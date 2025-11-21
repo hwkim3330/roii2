@@ -27,6 +27,14 @@
 | **Simple** | [simple.html](https://hwkim3330.github.io/roii2/simple.html) | Minimal clean view |
 | **Initial D** | [initiald.html](https://hwkim3330.github.io/roii2/initiald.html) | Racing drift mode |
 
+### Games
+| Version | URL | Description |
+|---------|-----|-------------|
+| **Runner** | [runner.html](https://hwkim3330.github.io/roii2/runner.html) | TSN Data Packet Runner - Collect sensor data, avoid faults |
+| **Defender** | [defender.html](https://hwkim3330.github.io/roii2/defender.html) | TSN Network Defense - Protect vehicle from cyber threats |
+| **Snake** | [snake.html](https://hwkim3330.github.io/roii2/snake.html) | Network Snake - Build your network topology |
+| **Shooter** | [shooter.html](https://hwkim3330.github.io/roii2/shooter.html) | TSN Space Defense - Space invaders with sensor weapons |
+
 ## Architecture
 
 ### Central HPC
@@ -186,6 +194,38 @@
 - Blinking sensor indicators
 - Real-time clock
 
+### TSN Data Runner (runner.html)
+- Endless runner with ROii2 vehicle model
+- Collect LiDAR, Camera, Radar data packets
+- Avoid network faults and packet loss events
+- Zone bonuses (Front-L, ACU_IT, Front-R)
+- Network health meter and real-time graph
+- Level progression based on throughput
+
+### TSN Network Defender (defender.html)
+- Tower defense style gameplay
+- ROii2 vehicle at center with sensor turrets
+- LiDAR (AOE), Camera (multi-target), Radar (homing)
+- Wave-based cyber threat attacks
+- Zone controller status indicators
+- Power-up system
+
+### Network Snake (snake.html)
+- Classic snake with network topology theme
+- ACU_IT head collects sensor nodes
+- Grow your TSN network connections
+- Mini-map showing topology
+- Bandwidth meter tracking
+- Various sensor types with different values
+
+### TSN Space Defense (shooter.html)
+- Space invaders with ROii2 vehicle
+- Three weapon types: LiDAR, Camera, Radar
+- Enemy types: Malware, DDoS, Ransomware, APT
+- Combo system for score multipliers
+- Power-ups: Rapid Fire, Triple Shot, Shield Boost
+- Wave-based progression
+
 ## Fault Simulation
 
 Simulate network failures to test redundancy:
@@ -223,6 +263,14 @@ Simulate network failures to test redundancy:
 - **Camera icon**: Change view
 - **Reset icon**: Reset position
 
+### Games
+| Game | Controls |
+|------|----------|
+| **Runner** | ← → / A D: Switch lanes, ↑ / SPACE: Jump, Swipe on mobile |
+| **Defender** | Click threats to target, 1/Q: LiDAR, 2/W: Camera, 3/E: Radar |
+| **Snake** | Arrow keys / WASD: Move, SPACE: Speed boost |
+| **Shooter** | ← → / A D: Move, SPACE / Click: Fire, 1/2/3: Switch weapons |
+
 ## Technology Stack
 
 - **Three.js** r128 - 3D rendering
@@ -249,6 +297,10 @@ roii2/
 ├── dark.html         # Cyberpunk neon theme
 ├── simple.html       # Minimal view
 ├── initiald.html     # Racing drift mode
+├── runner.html       # TSN Data Runner game
+├── defender.html     # Network defense game
+├── snake.html        # Network snake game
+├── shooter.html      # Space invaders game
 ├── script.js         # Main application logic
 ├── roii.glb          # 3D vehicle model
 ├── keti.png          # KETI logo

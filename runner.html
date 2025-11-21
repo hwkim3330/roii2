@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ROii2 - TSN Data Runner</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            overflow: hidden;
+            color: white;
+            touch-action: none;
+        }
+        #game { width: 100vw; height: 100vh; }
+
+        .hud {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        .hud-item {
+            background: rgba(0,20,40,0.9);
+            border: 2px solid #00ffff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+        }
+        .hud-label { font-size: 9px; color: #00aaaa; letter-spacing: 1px; }
+        .hud-value { font-size: 20px; color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+
+        .network-status {
+            position: absolute;
+            top: 70px;
+            left: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sensor-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 10px;
+        }
+        .sensor-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: bold;
+        }
+        .sensor-icon.lidar { background: #9966ff; }
+        .sensor-icon.camera { background: #4488ff; }
+        .sensor-icon.radar { background: #ffaa00; }
+        .sensor-progress {
+            width: 80px;
+            height: 6px;
+            background: #111;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .sensor-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .sensor-fill.lidar { background: linear-gradient(90deg, #9966ff, #cc88ff); }
+        .sensor-fill.camera { background: linear-gradient(90deg, #4488ff, #66aaff); }
+        .sensor-fill.radar { background: linear-gradient(90deg, #ffaa00, #ffcc44); }
+
+        .bandwidth-display {
+            position: absolute;
+            top: 180px;
+            left: 15px;
+            background: rgba(0,20,40,0.9);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 10px;
+        }
+        .bandwidth-title { color: #00aaaa; margin-bottom: 5px; }
+        .bandwidth-value {
+            font-size: 18px;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .zone-indicators {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+        .zone {
+            text-align: center;
+            padding: 8px 15px;
+            background: rgba(0,20,40,0.8);
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+        .zone.active {
+            opacity: 1;
+            box-shadow: 0 0 20px rgba(0,255,255,0.5);
+            border-color: #00ff00;
+        }
+        .zone-name { font-size: 10px; color: #00aaaa; }
+        .zone-status { font-size: 8px; color: #00ff00; }
+
+        .game-over, .menu-screen, .level-complete {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,10,20,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .menu-screen h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+            color: #00ffff;
+            text-shadow: 0 0 30px #00ffff;
+        }
+        .menu-screen .subtitle {
+            font-size: 14px;
+            color: #00aaaa;
+            margin-bottom: 30px;
+        }
+        .game-over h1 {
+            font-size: 36px;
+            color: #ff0054;
+            text-shadow: 0 0 30px #ff0054;
+        }
+        .level-complete h1 {
+            font-size: 36px;
+            color: #00ff00;
+            text-shadow: 0 0 30px #00ff00;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,255,255,0.1);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+        }
+        .stat-value { font-size: 24px; color: #00ffff; }
+        .stat-label { font-size: 10px; color: #00aaaa; margin-top: 5px; }
+
+        .btn {
+            padding: 12px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            background: transparent;
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            cursor: pointer;
+            margin: 8px;
+            transition: all 0.3s;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .btn:hover {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 30px #00ffff;
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: #555;
+            text-align: center;
+        }
+        .controls-hint span { color: #00ffff; }
+
+        .packet-counter {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+        .packet-type {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: rgba(0,20,40,0.9);
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        .packet-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .packet-dot.lidar { background: #9966ff; box-shadow: 0 0 8px #9966ff; }
+        .packet-dot.camera { background: #4488ff; box-shadow: 0 0 8px #4488ff; }
+        .packet-dot.radar { background: #ffaa00; box-shadow: 0 0 8px #ffaa00; }
+
+        .combo-display {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: 900;
+            pointer-events: none;
+            opacity: 0;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff;
+        }
+        .combo-display.show {
+            animation: comboAnim 0.6s ease-out;
+        }
+        @keyframes comboAnim {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+
+        .network-graph {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 120px;
+            height: 60px;
+            background: rgba(0,20,40,0.9);
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .network-graph canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .hidden { display: none !important; }
+
+        .loading {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #111;
+            border-top-color: #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            margin-top: 20px;
+            color: #00ffff;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading TSN Network...</div>
+    </div>
+
+    <div id="game"></div>
+
+    <div class="hud hidden" id="hud">
+        <div class="hud-item">
+            <div class="hud-label">THROUGHPUT</div>
+            <div class="hud-value" id="score">0</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">DISTANCE</div>
+            <div class="hud-value" id="distance">0m</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">LEVEL</div>
+            <div class="hud-value" id="level">1</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">BANDWIDTH</div>
+            <div class="hud-value" id="speed">0 Gbps</div>
+        </div>
+    </div>
+
+    <div class="network-status hidden" id="networkStatus">
+        <div class="sensor-bar">
+            <div class="sensor-icon lidar">L</div>
+            <span>LiDAR</span>
+            <div class="sensor-progress"><div class="sensor-fill lidar" id="lidarFill" style="width:0%"></div></div>
+            <span id="lidarCount">0</span>
+        </div>
+        <div class="sensor-bar">
+            <div class="sensor-icon camera">C</div>
+            <span>Camera</span>
+            <div class="sensor-progress"><div class="sensor-fill camera" id="cameraFill" style="width:0%"></div></div>
+            <span id="cameraCount">0</span>
+        </div>
+        <div class="sensor-bar">
+            <div class="sensor-icon radar">R</div>
+            <span>Radar</span>
+            <div class="sensor-progress"><div class="sensor-fill radar" id="radarFill" style="width:0%"></div></div>
+            <span id="radarCount">0</span>
+        </div>
+    </div>
+
+    <div class="bandwidth-display hidden" id="bandwidthDisplay">
+        <div class="bandwidth-title">NETWORK HEALTH</div>
+        <div class="bandwidth-value" id="networkHealth">100%</div>
+    </div>
+
+    <div class="zone-indicators hidden" id="zoneIndicators">
+        <div class="zone" id="zoneFL">
+            <div class="zone-name">FRONT-L</div>
+            <div class="zone-status">9692</div>
+        </div>
+        <div class="zone" id="zoneACU">
+            <div class="zone-name">ACU_IT</div>
+            <div class="zone-status">HPC</div>
+        </div>
+        <div class="zone" id="zoneFR">
+            <div class="zone-name">FRONT-R</div>
+            <div class="zone-status">9692</div>
+        </div>
+    </div>
+
+    <div class="combo-display" id="combo"></div>
+
+    <div class="network-graph hidden" id="networkGraph">
+        <canvas id="graphCanvas"></canvas>
+    </div>
+
+    <div class="menu-screen" id="menuScreen">
+        <h1>TSN DATA RUNNER</h1>
+        <div class="subtitle">Collect sensor data packets | Avoid network faults</div>
+        <img src="keti.png" style="width:80px;margin:20px;opacity:0.8;">
+        <div style="margin:20px;padding:20px;background:rgba(0,255,255,0.1);border-radius:10px;max-width:350px;">
+            <div style="font-size:12px;color:#00aaaa;margin-bottom:10px;">MISSION OBJECTIVE</div>
+            <div style="font-size:11px;color:#888;line-height:1.6;">
+                Collect data packets from LiDAR, Camera, and Radar sensors.
+                Avoid network faults and packet loss events.
+                Reach the bandwidth threshold to complete each level.
+            </div>
+        </div>
+        <button class="btn" onclick="startGame()">START TRANSMISSION</button>
+        <div style="margin-top:30px;font-size:11px;color:#444;">
+            <p>← → or A/D : Switch Lanes</p>
+            <p>↑ or SPACE : Jump</p>
+            <p>Swipe on mobile</p>
+        </div>
+    </div>
+
+    <div class="game-over hidden" id="gameOver">
+        <h1>NETWORK FAILURE</h1>
+        <div class="subtitle" style="color:#ff6666;">Connection Lost</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="finalScore">0</div>
+                <div class="stat-label">THROUGHPUT</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalDistance">0m</div>
+                <div class="stat-label">DISTANCE</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalPackets">0</div>
+                <div class="stat-label">PACKETS</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalLevel">1</div>
+                <div class="stat-label">LEVEL</div>
+            </div>
+        </div>
+        <button class="btn" onclick="startGame()">RECONNECT</button>
+        <button class="btn" onclick="showMenu()">MAIN MENU</button>
+    </div>
+
+    <div class="level-complete hidden" id="levelComplete">
+        <h1>TSN SYNCHRONIZED!</h1>
+        <div class="subtitle" style="color:#00ff00;">Level <span id="completedLevel">1</span> Complete</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="levelScore">0</div>
+                <div class="stat-label">THROUGHPUT</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="levelPackets">0</div>
+                <div class="stat-label">PACKETS</div>
+            </div>
+        </div>
+        <button class="btn" onclick="nextLevel()">NEXT LEVEL</button>
+    </div>
+
+    <div class="controls-hint hidden" id="controlsHint">
+        <span>←</span> <span>→</span> Switch Lanes | <span>SPACE</span> Jump | Collect TSN Data Packets
+    </div>
+
+    <script>
+    // === GAME CONFIG ===
+    const LANE_WIDTH = 4;
+    const LANE_COUNT = 3;
+    const SPAWN_DISTANCE = 120;
+    const PACKET_TYPES = ['lidar', 'camera', 'radar'];
+    const PACKET_COLORS = { lidar: 0x9966ff, camera: 0x4488ff, radar: 0xffaa00 };
+    const PACKET_VALUES = { lidar: 100, camera: 50, radar: 75 };
+    const LEVEL_TARGETS = [1000, 2500, 5000, 10000, 20000];
+
+    // === GAME STATE ===
+    let gameState = 'loading';
+    let score = 0;
+    let distance = 0;
+    let level = 1;
+    let networkHealth = 100;
+    let speed = 25;
+    let packetCounts = { lidar: 0, camera: 0, radar: 0 };
+    let totalPackets = 0;
+    let combo = 0;
+    let isInvincible = false;
+    let lastDamageTime = 0;
+    let graphData = [];
+
+    // Player state
+    let playerLane = 0;
+    let playerY = 0;
+    let velocityY = 0;
+    let isJumping = false;
+    const GRAVITY = 60;
+    const JUMP_FORCE = 20;
+
+    // Objects
+    let objects = [];
+    let particles = [];
+    let vehicleModel = null;
+    let sensorEffects = [];
+
+    // === THREE.JS SETUP ===
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000815);
+    scene.fog = new THREE.FogExp2(0x000815, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 6, 12);
+    camera.lookAt(0, 1, -20);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.getElementById('game').appendChild(renderer.domElement);
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x404080, 0.6));
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    mainLight.position.set(10, 30, 10);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    scene.add(mainLight);
+
+    // Cyan rim light
+    const rimLight = new THREE.DirectionalLight(0x00ffff, 0.4);
+    rimLight.position.set(-10, 10, -10);
+    scene.add(rimLight);
+
+    // === NETWORK ROAD ===
+    function createNetworkRoad() {
+        // Main road surface
+        const roadGeo = new THREE.PlaneGeometry(15, 300);
+        const roadMat = new THREE.MeshStandardMaterial({
+            color: 0x050510,
+            metalness: 0.3,
+            roughness: 0.8
+        });
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        road.position.z = -100;
+        road.receiveShadow = true;
+        scene.add(road);
+
+        // Network grid lines
+        const gridGroup = new THREE.Group();
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.15 });
+
+        // Horizontal lines
+        for (let z = -200; z <= 50; z += 5) {
+            const geo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-7, 0.02, z),
+                new THREE.Vector3(7, 0.02, z)
+            ]);
+            gridGroup.add(new THREE.Line(geo, lineMat));
+        }
+
+        // Vertical lines (lane markers)
+        for (let x = -6; x <= 6; x += 2) {
+            const geo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(x, 0.02, -200),
+                new THREE.Vector3(x, 0.02, 50)
+            ]);
+            gridGroup.add(new THREE.Line(geo, lineMat));
+        }
+        scene.add(gridGroup);
+
+        // Lane center indicators
+        for (let i = -1; i <= 1; i++) {
+            const laneGeo = new THREE.PlaneGeometry(0.3, 300);
+            const laneMat = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.2
+            });
+            const lane = new THREE.Mesh(laneGeo, laneMat);
+            lane.rotation.x = -Math.PI / 2;
+            lane.position.set(i * LANE_WIDTH, 0.03, -100);
+            scene.add(lane);
+        }
+
+        // Side rails (network backbone)
+        [-8, 8].forEach(x => {
+            const railGeo = new THREE.BoxGeometry(0.3, 0.5, 300);
+            const railMat = new THREE.MeshStandardMaterial({
+                color: 0x003344,
+                emissive: 0x001122,
+                metalness: 0.8
+            });
+            const rail = new THREE.Mesh(railGeo, railMat);
+            rail.position.set(x, 0.25, -100);
+            scene.add(rail);
+
+            // Glowing top
+            const glowGeo = new THREE.BoxGeometry(0.1, 0.1, 300);
+            const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            glow.position.set(x, 0.55, -100);
+            scene.add(glow);
+        });
+    }
+    createNetworkRoad();
+
+    // === PLAYER GROUP ===
+    const playerGroup = new THREE.Group();
+    scene.add(playerGroup);
+
+    // Sensor visualization group
+    const sensorGroup = new THREE.Group();
+    playerGroup.add(sensorGroup);
+
+    // === LOAD VEHICLE MODEL ===
+    const loader = new THREE.GLTFLoader();
+    loader.load('roii.glb', (gltf) => {
+        vehicleModel = gltf.scene;
+        vehicleModel.scale.set(0.8, 0.8, 0.8);
+        vehicleModel.rotation.y = Math.PI;
+
+        vehicleModel.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                if (child.material) {
+                    child.material.color.multiplyScalar(2.0);
+                    child.material.emissive = new THREE.Color(0x003344);
+                    child.material.emissiveIntensity = 0.3;
+                }
+            }
+        });
+
+        playerGroup.add(vehicleModel);
+        createSensorEffects();
+
+        document.getElementById('loading').classList.add('hidden');
+        gameState = 'menu';
+    }, undefined, (error) => {
+        console.error('Error loading model:', error);
+        createFallbackVehicle();
+        document.getElementById('loading').classList.add('hidden');
+        gameState = 'menu';
+    });
+
+    function createFallbackVehicle() {
+        // Fallback box vehicle if model fails to load
+        const bodyGeo = new THREE.BoxGeometry(2, 0.8, 3.5);
+        const bodyMat = new THREE.MeshStandardMaterial({
+            color: 0x00ffff,
+            metalness: 0.8,
+            roughness: 0.2,
+            emissive: 0x004444,
+            emissiveIntensity: 0.3
+        });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.6;
+        body.castShadow = true;
+        playerGroup.add(body);
+        createSensorEffects();
+    }
+
+    function createSensorEffects() {
+        // LiDAR pulse effect (top of vehicle)
+        const lidarGeo = new THREE.RingGeometry(0.1, 0.4, 32);
+        const lidarMat = new THREE.MeshBasicMaterial({
+            color: 0x9966ff,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide
+        });
+        const lidar = new THREE.Mesh(lidarGeo, lidarMat);
+        lidar.rotation.x = -Math.PI / 2;
+        lidar.position.set(0, 1.8, 0);
+        sensorGroup.add(lidar);
+        sensorEffects.push({ mesh: lidar, type: 'lidar', phase: 0 });
+
+        // Camera indicators (front)
+        const camGeo = new THREE.BoxGeometry(0.15, 0.15, 0.05);
+        const camMat = new THREE.MeshBasicMaterial({ color: 0x4488ff });
+        [-0.6, 0, 0.6].forEach(x => {
+            const cam = new THREE.Mesh(camGeo, camMat);
+            cam.position.set(x, 1.2, -1.8);
+            sensorGroup.add(cam);
+            sensorEffects.push({ mesh: cam, type: 'camera', phase: Math.random() * Math.PI * 2 });
+        });
+
+        // Radar indicators (corners)
+        const radarGeo = new THREE.ConeGeometry(0.1, 0.2, 4);
+        const radarMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+        [[-1, 1.0, -1.5], [1, 1.0, -1.5]].forEach(pos => {
+            const radar = new THREE.Mesh(radarGeo, radarMat);
+            radar.position.set(...pos);
+            radar.rotation.x = Math.PI / 2;
+            sensorGroup.add(radar);
+            sensorEffects.push({ mesh: radar, type: 'radar', phase: Math.random() * Math.PI * 2 });
+        });
+
+        // Engine glow
+        const glowGeo = new THREE.BoxGeometry(0.3, 0.15, 0.1);
+        const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+        [-0.5, 0.5].forEach(x => {
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            glow.position.set(x, 0.4, 1.8);
+            sensorGroup.add(glow);
+        });
+    }
+
+    // === DATA PACKET CREATION ===
+    function createDataPacket(x, z, type) {
+        const group = new THREE.Group();
+        const color = PACKET_COLORS[type];
+
+        // Core geometry varies by type
+        let coreGeo;
+        if (type === 'lidar') {
+            coreGeo = new THREE.OctahedronGeometry(0.4);
+        } else if (type === 'camera') {
+            coreGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        } else {
+            coreGeo = new THREE.TetrahedronGeometry(0.4);
+        }
+
+        const coreMat = new THREE.MeshStandardMaterial({
+            color: color,
+            emissive: color,
+            emissiveIntensity: 1.5,
+            metalness: 1,
+            roughness: 0
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        group.add(core);
+
+        // Outer glow ring
+        const ringGeo = new THREE.RingGeometry(0.5, 0.6, 16);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        group.add(ring);
+
+        // Point light
+        const light = new THREE.PointLight(color, 0.5, 3);
+        group.add(light);
+
+        group.position.set(x, 1.5, z);
+        scene.add(group);
+
+        return { type: 'packet', packetType: type, mesh: group, x, z, y: 1.5, active: true };
+    }
+
+    // === NETWORK FAULT (OBSTACLE) ===
+    function createNetworkFault(x, z) {
+        const group = new THREE.Group();
+
+        // Error box
+        const boxGeo = new THREE.BoxGeometry(1.2, 2, 1.2);
+        const boxMat = new THREE.MeshStandardMaterial({
+            color: 0xff0044,
+            emissive: 0x330011,
+            metalness: 0.5,
+            roughness: 0.3
+        });
+        const box = new THREE.Mesh(boxGeo, boxMat);
+        box.position.y = 1;
+        box.castShadow = true;
+        group.add(box);
+
+        // Warning wireframe
+        const wireGeo = new THREE.BoxGeometry(1.4, 2.2, 1.4);
+        const wireMat = new THREE.MeshBasicMaterial({
+            color: 0xff0044,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.6
+        });
+        const wire = new THREE.Mesh(wireGeo, wireMat);
+        wire.position.y = 1;
+        group.add(wire);
+
+        // X symbol on top
+        const xMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
+        const xGeo = new THREE.BoxGeometry(0.8, 0.1, 0.15);
+        [Math.PI / 4, -Math.PI / 4].forEach(rot => {
+            const xBar = new THREE.Mesh(xGeo, xMat);
+            xBar.rotation.z = rot;
+            xBar.position.y = 2.2;
+            group.add(xBar);
+        });
+
+        // Danger light
+        const light = new THREE.PointLight(0xff0044, 0.8, 5);
+        light.position.y = 2.5;
+        group.add(light);
+
+        group.position.set(x, 0, z);
+        scene.add(group);
+
+        return { type: 'fault', mesh: group, x, z, active: true };
+    }
+
+    // === PACKET LOSS EVENT ===
+    function createPacketLoss(x, z) {
+        const group = new THREE.Group();
+
+        // Glitchy cube
+        const geo = new THREE.IcosahedronGeometry(0.6);
+        const mat = new THREE.MeshBasicMaterial({
+            color: 0xff6600,
+            wireframe: true
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        group.add(mesh);
+
+        // Inner warning
+        const innerGeo = new THREE.IcosahedronGeometry(0.4);
+        const innerMat = new THREE.MeshStandardMaterial({
+            color: 0xff3300,
+            emissive: 0xff2200,
+            emissiveIntensity: 0.5
+        });
+        group.add(new THREE.Mesh(innerGeo, innerMat));
+
+        group.position.set(x, 1, z);
+        scene.add(group);
+
+        return { type: 'packetloss', mesh: group, x, z, active: true };
+    }
+
+    // === ZONE BONUS ===
+    function createZoneBonus(x, z, zone) {
+        const group = new THREE.Group();
+
+        const geo = new THREE.CylinderGeometry(0.6, 0.6, 0.3, 6);
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0x00ff00,
+            emissive: 0x00ff00,
+            emissiveIntensity: 1,
+            metalness: 0.9
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        group.add(mesh);
+
+        // Ring
+        const ringGeo = new THREE.TorusGeometry(0.8, 0.05, 8, 16);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        group.add(ring);
+
+        group.position.set(x, 1.2, z);
+        scene.add(group);
+
+        return { type: 'zone', zone: zone, mesh: group, x, z, y: 1.2, active: true };
+    }
+
+    // === PARTICLE SYSTEM ===
+    function spawnParticles(x, y, z, color, count = 15) {
+        for (let i = 0; i < count; i++) {
+            const geo = new THREE.OctahedronGeometry(0.08);
+            const mat = new THREE.MeshBasicMaterial({ color });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            scene.add(mesh);
+
+            particles.push({
+                mesh,
+                vx: (Math.random() - 0.5) * 8,
+                vy: Math.random() * 6 + 2,
+                vz: (Math.random() - 0.5) * 8,
+                life: 1
+            });
+        }
+    }
+
+    // === SPAWNING ===
+    let spawnTimer = 0;
+
+    function spawnObjects(delta) {
+        if (gameState !== 'playing') return;
+
+        spawnTimer += delta;
+        if (spawnTimer < 0.3) return;
+        spawnTimer = 0;
+
+        let furthestZ = -30;
+        objects.forEach(obj => {
+            if (obj.z < furthestZ) furthestZ = obj.z;
+        });
+
+        if (furthestZ > -SPAWN_DISTANCE) {
+            const spawnZ = furthestZ - (10 + Math.random() * 15);
+
+            const rand = Math.random();
+
+            if (rand < 0.5) {
+                // Data packet
+                const lane = Math.floor(Math.random() * LANE_COUNT) - 1;
+                const type = PACKET_TYPES[Math.floor(Math.random() * PACKET_TYPES.length)];
+                objects.push(createDataPacket(lane * LANE_WIDTH, spawnZ, type));
+            } else if (rand < 0.8) {
+                // Network fault
+                const faultCount = level >= 2 && Math.random() > 0.7 ? 2 : 1;
+                const usedLanes = [];
+                for (let i = 0; i < faultCount; i++) {
+                    let lane;
+                    do { lane = Math.floor(Math.random() * LANE_COUNT) - 1; }
+                    while (usedLanes.includes(lane));
+                    usedLanes.push(lane);
+                    objects.push(createNetworkFault(lane * LANE_WIDTH, spawnZ));
+                }
+            } else if (rand < 0.9) {
+                // Packet loss
+                const lane = Math.floor(Math.random() * LANE_COUNT) - 1;
+                objects.push(createPacketLoss(lane * LANE_WIDTH, spawnZ));
+            } else {
+                // Zone bonus (rare)
+                const lane = Math.floor(Math.random() * LANE_COUNT) - 1;
+                const zones = ['FL', 'ACU', 'FR'];
+                objects.push(createZoneBonus(lane * LANE_WIDTH, spawnZ, zones[Math.floor(Math.random() * zones.length)]));
+            }
+        }
+    }
+
+    // === INPUT ===
+    let touchStartX = 0, touchStartY = 0;
+
+    document.addEventListener('keydown', (e) => {
+        if (gameState !== 'playing') return;
+
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+            playerLane = Math.max(playerLane - 1, -1);
+        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            playerLane = Math.min(playerLane + 1, 1);
+        } else if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') && !isJumping) {
+            isJumping = true;
+            velocityY = JUMP_FORCE;
+        }
+    });
+
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
+
+    document.addEventListener('touchend', (e) => {
+        if (gameState !== 'playing') return;
+
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
+            if (dx > 0) playerLane = Math.min(playerLane + 1, 1);
+            else playerLane = Math.max(playerLane - 1, -1);
+        } else if (dy < -30 && !isJumping) {
+            isJumping = true;
+            velocityY = JUMP_FORCE;
+        }
+    });
+
+    // === COLLISION ===
+    function checkCollisions() {
+        const px = playerLane * LANE_WIDTH;
+        const py = playerY;
+
+        objects.forEach(obj => {
+            if (!obj.active) return;
+
+            const dx = Math.abs(obj.x - px);
+            const dz = Math.abs(obj.z);
+
+            if (dx < 1.5 && dz < 2.5) {
+                if (obj.type === 'fault' || obj.type === 'packetloss') {
+                    if (py > 2) return; // Jumped over
+
+                    if (!isInvincible) {
+                        takeDamage(obj.type === 'fault' ? 20 : 10);
+                        obj.active = false;
+                        scene.remove(obj.mesh);
+                        spawnParticles(obj.x, 1, obj.z, 0xff0044, 20);
+                    }
+                } else if (obj.type === 'packet') {
+                    if (Math.abs(obj.y - py - 1) < 2) {
+                        collectPacket(obj.packetType, obj.x, obj.y, obj.z);
+                        obj.active = false;
+                        scene.remove(obj.mesh);
+                    }
+                } else if (obj.type === 'zone') {
+                    if (Math.abs(obj.y - py - 1) < 2) {
+                        collectZoneBonus(obj.zone);
+                        obj.active = false;
+                        scene.remove(obj.mesh);
+                        spawnParticles(obj.x, obj.y, obj.z, 0x00ff00, 25);
+                    }
+                }
+            }
+        });
+    }
+
+    function takeDamage(amount) {
+        networkHealth -= amount;
+        combo = 0;
+        isInvincible = true;
+        lastDamageTime = Date.now();
+
+        showCombo('FAULT!', '#ff0044');
+
+        if (networkHealth <= 0) {
+            networkHealth = 0;
+            gameOver();
+        }
+        updateNetworkHealthUI();
+    }
+
+    function collectPacket(type, x, y, z) {
+        const value = PACKET_VALUES[type];
+        const comboMultiplier = Math.min(1 + combo * 0.1, 3);
+        const points = Math.floor(value * comboMultiplier);
+
+        score += points;
+        packetCounts[type]++;
+        totalPackets++;
+        combo++;
+
+        spawnParticles(x, y, z, PACKET_COLORS[type]);
+        showCombo('+' + points, '#' + PACKET_COLORS[type].toString(16).padStart(6, '0'));
+
+        // Heal slightly
+        networkHealth = Math.min(100, networkHealth + 2);
+
+        updateUI();
+        updateSensorBars();
+
+        // Check level completion
+        if (score >= LEVEL_TARGETS[level - 1]) {
+            levelComplete();
+        }
+    }
+
+    function collectZoneBonus(zone) {
+        score += 300;
+        networkHealth = Math.min(100, networkHealth + 20);
+        showCombo('ZONE BONUS +300', '#00ff00');
+
+        // Highlight zone
+        const zoneEl = document.getElementById('zone' + zone);
+        zoneEl.classList.add('active');
+        setTimeout(() => zoneEl.classList.remove('active'), 2000);
+
+        updateUI();
+        updateNetworkHealthUI();
+    }
+
+    // === UI UPDATES ===
+    function updateUI() {
+        document.getElementById('score').textContent = score.toLocaleString();
+        document.getElementById('distance').textContent = Math.floor(distance) + 'm';
+        document.getElementById('level').textContent = level;
+        document.getElementById('speed').textContent = (speed / 10).toFixed(1) + ' Gbps';
+    }
+
+    function updateNetworkHealthUI() {
+        const el = document.getElementById('networkHealth');
+        el.textContent = Math.floor(networkHealth) + '%';
+        el.style.color = networkHealth > 50 ? '#00ff00' : networkHealth > 25 ? '#ffaa00' : '#ff0044';
+    }
+
+    function updateSensorBars() {
+        const maxPackets = Math.max(10, Math.max(packetCounts.lidar, packetCounts.camera, packetCounts.radar));
+
+        PACKET_TYPES.forEach(type => {
+            document.getElementById(type + 'Fill').style.width = (packetCounts[type] / maxPackets * 100) + '%';
+            document.getElementById(type + 'Count').textContent = packetCounts[type];
+        });
+    }
+
+    function showCombo(text, color = '#00ffff') {
+        const el = document.getElementById('combo');
+        el.textContent = text;
+        el.style.color = color;
+        el.style.textShadow = '0 0 20px ' + color;
+        el.className = 'combo-display show';
+        setTimeout(() => el.className = 'combo-display', 600);
+    }
+
+    function updateGraph() {
+        graphData.push(networkHealth);
+        if (graphData.length > 50) graphData.shift();
+
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 120;
+        canvas.height = 60;
+
+        ctx.clearRect(0, 0, 120, 60);
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+
+        graphData.forEach((val, i) => {
+            const x = (i / 50) * 120;
+            const y = 60 - (val / 100) * 50;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+    }
+
+    // === GAME FLOW ===
+    function startGame() {
+        gameState = 'playing';
+        score = 0;
+        distance = 0;
+        networkHealth = 100;
+        speed = 25 + (level - 1) * 8;
+        packetCounts = { lidar: 0, camera: 0, radar: 0 };
+        totalPackets = 0;
+        combo = 0;
+        playerLane = 0;
+        playerY = 0;
+        isJumping = false;
+        graphData = [];
+
+        objects.forEach(obj => scene.remove(obj.mesh));
+        objects = [];
+        particles.forEach(p => scene.remove(p.mesh));
+        particles = [];
+
+        updateUI();
+        updateNetworkHealthUI();
+        updateSensorBars();
+
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('gameOver').classList.add('hidden');
+        document.getElementById('levelComplete').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        document.getElementById('networkStatus').classList.remove('hidden');
+        document.getElementById('bandwidthDisplay').classList.remove('hidden');
+        document.getElementById('zoneIndicators').classList.remove('hidden');
+        document.getElementById('networkGraph').classList.remove('hidden');
+        document.getElementById('controlsHint').classList.remove('hidden');
+    }
+
+    function gameOver() {
+        gameState = 'gameover';
+        document.getElementById('finalScore').textContent = score.toLocaleString();
+        document.getElementById('finalDistance').textContent = Math.floor(distance) + 'm';
+        document.getElementById('finalPackets').textContent = totalPackets;
+        document.getElementById('finalLevel').textContent = level;
+        document.getElementById('gameOver').classList.remove('hidden');
+        hideHUD();
+        level = 1;
+    }
+
+    function levelComplete() {
+        gameState = 'levelcomplete';
+        document.getElementById('completedLevel').textContent = level;
+        document.getElementById('levelScore').textContent = score.toLocaleString();
+        document.getElementById('levelPackets').textContent = totalPackets;
+        document.getElementById('levelComplete').classList.remove('hidden');
+        hideHUD();
+    }
+
+    function nextLevel() {
+        level++;
+        startGame();
+    }
+
+    function showMenu() {
+        gameState = 'menu';
+        level = 1;
+        document.getElementById('gameOver').classList.add('hidden');
+        document.getElementById('menuScreen').classList.remove('hidden');
+        hideHUD();
+    }
+
+    function hideHUD() {
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('networkStatus').classList.add('hidden');
+        document.getElementById('bandwidthDisplay').classList.add('hidden');
+        document.getElementById('zoneIndicators').classList.add('hidden');
+        document.getElementById('networkGraph').classList.add('hidden');
+        document.getElementById('controlsHint').classList.add('hidden');
+    }
+
+    // === GAME LOOP ===
+    let lastTime = 0;
+    let graphTimer = 0;
+
+    function animate(time) {
+        requestAnimationFrame(animate);
+
+        const delta = Math.min((time - lastTime) / 1000, 0.05);
+        lastTime = time;
+
+        if (gameState === 'playing') {
+            distance += speed * delta;
+            speed = Math.min(80, 25 + (level - 1) * 8 + distance * 0.003);
+
+            // Player horizontal movement
+            const targetX = playerLane * LANE_WIDTH;
+            playerGroup.position.x += (targetX - playerGroup.position.x) * delta * 12;
+
+            // Jump physics
+            if (isJumping) {
+                playerY += velocityY * delta;
+                velocityY -= GRAVITY * delta;
+
+                if (playerY <= 0) {
+                    playerY = 0;
+                    isJumping = false;
+                    velocityY = 0;
+                }
+            }
+            playerGroup.position.y = playerY;
+
+            // Banking
+            const xDiff = targetX - playerGroup.position.x;
+            playerGroup.rotation.z = -xDiff * 0.12;
+            playerGroup.rotation.x = isJumping ? -0.08 : 0;
+
+            // Move objects
+            objects.forEach(obj => {
+                obj.z += speed * delta;
+                obj.mesh.position.z = obj.z;
+
+                if (obj.type === 'packet' || obj.type === 'zone') {
+                    obj.mesh.rotation.y += delta * 2;
+                    obj.mesh.position.y = obj.y + Math.sin(time * 0.004) * 0.15;
+                }
+                if (obj.type === 'packetloss') {
+                    obj.mesh.rotation.x += delta * 3;
+                    obj.mesh.rotation.y += delta * 2;
+                }
+                if (obj.type === 'fault') {
+                    // Pulsing effect
+                    const pulse = 0.9 + Math.sin(time * 0.01) * 0.1;
+                    obj.mesh.scale.setScalar(pulse);
+                }
+            });
+
+            // Remove off-screen
+            objects = objects.filter(obj => {
+                if (obj.z > 15 || !obj.active) {
+                    scene.remove(obj.mesh);
+                    return false;
+                }
+                return true;
+            });
+
+            spawnObjects(delta);
+            checkCollisions();
+
+            // Invincibility
+            if (isInvincible && Date.now() - lastDamageTime > 1500) {
+                isInvincible = false;
+            }
+            playerGroup.visible = isInvincible ? Math.floor(Date.now() / 80) % 2 === 0 : true;
+
+            // Sensor effects
+            sensorEffects.forEach((effect, i) => {
+                effect.phase += delta * 3;
+                if (effect.type === 'lidar') {
+                    effect.mesh.scale.setScalar(1 + Math.sin(effect.phase) * 0.3);
+                    effect.mesh.material.opacity = 0.5 + Math.sin(effect.phase) * 0.3;
+                } else {
+                    effect.mesh.material.opacity = 0.5 + Math.sin(effect.phase) * 0.5;
+                }
+            });
+
+            // Graph update
+            graphTimer += delta;
+            if (graphTimer > 0.5) {
+                graphTimer = 0;
+                updateGraph();
+            }
+
+            updateUI();
+        }
+
+        // Particles
+        particles = particles.filter(p => {
+            p.life -= delta * 2;
+            if (p.life <= 0) {
+                scene.remove(p.mesh);
+                return false;
+            }
+            p.mesh.position.x += p.vx * delta;
+            p.mesh.position.y += p.vy * delta;
+            p.mesh.position.z += p.vz * delta;
+            p.vy -= 15 * delta;
+            p.mesh.scale.setScalar(p.life);
+            return true;
+        });
+
+        renderer.render(scene, camera);
+    }
+
+    // === RESIZE ===
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate(0);
+    </script>
+</body>
+</html>

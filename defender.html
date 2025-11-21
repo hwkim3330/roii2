@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ROii2 - TSN Network Defender</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <script src="libs/OrbitControls.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            overflow: hidden;
+            color: white;
+            touch-action: none;
+        }
+        #game { width: 100vw; height: 100vh; cursor: crosshair; }
+
+        .hud {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        .hud-item {
+            background: rgba(0,20,40,0.9);
+            border: 2px solid #00ffff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+        }
+        .hud-label { font-size: 10px; color: #00aaaa; letter-spacing: 1px; }
+        .hud-value { font-size: 24px; color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+
+        .sensor-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            pointer-events: none;
+        }
+        .sensor-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transition: all 0.3s;
+            pointer-events: all;
+            cursor: pointer;
+        }
+        .sensor-btn.lidar { background: rgba(153,102,255,0.3); border: 3px solid #9966ff; }
+        .sensor-btn.camera { background: rgba(68,136,255,0.3); border: 3px solid #4488ff; }
+        .sensor-btn.radar { background: rgba(255,170,0,0.3); border: 3px solid #ffaa00; }
+        .sensor-btn:hover { transform: scale(1.1); }
+        .sensor-btn.active { animation: pulse 0.3s; }
+        .sensor-btn.cooldown { opacity: 0.5; pointer-events: none; }
+        .sensor-icon { font-size: 20px; margin-bottom: 3px; }
+        .sensor-cooldown {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .sensor-cooldown-fill {
+            height: 100%;
+            background: #00ffff;
+            transition: width 0.1s linear;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); box-shadow: 0 0 30px currentColor; }
+        }
+
+        .network-health {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            width: 200px;
+        }
+        .health-bar-bg {
+            height: 20px;
+            background: #111;
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .health-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00ffaa);
+            transition: width 0.3s;
+        }
+        .health-label { font-size: 10px; color: #00aaaa; margin-bottom: 5px; }
+
+        .wave-indicator {
+            position: absolute;
+            top: 130px;
+            left: 20px;
+            font-size: 14px;
+            color: #00ffff;
+        }
+
+        .zone-status {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .zone-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: rgba(0,20,40,0.9);
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            font-size: 11px;
+        }
+        .zone-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff00;
+            box-shadow: 0 0 8px #00ff00;
+        }
+        .zone-dot.warning { background: #ffaa00; box-shadow: 0 0 8px #ffaa00; }
+        .zone-dot.danger { background: #ff0044; box-shadow: 0 0 8px #ff0044; animation: blink 0.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .threat-warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: #ff0044;
+            text-shadow: 0 0 20px #ff0044;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .threat-warning.show { animation: warningAnim 1s; }
+        @keyframes warningAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .game-over, .menu-screen, .wave-complete {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,10,20,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .menu-screen h1 {
+            font-size: 36px;
+            color: #00ffff;
+            text-shadow: 0 0 30px #00ffff;
+            margin-bottom: 10px;
+        }
+        .subtitle { font-size: 14px; color: #00aaaa; margin-bottom: 30px; }
+        .game-over h1 { font-size: 36px; color: #ff0054; text-shadow: 0 0 30px #ff0054; }
+        .wave-complete h1 { font-size: 36px; color: #00ff00; text-shadow: 0 0 30px #00ff00; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,255,255,0.1);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+        }
+        .stat-value { font-size: 24px; color: #00ffff; }
+        .stat-label { font-size: 10px; color: #00aaaa; margin-top: 5px; }
+
+        .btn {
+            padding: 12px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            background: transparent;
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            cursor: pointer;
+            margin: 8px;
+            transition: all 0.3s;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .btn:hover { background: #00ffff; color: #000; box-shadow: 0 0 30px #00ffff; }
+
+        .instructions {
+            max-width: 400px;
+            text-align: center;
+            margin: 20px;
+            padding: 20px;
+            background: rgba(0,255,255,0.1);
+            border-radius: 10px;
+            font-size: 12px;
+            color: #888;
+            line-height: 1.8;
+        }
+
+        .hidden { display: none !important; }
+
+        .loading {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #111;
+            border-top-color: #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { margin-top: 20px; color: #00ffff; font-size: 14px; }
+
+        .kill-count {
+            position: absolute;
+            pointer-events: none;
+            font-size: 20px;
+            font-weight: bold;
+            animation: killAnim 1s forwards;
+        }
+        @keyframes killAnim {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Initializing Defense Systems...</div>
+    </div>
+
+    <div id="game"></div>
+
+    <div class="hud hidden" id="hud">
+        <div class="hud-item">
+            <div class="hud-label">SCORE</div>
+            <div class="hud-value" id="score">0</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">THREATS</div>
+            <div class="hud-value" id="threats">0</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">WAVE</div>
+            <div class="hud-value" id="wave">1</div>
+        </div>
+    </div>
+
+    <div class="network-health hidden" id="networkHealth">
+        <div class="health-label">NETWORK INTEGRITY</div>
+        <div class="health-bar-bg">
+            <div class="health-bar-fill" id="healthFill" style="width:100%"></div>
+        </div>
+    </div>
+
+    <div class="wave-indicator hidden" id="waveIndicator">
+        WAVE <span id="currentWave">1</span> / <span id="totalWaves">5</span>
+    </div>
+
+    <div class="zone-status hidden" id="zoneStatus">
+        <div class="zone-item">
+            <div class="zone-dot" id="zoneFLDot"></div>
+            <span>Front-L 9692</span>
+        </div>
+        <div class="zone-item">
+            <div class="zone-dot" id="zoneACUDot"></div>
+            <span>ACU_IT HPC</span>
+        </div>
+        <div class="zone-item">
+            <div class="zone-dot" id="zoneFRDot"></div>
+            <span>Front-R 9692</span>
+        </div>
+        <div class="zone-item">
+            <div class="zone-dot" id="zoneRearDot"></div>
+            <span>Rear 9692</span>
+        </div>
+    </div>
+
+    <div class="sensor-panel hidden" id="sensorPanel">
+        <div class="sensor-btn lidar" id="btnLidar" onclick="fireSensor('lidar')">
+            <div class="sensor-icon">L</div>
+            <div>LiDAR</div>
+        </div>
+        <div class="sensor-btn camera" id="btnCamera" onclick="fireSensor('camera')">
+            <div class="sensor-icon">C</div>
+            <div>Camera</div>
+        </div>
+        <div class="sensor-btn radar" id="btnRadar" onclick="fireSensor('radar')">
+            <div class="sensor-icon">R</div>
+            <div>Radar</div>
+        </div>
+    </div>
+
+    <div class="threat-warning" id="threatWarning">INCOMING THREAT!</div>
+
+    <div class="menu-screen" id="menuScreen">
+        <h1>TSN NETWORK DEFENDER</h1>
+        <div class="subtitle">Protect the vehicle's network from cyber threats</div>
+        <img src="keti.png" style="width:80px;margin:20px;opacity:0.8;">
+        <div class="instructions">
+            <strong style="color:#00ffff;">MISSION:</strong><br>
+            Defend the ROii2 vehicle's TSN network from incoming threats.<br><br>
+            <strong style="color:#9966ff;">LiDAR</strong> - Area damage, slow reload<br>
+            <strong style="color:#4488ff;">Camera</strong> - Multi-target, medium reload<br>
+            <strong style="color:#ffaa00;">Radar</strong> - Single target, fast reload<br><br>
+            Click threats or use sensor buttons to attack!
+        </div>
+        <button class="btn" onclick="startGame()">ENGAGE DEFENSE</button>
+    </div>
+
+    <div class="game-over hidden" id="gameOver">
+        <h1>NETWORK BREACH!</h1>
+        <div class="subtitle" style="color:#ff6666;">Defense Systems Compromised</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="finalScore">0</div>
+                <div class="stat-label">SCORE</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalThreats">0</div>
+                <div class="stat-label">THREATS NEUTRALIZED</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalWave">1</div>
+                <div class="stat-label">WAVE REACHED</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalAccuracy">0%</div>
+                <div class="stat-label">ACCURACY</div>
+            </div>
+        </div>
+        <button class="btn" onclick="startGame()">RETRY</button>
+        <button class="btn" onclick="showMenu()">MENU</button>
+    </div>
+
+    <div class="wave-complete hidden" id="waveComplete">
+        <h1>WAVE CLEARED!</h1>
+        <div class="subtitle" style="color:#00ff00;">Network Secured</div>
+        <div class="stat-item" style="margin:20px;">
+            <div class="stat-value" id="waveScore">0</div>
+            <div class="stat-label">WAVE BONUS</div>
+        </div>
+        <button class="btn" onclick="nextWave()">NEXT WAVE</button>
+    </div>
+
+    <script>
+    // === GAME CONFIG ===
+    const THREAT_TYPES = {
+        malware: { color: 0xff0044, health: 1, speed: 8, damage: 10, points: 100, size: 0.5 },
+        ddos: { color: 0xff6600, health: 2, speed: 6, damage: 15, points: 150, size: 0.7 },
+        ransomware: { color: 0xaa00ff, health: 3, speed: 4, damage: 25, points: 200, size: 0.9 },
+        apt: { color: 0xff00ff, health: 5, speed: 3, damage: 40, points: 500, size: 1.2 }
+    };
+
+    const SENSOR_CONFIG = {
+        lidar: { damage: 3, cooldown: 2000, range: 15, aoe: true, color: 0x9966ff },
+        camera: { damage: 2, cooldown: 1000, range: 20, multi: 3, color: 0x4488ff },
+        radar: { damage: 1, cooldown: 400, range: 25, homing: true, color: 0xffaa00 }
+    };
+
+    // === GAME STATE ===
+    let gameState = 'loading';
+    let score = 0;
+    let wave = 1;
+    let networkHealth = 100;
+    let threatsNeutralized = 0;
+    let shotsFired = 0;
+    let shotsHit = 0;
+
+    let threats = [];
+    let projectiles = [];
+    let particles = [];
+    let sensorCooldowns = { lidar: 0, camera: 0, radar: 0 };
+
+    let vehicleModel = null;
+    let selectedTarget = null;
+
+    // Wave config
+    const WAVES = [
+        { malware: 10 },
+        { malware: 15, ddos: 5 },
+        { malware: 10, ddos: 10, ransomware: 3 },
+        { malware: 15, ddos: 10, ransomware: 5 },
+        { malware: 20, ddos: 15, ransomware: 8, apt: 2 }
+    ];
+    let waveThreats = [];
+    let spawnTimer = 0;
+    let waveComplete = false;
+
+    // === THREE.JS SETUP ===
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000815);
+    scene.fog = new THREE.FogExp2(0x000815, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 20, 25);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.getElementById('game').appendChild(renderer.domElement);
+
+    // Controls for camera rotation
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enablePan = false;
+    controls.enableZoom = false;
+    controls.maxPolarAngle = Math.PI / 2.5;
+    controls.minPolarAngle = Math.PI / 4;
+    controls.autoRotate = false;
+    controls.enabled = false;
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x404080, 0.6));
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    mainLight.position.set(10, 30, 10);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+
+    const blueLight = new THREE.PointLight(0x00ffff, 1, 50);
+    blueLight.position.set(0, 5, 0);
+    scene.add(blueLight);
+
+    // === GROUND ===
+    const groundGeo = new THREE.CircleGeometry(40, 64);
+    const groundMat = new THREE.MeshStandardMaterial({
+        color: 0x050510,
+        metalness: 0.3,
+        roughness: 0.8
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Grid
+    const gridHelper = new THREE.GridHelper(80, 40, 0x00ffff, 0x003344);
+    gridHelper.material.opacity = 0.2;
+    gridHelper.material.transparent = true;
+    scene.add(gridHelper);
+
+    // Defense perimeter
+    const perimeterGeo = new THREE.RingGeometry(14, 14.3, 64);
+    const perimeterMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+    const perimeter = new THREE.Mesh(perimeterGeo, perimeterMat);
+    perimeter.rotation.x = -Math.PI / 2;
+    perimeter.position.y = 0.1;
+    scene.add(perimeter);
+
+    // === VEHICLE GROUP ===
+    const vehicleGroup = new THREE.Group();
+    scene.add(vehicleGroup);
+
+    // Zone controller indicators
+    const zonePositions = {
+        FL: [-2, 0, -2],
+        FR: [2, 0, -2],
+        Rear: [0, 0, 3],
+        ACU: [0, 1.5, 0]
+    };
+
+    const zoneIndicators = {};
+    Object.entries(zonePositions).forEach(([name, pos]) => {
+        const geo = new THREE.SphereGeometry(0.3, 16, 16);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(...pos);
+        vehicleGroup.add(mesh);
+        zoneIndicators[name] = mesh;
+    });
+
+    // === LOAD VEHICLE ===
+    const loader = new THREE.GLTFLoader();
+    loader.load('roii.glb', (gltf) => {
+        vehicleModel = gltf.scene;
+        vehicleModel.scale.set(1.2, 1.2, 1.2);
+
+        vehicleModel.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                if (child.material) {
+                    child.material.color.multiplyScalar(2.5);
+                    child.material.emissive = new THREE.Color(0x003344);
+                    child.material.emissiveIntensity = 0.4;
+                }
+            }
+        });
+
+        vehicleGroup.add(vehicleModel);
+        createSensorTurrets();
+
+        document.getElementById('loading').classList.add('hidden');
+        gameState = 'menu';
+    }, undefined, (error) => {
+        console.error('Error loading model:', error);
+        createFallbackVehicle();
+        document.getElementById('loading').classList.add('hidden');
+        gameState = 'menu';
+    });
+
+    function createFallbackVehicle() {
+        const bodyGeo = new THREE.BoxGeometry(3, 1, 5);
+        const bodyMat = new THREE.MeshStandardMaterial({
+            color: 0x00ffff,
+            metalness: 0.8,
+            emissive: 0x004444,
+            emissiveIntensity: 0.3
+        });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.6;
+        body.castShadow = true;
+        vehicleGroup.add(body);
+        createSensorTurrets();
+    }
+
+    // Sensor turrets on vehicle
+    const sensorTurrets = [];
+    function createSensorTurrets() {
+        // LiDAR (top center)
+        const lidarGeo = new THREE.CylinderGeometry(0.4, 0.5, 0.3, 16);
+        const lidarMat = new THREE.MeshStandardMaterial({ color: 0x9966ff, emissive: 0x9966ff, emissiveIntensity: 0.5 });
+        const lidar = new THREE.Mesh(lidarGeo, lidarMat);
+        lidar.position.set(0, 2.2, 0);
+        vehicleGroup.add(lidar);
+        sensorTurrets.push({ mesh: lidar, type: 'lidar' });
+
+        // Cameras (front corners)
+        const camGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+        const camMat = new THREE.MeshStandardMaterial({ color: 0x4488ff, emissive: 0x4488ff, emissiveIntensity: 0.5 });
+        [[-1.2, 1.5, -2], [1.2, 1.5, -2], [0, 1.5, -2.5]].forEach(pos => {
+            const cam = new THREE.Mesh(camGeo, camMat);
+            cam.position.set(...pos);
+            vehicleGroup.add(cam);
+            sensorTurrets.push({ mesh: cam, type: 'camera' });
+        });
+
+        // Radars (corners)
+        const radarGeo = new THREE.ConeGeometry(0.2, 0.4, 6);
+        const radarMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0xffaa00, emissiveIntensity: 0.5 });
+        [[-1.5, 1.2, -1.5], [1.5, 1.2, -1.5], [-1.5, 1.2, 2], [1.5, 1.2, 2]].forEach(pos => {
+            const radar = new THREE.Mesh(radarGeo, radarMat);
+            radar.position.set(...pos);
+            vehicleGroup.add(radar);
+            sensorTurrets.push({ mesh: radar, type: 'radar' });
+        });
+    }
+
+    // === THREAT CREATION ===
+    function createThreat(type) {
+        const config = THREAT_TYPES[type];
+        const group = new THREE.Group();
+
+        // Main body
+        const geo = new THREE.IcosahedronGeometry(config.size);
+        const mat = new THREE.MeshStandardMaterial({
+            color: config.color,
+            emissive: config.color,
+            emissiveIntensity: 0.8,
+            wireframe: type === 'ddos'
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        group.add(mesh);
+
+        // Outer shell
+        const shellGeo = new THREE.IcosahedronGeometry(config.size * 1.3);
+        const shellMat = new THREE.MeshBasicMaterial({
+            color: config.color,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.4
+        });
+        group.add(new THREE.Mesh(shellGeo, shellMat));
+
+        // Light
+        const light = new THREE.PointLight(config.color, 0.5, 5);
+        group.add(light);
+
+        // Position at edge of arena
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 35;
+        group.position.set(
+            Math.cos(angle) * distance,
+            1 + Math.random() * 2,
+            Math.sin(angle) * distance
+        );
+
+        scene.add(group);
+
+        return {
+            type,
+            mesh: group,
+            health: config.health,
+            maxHealth: config.health,
+            speed: config.speed,
+            damage: config.damage,
+            points: config.points,
+            active: true
+        };
+    }
+
+    // === PROJECTILE CREATION ===
+    function createProjectile(sensorType, target) {
+        const config = SENSOR_CONFIG[sensorType];
+        const group = new THREE.Group();
+
+        const geo = new THREE.SphereGeometry(0.15);
+        const mat = new THREE.MeshBasicMaterial({ color: config.color });
+        group.add(new THREE.Mesh(geo, mat));
+
+        // Trail
+        const trailGeo = new THREE.CylinderGeometry(0.05, 0.1, 0.5);
+        const trailMat = new THREE.MeshBasicMaterial({ color: config.color, transparent: true, opacity: 0.5 });
+        const trail = new THREE.Mesh(trailGeo, trailMat);
+        trail.position.z = 0.3;
+        trail.rotation.x = Math.PI / 2;
+        group.add(trail);
+
+        // Light
+        group.add(new THREE.PointLight(config.color, 0.5, 3));
+
+        // Start position (from vehicle)
+        const turret = sensorTurrets.find(t => t.type === sensorType);
+        if (turret) {
+            group.position.copy(turret.mesh.position);
+            vehicleGroup.localToWorld(group.position);
+        } else {
+            group.position.set(0, 2, 0);
+        }
+
+        scene.add(group);
+
+        return {
+            type: sensorType,
+            mesh: group,
+            target: target,
+            damage: config.damage,
+            speed: 50,
+            active: true,
+            aoe: config.aoe,
+            multi: config.multi
+        };
+    }
+
+    // === PARTICLE EFFECTS ===
+    function spawnParticles(x, y, z, color, count = 15) {
+        for (let i = 0; i < count; i++) {
+            const geo = new THREE.OctahedronGeometry(0.1);
+            const mat = new THREE.MeshBasicMaterial({ color });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            scene.add(mesh);
+
+            particles.push({
+                mesh,
+                vx: (Math.random() - 0.5) * 15,
+                vy: Math.random() * 10,
+                vz: (Math.random() - 0.5) * 15,
+                life: 1
+            });
+        }
+    }
+
+    // === SENSOR FIRING ===
+    function fireSensor(type) {
+        if (gameState !== 'playing') return;
+        if (sensorCooldowns[type] > 0) return;
+
+        const config = SENSOR_CONFIG[type];
+        sensorCooldowns[type] = config.cooldown;
+        shotsFired++;
+
+        // Visual feedback
+        const btn = document.getElementById('btn' + type.charAt(0).toUpperCase() + type.slice(1));
+        btn.classList.add('active');
+        setTimeout(() => btn.classList.remove('active'), 300);
+
+        // Animate turrets
+        sensorTurrets.filter(t => t.type === type).forEach(turret => {
+            const originalY = turret.mesh.position.y;
+            turret.mesh.position.y += 0.2;
+            setTimeout(() => turret.mesh.position.y = originalY, 100);
+        });
+
+        if (type === 'lidar') {
+            // AOE attack - damage all threats in range
+            const range = config.range;
+            threats.forEach(threat => {
+                if (!threat.active) return;
+                const dist = threat.mesh.position.length();
+                if (dist < range) {
+                    projectiles.push(createProjectile(type, threat));
+                }
+            });
+        } else if (type === 'camera') {
+            // Multi-target
+            const targets = threats.filter(t => t.active).slice(0, config.multi);
+            targets.forEach(target => {
+                projectiles.push(createProjectile(type, target));
+            });
+        } else if (type === 'radar') {
+            // Single target - nearest or selected
+            let target = selectedTarget;
+            if (!target || !target.active) {
+                target = threats.filter(t => t.active)
+                    .sort((a, b) => a.mesh.position.length() - b.mesh.position.length())[0];
+            }
+            if (target) {
+                projectiles.push(createProjectile(type, target));
+            }
+        }
+    }
+
+    // === INPUT ===
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    document.addEventListener('click', (e) => {
+        if (gameState !== 'playing') return;
+
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(threats.map(t => t.mesh), true);
+
+        if (intersects.length > 0) {
+            const clickedMesh = intersects[0].object.parent;
+            const threat = threats.find(t => t.mesh === clickedMesh);
+            if (threat && threat.active) {
+                selectedTarget = threat;
+                // Auto-fire radar on click
+                fireSensor('radar');
+            }
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (gameState !== 'playing') return;
+
+        if (e.key === '1' || e.key === 'q') fireSensor('lidar');
+        else if (e.key === '2' || e.key === 'w') fireSensor('camera');
+        else if (e.key === '3' || e.key === 'e') fireSensor('radar');
+    });
+
+    // === GAME LOGIC ===
+    function initWave() {
+        const waveConfig = WAVES[wave - 1] || WAVES[WAVES.length - 1];
+        waveThreats = [];
+
+        Object.entries(waveConfig).forEach(([type, count]) => {
+            for (let i = 0; i < count; i++) {
+                waveThreats.push(type);
+            }
+        });
+
+        // Shuffle
+        waveThreats.sort(() => Math.random() - 0.5);
+        waveComplete = false;
+
+        showWarning('WAVE ' + wave + ' INCOMING!');
+    }
+
+    function spawnThreat(delta) {
+        if (waveThreats.length === 0) return;
+
+        spawnTimer += delta;
+        const spawnInterval = Math.max(0.5, 2 - wave * 0.2);
+
+        if (spawnTimer >= spawnInterval) {
+            spawnTimer = 0;
+            const type = waveThreats.shift();
+            threats.push(createThreat(type));
+        }
+    }
+
+    function updateThreats(delta) {
+        threats.forEach(threat => {
+            if (!threat.active) return;
+
+            // Move towards center
+            const dir = new THREE.Vector3().sub(threat.mesh.position).normalize();
+            threat.mesh.position.add(dir.multiplyScalar(threat.speed * delta));
+
+            // Rotate
+            threat.mesh.rotation.y += delta * 2;
+            threat.mesh.rotation.x += delta;
+
+            // Check if reached vehicle
+            if (threat.mesh.position.length() < 3) {
+                damageNetwork(threat.damage);
+                destroyThreat(threat, false);
+            }
+        });
+
+        // Remove inactive
+        threats = threats.filter(t => {
+            if (!t.active) {
+                scene.remove(t.mesh);
+                return false;
+            }
+            return true;
+        });
+
+        // Check wave complete
+        if (waveThreats.length === 0 && threats.length === 0 && !waveComplete && gameState === 'playing') {
+            waveComplete = true;
+            completeWave();
+        }
+    }
+
+    function updateProjectiles(delta) {
+        projectiles.forEach(proj => {
+            if (!proj.active || !proj.target || !proj.target.active) {
+                proj.active = false;
+                return;
+            }
+
+            // Move towards target
+            const dir = new THREE.Vector3()
+                .copy(proj.target.mesh.position)
+                .sub(proj.mesh.position)
+                .normalize();
+
+            proj.mesh.position.add(dir.multiplyScalar(proj.speed * delta));
+            proj.mesh.lookAt(proj.target.mesh.position);
+
+            // Check hit
+            if (proj.mesh.position.distanceTo(proj.target.mesh.position) < 1) {
+                hitThreat(proj.target, proj.damage, proj.type);
+                proj.active = false;
+                shotsHit++;
+
+                // AOE damage
+                if (proj.aoe) {
+                    threats.forEach(t => {
+                        if (t !== proj.target && t.active) {
+                            if (t.mesh.position.distanceTo(proj.target.mesh.position) < 5) {
+                                hitThreat(t, proj.damage * 0.5, proj.type);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        // Remove inactive
+        projectiles = projectiles.filter(p => {
+            if (!p.active) {
+                scene.remove(p.mesh);
+                return false;
+            }
+            return true;
+        });
+    }
+
+    function hitThreat(threat, damage, sensorType) {
+        threat.health -= damage;
+        spawnParticles(
+            threat.mesh.position.x,
+            threat.mesh.position.y,
+            threat.mesh.position.z,
+            SENSOR_CONFIG[sensorType].color,
+            5
+        );
+
+        if (threat.health <= 0) {
+            destroyThreat(threat, true);
+        }
+    }
+
+    function destroyThreat(threat, scored) {
+        if (!threat.active) return;
+        threat.active = false;
+
+        spawnParticles(
+            threat.mesh.position.x,
+            threat.mesh.position.y,
+            threat.mesh.position.z,
+            THREAT_TYPES[threat.type].color,
+            20
+        );
+
+        if (scored) {
+            score += threat.points;
+            threatsNeutralized++;
+            showKillPoints(threat.mesh.position, '+' + threat.points);
+            updateUI();
+        }
+    }
+
+    function damageNetwork(damage) {
+        networkHealth -= damage;
+        updateHealthUI();
+
+        showWarning('NETWORK BREACH!');
+
+        if (networkHealth <= 0) {
+            networkHealth = 0;
+            gameOver();
+        }
+    }
+
+    function updateCooldowns(delta) {
+        Object.keys(sensorCooldowns).forEach(type => {
+            if (sensorCooldowns[type] > 0) {
+                sensorCooldowns[type] -= delta * 1000;
+                if (sensorCooldowns[type] < 0) sensorCooldowns[type] = 0;
+            }
+
+            const btn = document.getElementById('btn' + type.charAt(0).toUpperCase() + type.slice(1));
+            const pct = (SENSOR_CONFIG[type].cooldown - sensorCooldowns[type]) / SENSOR_CONFIG[type].cooldown * 100;
+            btn.classList.toggle('cooldown', sensorCooldowns[type] > 0);
+        });
+    }
+
+    // === UI ===
+    function updateUI() {
+        document.getElementById('score').textContent = score.toLocaleString();
+        document.getElementById('threats').textContent = threatsNeutralized;
+        document.getElementById('wave').textContent = wave;
+        document.getElementById('currentWave').textContent = wave;
+    }
+
+    function updateHealthUI() {
+        document.getElementById('healthFill').style.width = networkHealth + '%';
+
+        // Zone indicators
+        const zones = ['FL', 'ACU', 'FR', 'Rear'];
+        zones.forEach((zone, i) => {
+            const dot = document.getElementById('zone' + zone + 'Dot');
+            if (networkHealth > 75) dot.className = 'zone-dot';
+            else if (networkHealth > 50) dot.className = 'zone-dot warning';
+            else dot.className = 'zone-dot danger';
+        });
+    }
+
+    function showWarning(text) {
+        const el = document.getElementById('threatWarning');
+        el.textContent = text;
+        el.className = 'threat-warning show';
+        setTimeout(() => el.className = 'threat-warning', 1000);
+    }
+
+    function showKillPoints(pos, text) {
+        const screenPos = pos.clone().project(camera);
+        const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+
+        const el = document.createElement('div');
+        el.className = 'kill-count';
+        el.textContent = text;
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.style.color = '#00ffff';
+        document.body.appendChild(el);
+
+        setTimeout(() => el.remove(), 1000);
+    }
+
+    // === GAME FLOW ===
+    function startGame() {
+        gameState = 'playing';
+        score = 0;
+        wave = 1;
+        networkHealth = 100;
+        threatsNeutralized = 0;
+        shotsFired = 0;
+        shotsHit = 0;
+
+        threats.forEach(t => scene.remove(t.mesh));
+        threats = [];
+        projectiles.forEach(p => scene.remove(p.mesh));
+        projectiles = [];
+        particles.forEach(p => scene.remove(p.mesh));
+        particles = [];
+
+        sensorCooldowns = { lidar: 0, camera: 0, radar: 0 };
+
+        updateUI();
+        updateHealthUI();
+        initWave();
+
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('gameOver').classList.add('hidden');
+        document.getElementById('waveComplete').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        document.getElementById('networkHealth').classList.remove('hidden');
+        document.getElementById('waveIndicator').classList.remove('hidden');
+        document.getElementById('zoneStatus').classList.remove('hidden');
+        document.getElementById('sensorPanel').classList.remove('hidden');
+    }
+
+    function gameOver() {
+        gameState = 'gameover';
+        document.getElementById('finalScore').textContent = score.toLocaleString();
+        document.getElementById('finalThreats').textContent = threatsNeutralized;
+        document.getElementById('finalWave').textContent = wave;
+        document.getElementById('finalAccuracy').textContent = shotsFired > 0 ? Math.floor(shotsHit / shotsFired * 100) + '%' : '0%';
+        document.getElementById('gameOver').classList.remove('hidden');
+        hideHUD();
+    }
+
+    function completeWave() {
+        gameState = 'wavecomplete';
+        const waveBonus = wave * 500;
+        score += waveBonus;
+        document.getElementById('waveScore').textContent = waveBonus.toLocaleString();
+        document.getElementById('waveComplete').classList.remove('hidden');
+        hideHUD();
+    }
+
+    function nextWave() {
+        wave++;
+        networkHealth = Math.min(100, networkHealth + 20);
+        updateHealthUI();
+
+        document.getElementById('waveComplete').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        document.getElementById('networkHealth').classList.remove('hidden');
+        document.getElementById('waveIndicator').classList.remove('hidden');
+        document.getElementById('zoneStatus').classList.remove('hidden');
+        document.getElementById('sensorPanel').classList.remove('hidden');
+
+        gameState = 'playing';
+        initWave();
+        updateUI();
+    }
+
+    function showMenu() {
+        gameState = 'menu';
+        document.getElementById('gameOver').classList.add('hidden');
+        document.getElementById('menuScreen').classList.remove('hidden');
+        hideHUD();
+    }
+
+    function hideHUD() {
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('networkHealth').classList.add('hidden');
+        document.getElementById('waveIndicator').classList.add('hidden');
+        document.getElementById('zoneStatus').classList.add('hidden');
+        document.getElementById('sensorPanel').classList.add('hidden');
+    }
+
+    // === GAME LOOP ===
+    let lastTime = 0;
+
+    function animate(time) {
+        requestAnimationFrame(animate);
+
+        const delta = Math.min((time - lastTime) / 1000, 0.05);
+        lastTime = time;
+
+        if (gameState === 'playing') {
+            spawnThreat(delta);
+            updateThreats(delta);
+            updateProjectiles(delta);
+            updateCooldowns(delta);
+        }
+
+        // Rotate vehicle slightly
+        vehicleGroup.rotation.y += delta * 0.1;
+
+        // Animate turrets
+        sensorTurrets.forEach((turret, i) => {
+            if (turret.type === 'lidar') {
+                turret.mesh.rotation.y += delta * 2;
+            }
+        });
+
+        // Update particles
+        particles = particles.filter(p => {
+            p.life -= delta * 2;
+            if (p.life <= 0) {
+                scene.remove(p.mesh);
+                return false;
+            }
+            p.mesh.position.x += p.vx * delta;
+            p.mesh.position.y += p.vy * delta;
+            p.mesh.position.z += p.vz * delta;
+            p.vy -= 20 * delta;
+            p.mesh.scale.setScalar(p.life);
+            return true;
+        });
+
+        // Pulse perimeter
+        const pulse = 0.3 + Math.sin(time * 0.003) * 0.2;
+        perimeter.material.opacity = pulse;
+
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // === RESIZE ===
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate(0);
+    </script>
+</body>
+</html>

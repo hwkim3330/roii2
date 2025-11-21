@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ROii2 - TSN Network Snake</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            overflow: hidden;
+            color: white;
+            touch-action: none;
+        }
+        #game { width: 100vw; height: 100vh; }
+
+        .hud {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        .hud-item {
+            background: rgba(0,20,40,0.9);
+            border: 2px solid #00ffff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+        }
+        .hud-label { font-size: 10px; color: #00aaaa; letter-spacing: 1px; }
+        .hud-value { font-size: 24px; color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+
+        .network-info {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0,20,40,0.9);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 11px;
+        }
+        .network-title { color: #00aaaa; margin-bottom: 10px; font-size: 10px; }
+        .node-list { display: flex; flex-direction: column; gap: 5px; }
+        .node-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .node-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .node-dot.lidar { background: #9966ff; box-shadow: 0 0 5px #9966ff; }
+        .node-dot.camera { background: #4488ff; box-shadow: 0 0 5px #4488ff; }
+        .node-dot.radar { background: #ffaa00; box-shadow: 0 0 5px #ffaa00; }
+        .node-dot.switch { background: #00ffff; box-shadow: 0 0 5px #00ffff; }
+
+        .bandwidth-meter {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .bandwidth-bar {
+            width: 300px;
+            height: 8px;
+            background: #111;
+            border: 1px solid #00ffff;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .bandwidth-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff, #00ff88);
+            transition: width 0.3s;
+        }
+        .bandwidth-label { font-size: 10px; color: #00aaaa; }
+
+        .controls-display {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        .control-key {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: rgba(0,20,40,0.8);
+            transition: all 0.2s;
+        }
+        .control-key.active {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .speed-boost {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .speed-boost.show { animation: boostAnim 0.5s; }
+        @keyframes boostAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .game-over, .menu-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,10,20,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .menu-screen h1 {
+            font-size: 36px;
+            color: #00ffff;
+            text-shadow: 0 0 30px #00ffff;
+            margin-bottom: 10px;
+        }
+        .subtitle { font-size: 14px; color: #00aaaa; margin-bottom: 30px; }
+        .game-over h1 { font-size: 36px; color: #ff0054; text-shadow: 0 0 30px #ff0054; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,255,255,0.1);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+        }
+        .stat-value { font-size: 24px; color: #00ffff; }
+        .stat-label { font-size: 10px; color: #00aaaa; margin-top: 5px; }
+
+        .btn {
+            padding: 12px 35px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            background: transparent;
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            cursor: pointer;
+            margin: 8px;
+            transition: all 0.3s;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .btn:hover { background: #00ffff; color: #000; box-shadow: 0 0 30px #00ffff; }
+
+        .instructions {
+            max-width: 400px;
+            text-align: center;
+            margin: 20px;
+            padding: 20px;
+            background: rgba(0,255,255,0.1);
+            border-radius: 10px;
+            font-size: 12px;
+            color: #888;
+            line-height: 1.8;
+        }
+
+        .hidden { display: none !important; }
+
+        .loading {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #111;
+            border-top-color: #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { margin-top: 20px; color: #00ffff; font-size: 14px; }
+
+        .mini-map {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(0,20,40,0.9);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .mini-map canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Building Network Topology...</div>
+    </div>
+
+    <div id="game"></div>
+
+    <div class="hud hidden" id="hud">
+        <div class="hud-item">
+            <div class="hud-label">THROUGHPUT</div>
+            <div class="hud-value" id="score">0</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">NODES</div>
+            <div class="hud-value" id="nodes">1</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">SPEED</div>
+            <div class="hud-value" id="speed">1.0x</div>
+        </div>
+    </div>
+
+    <div class="network-info hidden" id="networkInfo">
+        <div class="network-title">NETWORK TOPOLOGY</div>
+        <div class="node-list" id="nodeList">
+            <div class="node-item">
+                <div class="node-dot switch"></div>
+                <span>ACU_IT (HPC)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="mini-map hidden" id="miniMap">
+        <canvas id="miniMapCanvas"></canvas>
+    </div>
+
+    <div class="bandwidth-meter hidden" id="bandwidthMeter">
+        <div class="bandwidth-label">NETWORK BANDWIDTH: <span id="bandwidthValue">0</span> Gbps</div>
+        <div class="bandwidth-bar">
+            <div class="bandwidth-fill" id="bandwidthFill" style="width:0%"></div>
+        </div>
+    </div>
+
+    <div class="controls-display hidden" id="controlsDisplay">
+        <div class="control-key" id="keyUp">↑</div>
+        <div class="control-key" id="keyLeft">←</div>
+        <div class="control-key" id="keyDown">↓</div>
+        <div class="control-key" id="keyRight">→</div>
+    </div>
+
+    <div class="speed-boost" id="speedBoost">SPEED BOOST!</div>
+
+    <div class="menu-screen" id="menuScreen">
+        <h1>TSN NETWORK SNAKE</h1>
+        <div class="subtitle">Build your automotive network topology</div>
+        <img src="keti.png" style="width:80px;margin:20px;opacity:0.8;">
+        <div class="instructions">
+            <strong style="color:#00ffff;">OBJECTIVE:</strong><br>
+            Guide the ACU_IT to collect sensor nodes and expand the TSN network.<br><br>
+            <strong style="color:#9966ff;">LiDAR</strong> - +100 pts, 1 Gbps<br>
+            <strong style="color:#4488ff;">Camera</strong> - +50 pts, 0.5 Gbps<br>
+            <strong style="color:#ffaa00;">Radar</strong> - +75 pts, 0.8 Gbps<br>
+            <strong style="color:#00ff00;">Switch</strong> - +200 pts, 10 Gbps<br><br>
+            Avoid hitting walls or your own network!
+        </div>
+        <button class="btn" onclick="startGame()">BUILD NETWORK</button>
+        <div style="margin-top:20px;font-size:11px;color:#444;">
+            <p>Arrow Keys or WASD to move</p>
+            <p>SPACE to boost speed</p>
+        </div>
+    </div>
+
+    <div class="game-over hidden" id="gameOver">
+        <h1>NETWORK COLLISION!</h1>
+        <div class="subtitle" style="color:#ff6666;">Topology Error Detected</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="finalScore">0</div>
+                <div class="stat-label">THROUGHPUT</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalNodes">0</div>
+                <div class="stat-label">NODES</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalBandwidth">0</div>
+                <div class="stat-label">BANDWIDTH (Gbps)</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="finalLength">0</div>
+                <div class="stat-label">MAX LENGTH</div>
+            </div>
+        </div>
+        <button class="btn" onclick="startGame()">REBUILD</button>
+        <button class="btn" onclick="showMenu()">MENU</button>
+    </div>
+
+    <script>
+    // === GAME CONFIG ===
+    const GRID_SIZE = 30;
+    const CELL_SIZE = 2;
+    const MOVE_INTERVAL_BASE = 200; // ms
+
+    const NODE_TYPES = {
+        lidar: { color: 0x9966ff, points: 100, bandwidth: 1.0, name: 'LiDAR' },
+        camera: { color: 0x4488ff, points: 50, bandwidth: 0.5, name: 'Camera' },
+        radar: { color: 0xffaa00, points: 75, bandwidth: 0.8, name: 'Radar' },
+        switch: { color: 0x00ff00, points: 200, bandwidth: 10.0, name: 'Switch 9692' }
+    };
+
+    // === GAME STATE ===
+    let gameState = 'loading';
+    let score = 0;
+    let speedMultiplier = 1;
+    let totalBandwidth = 0;
+    let maxLength = 1;
+
+    let snake = [];
+    let direction = { x: 1, z: 0 };
+    let nextDirection = { x: 1, z: 0 };
+    let food = null;
+    let moveTimer = 0;
+    let boosting = false;
+
+    let snakeMeshes = [];
+    let connectionLines = [];
+    let foodMesh = null;
+    let vehicleModel = null;
+
+    // === THREE.JS SETUP ===
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000815);
+    scene.fog = new THREE.FogExp2(0x000815, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 50, 30);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.getElementById('game').appendChild(renderer.domElement);
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x404080, 0.6));
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    mainLight.position.set(20, 40, 20);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+
+    // === ARENA ===
+    // Ground
+    const groundSize = GRID_SIZE * CELL_SIZE;
+    const groundGeo = new THREE.PlaneGeometry(groundSize, groundSize);
+    const groundMat = new THREE.MeshStandardMaterial({
+        color: 0x050510,
+        metalness: 0.3,
+        roughness: 0.8
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Grid
+    const gridHelper = new THREE.GridHelper(groundSize, GRID_SIZE, 0x00ffff, 0x003344);
+    gridHelper.material.opacity = 0.2;
+    gridHelper.material.transparent = true;
+    scene.add(gridHelper);
+
+    // Walls
+    const wallMat = new THREE.MeshStandardMaterial({
+        color: 0xff0044,
+        emissive: 0x330011,
+        transparent: true,
+        opacity: 0.8
+    });
+
+    const halfSize = groundSize / 2;
+    [
+        { pos: [0, 1, -halfSize], size: [groundSize, 2, 0.5] },
+        { pos: [0, 1, halfSize], size: [groundSize, 2, 0.5] },
+        { pos: [-halfSize, 1, 0], size: [0.5, 2, groundSize] },
+        { pos: [halfSize, 1, 0], size: [0.5, 2, groundSize] }
+    ].forEach(wall => {
+        const geo = new THREE.BoxGeometry(...wall.size);
+        const mesh = new THREE.Mesh(geo, wallMat);
+        mesh.position.set(...wall.pos);
+        scene.add(mesh);
+    });
+
+    // === LOAD VEHICLE MODEL ===
+    const loader = new THREE.GLTFLoader();
+    loader.load('roii.glb', (gltf) => {
+        vehicleModel = gltf.scene;
+        vehicleModel.scale.set(0.5, 0.5, 0.5);
+
+        vehicleModel.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                if (child.material) {
+                    child.material.color.multiplyScalar(2.5);
+                    child.material.emissive = new THREE.Color(0x00ffff);
+                    child.material.emissiveIntensity = 0.5;
+                }
+            }
+        });
+
+        document.getElementById('loading').classList.add('hidden');
+        gameState = 'menu';
+    }, undefined, () => {
+        document.getElementById('loading').classList.add('hidden');
+        gameState = 'menu';
+    });
+
+    // === SNAKE NODE CREATION ===
+    function createSnakeNode(type, isHead = false) {
+        const group = new THREE.Group();
+
+        if (isHead && vehicleModel) {
+            const model = vehicleModel.clone();
+            group.add(model);
+        } else {
+            const config = NODE_TYPES[type] || { color: 0x00ffff };
+
+            // Node body
+            let geo;
+            if (type === 'lidar') {
+                geo = new THREE.OctahedronGeometry(0.6);
+            } else if (type === 'camera') {
+                geo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+            } else if (type === 'radar') {
+                geo = new THREE.TetrahedronGeometry(0.6);
+            } else if (type === 'switch') {
+                geo = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 8);
+            } else {
+                geo = new THREE.SphereGeometry(0.5);
+            }
+
+            const mat = new THREE.MeshStandardMaterial({
+                color: config.color,
+                emissive: config.color,
+                emissiveIntensity: 0.5,
+                metalness: 0.8
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true;
+            group.add(mesh);
+
+            // Glow ring
+            const ringGeo = new THREE.RingGeometry(0.7, 0.8, 16);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: config.color,
+                transparent: true,
+                opacity: 0.5,
+                side: THREE.DoubleSide
+            });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            group.add(ring);
+        }
+
+        scene.add(group);
+        return group;
+    }
+
+    // === CONNECTION LINE ===
+    function createConnection(from, to) {
+        const points = [
+            new THREE.Vector3(from.x * CELL_SIZE, 0.5, from.z * CELL_SIZE),
+            new THREE.Vector3(to.x * CELL_SIZE, 0.5, to.z * CELL_SIZE)
+        ];
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineBasicMaterial({
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.8
+        });
+        const line = new THREE.Line(geo, mat);
+        scene.add(line);
+        return line;
+    }
+
+    // === FOOD CREATION ===
+    function spawnFood() {
+        if (foodMesh) {
+            scene.remove(foodMesh);
+        }
+
+        // Random position not on snake
+        let pos;
+        do {
+            pos = {
+                x: Math.floor(Math.random() * GRID_SIZE) - GRID_SIZE / 2,
+                z: Math.floor(Math.random() * GRID_SIZE) - GRID_SIZE / 2
+            };
+        } while (snake.some(s => s.x === pos.x && s.z === pos.z));
+
+        // Random type
+        const types = Object.keys(NODE_TYPES);
+        const weights = [4, 5, 4, 1]; // lidar, camera, radar, switch
+        let total = weights.reduce((a, b) => a + b);
+        let r = Math.random() * total;
+        let type = types[0];
+        for (let i = 0; i < weights.length; i++) {
+            r -= weights[i];
+            if (r <= 0) { type = types[i]; break; }
+        }
+
+        food = { ...pos, type };
+
+        // Create mesh
+        foodMesh = new THREE.Group();
+        const config = NODE_TYPES[type];
+
+        let geo;
+        if (type === 'lidar') geo = new THREE.OctahedronGeometry(0.5);
+        else if (type === 'camera') geo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+        else if (type === 'radar') geo = new THREE.TetrahedronGeometry(0.5);
+        else geo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 8);
+
+        const mat = new THREE.MeshStandardMaterial({
+            color: config.color,
+            emissive: config.color,
+            emissiveIntensity: 1.5,
+            metalness: 1
+        });
+        foodMesh.add(new THREE.Mesh(geo, mat));
+
+        // Outer glow
+        const glowGeo = new THREE.RingGeometry(0.8, 1.0, 16);
+        const glowMat = new THREE.MeshBasicMaterial({
+            color: config.color,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide
+        });
+        const glow = new THREE.Mesh(glowGeo, glowMat);
+        glow.rotation.x = -Math.PI / 2;
+        foodMesh.add(glow);
+
+        foodMesh.add(new THREE.PointLight(config.color, 0.5, 5));
+
+        foodMesh.position.set(pos.x * CELL_SIZE, 1, pos.z * CELL_SIZE);
+        scene.add(foodMesh);
+    }
+
+    // === GAME LOGIC ===
+    function moveSnake() {
+        direction = { ...nextDirection };
+
+        // New head position
+        const head = snake[0];
+        const newHead = {
+            x: head.x + direction.x,
+            z: head.z + direction.z,
+            type: 'head'
+        };
+
+        // Check wall collision
+        const limit = GRID_SIZE / 2;
+        if (newHead.x < -limit || newHead.x >= limit ||
+            newHead.z < -limit || newHead.z >= limit) {
+            gameOver();
+            return;
+        }
+
+        // Check self collision (skip first few segments)
+        for (let i = 1; i < snake.length; i++) {
+            if (snake[i].x === newHead.x && snake[i].z === newHead.z) {
+                gameOver();
+                return;
+            }
+        }
+
+        // Move snake
+        snake.unshift(newHead);
+
+        // Check food
+        if (food && newHead.x === food.x && newHead.z === food.z) {
+            collectFood();
+        } else {
+            // Remove tail
+            snake.pop();
+        }
+
+        updateSnakeMeshes();
+    }
+
+    function collectFood() {
+        const config = NODE_TYPES[food.type];
+        score += config.points;
+        totalBandwidth += config.bandwidth;
+
+        // Speed up
+        speedMultiplier = Math.min(2.5, 1 + snake.length * 0.02);
+
+        if (snake.length > maxLength) maxLength = snake.length;
+
+        // Add node type to snake
+        snake[0].type = food.type;
+
+        // Show boost effect
+        showBoost('+' + config.points);
+
+        updateUI();
+        updateNodeList();
+        spawnFood();
+    }
+
+    function updateSnakeMeshes() {
+        // Remove old meshes
+        snakeMeshes.forEach(m => scene.remove(m));
+        connectionLines.forEach(l => scene.remove(l));
+        snakeMeshes = [];
+        connectionLines = [];
+
+        // Create new meshes
+        snake.forEach((segment, i) => {
+            const isHead = i === 0;
+            const mesh = createSnakeNode(isHead ? 'head' : segment.type, isHead);
+            mesh.position.set(
+                segment.x * CELL_SIZE,
+                isHead ? 0 : 0.5,
+                segment.z * CELL_SIZE
+            );
+
+            // Rotate head in direction of movement
+            if (isHead) {
+                mesh.rotation.y = Math.atan2(direction.x, direction.z);
+            }
+
+            snakeMeshes.push(mesh);
+
+            // Connection to previous
+            if (i > 0) {
+                const line = createConnection(snake[i - 1], segment);
+                connectionLines.push(line);
+            }
+        });
+
+        // Update camera to follow head
+        const head = snake[0];
+        const targetCamPos = new THREE.Vector3(
+            head.x * CELL_SIZE,
+            40,
+            head.z * CELL_SIZE + 25
+        );
+        camera.position.lerp(targetCamPos, 0.05);
+        camera.lookAt(head.x * CELL_SIZE, 0, head.z * CELL_SIZE);
+    }
+
+    // === INPUT ===
+    document.addEventListener('keydown', (e) => {
+        if (gameState !== 'playing') return;
+
+        const key = e.key.toLowerCase();
+
+        // Prevent reversing
+        if ((key === 'arrowup' || key === 'w') && direction.z !== 1) {
+            nextDirection = { x: 0, z: -1 };
+            highlightKey('Up');
+        } else if ((key === 'arrowdown' || key === 's') && direction.z !== -1) {
+            nextDirection = { x: 0, z: 1 };
+            highlightKey('Down');
+        } else if ((key === 'arrowleft' || key === 'a') && direction.x !== 1) {
+            nextDirection = { x: -1, z: 0 };
+            highlightKey('Left');
+        } else if ((key === 'arrowright' || key === 'd') && direction.x !== -1) {
+            nextDirection = { x: 1, z: 0 };
+            highlightKey('Right');
+        } else if (key === ' ') {
+            boosting = true;
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (e.key === ' ') boosting = false;
+    });
+
+    // Touch controls
+    let touchStartX, touchStartY;
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
+
+    document.addEventListener('touchend', (e) => {
+        if (gameState !== 'playing') return;
+
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            if (dx > 30 && direction.x !== -1) nextDirection = { x: 1, z: 0 };
+            else if (dx < -30 && direction.x !== 1) nextDirection = { x: -1, z: 0 };
+        } else {
+            if (dy > 30 && direction.z !== -1) nextDirection = { x: 0, z: 1 };
+            else if (dy < -30 && direction.z !== 1) nextDirection = { x: 0, z: -1 };
+        }
+    });
+
+    function highlightKey(dir) {
+        ['Up', 'Down', 'Left', 'Right'].forEach(d => {
+            document.getElementById('key' + d).classList.remove('active');
+        });
+        document.getElementById('key' + dir).classList.add('active');
+    }
+
+    // === UI ===
+    function updateUI() {
+        document.getElementById('score').textContent = score.toLocaleString();
+        document.getElementById('nodes').textContent = snake.length;
+        document.getElementById('speed').textContent = speedMultiplier.toFixed(1) + 'x';
+        document.getElementById('bandwidthValue').textContent = totalBandwidth.toFixed(1);
+        document.getElementById('bandwidthFill').style.width = Math.min(100, totalBandwidth / 50 * 100) + '%';
+    }
+
+    function updateNodeList() {
+        const list = document.getElementById('nodeList');
+        const counts = { lidar: 0, camera: 0, radar: 0, switch: 0 };
+
+        snake.forEach(s => {
+            if (s.type && counts[s.type] !== undefined) counts[s.type]++;
+        });
+
+        list.innerHTML = '<div class="node-item"><div class="node-dot switch"></div><span>ACU_IT (HPC)</span></div>';
+
+        Object.entries(counts).forEach(([type, count]) => {
+            if (count > 0) {
+                const config = NODE_TYPES[type];
+                list.innerHTML += `
+                    <div class="node-item">
+                        <div class="node-dot ${type}"></div>
+                        <span>${config.name} x${count}</span>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    function updateMiniMap() {
+        const canvas = document.getElementById('miniMapCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 150;
+        canvas.height = 150;
+
+        ctx.fillStyle = '#000815';
+        ctx.fillRect(0, 0, 150, 150);
+
+        // Grid
+        ctx.strokeStyle = '#003344';
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i <= GRID_SIZE; i++) {
+            const pos = (i / GRID_SIZE) * 150;
+            ctx.beginPath();
+            ctx.moveTo(pos, 0);
+            ctx.lineTo(pos, 150);
+            ctx.moveTo(0, pos);
+            ctx.lineTo(150, pos);
+            ctx.stroke();
+        }
+
+        // Snake
+        snake.forEach((s, i) => {
+            const x = ((s.x + GRID_SIZE / 2) / GRID_SIZE) * 150;
+            const y = ((s.z + GRID_SIZE / 2) / GRID_SIZE) * 150;
+
+            if (i === 0) {
+                ctx.fillStyle = '#00ffff';
+                ctx.fillRect(x - 4, y - 4, 8, 8);
+            } else {
+                const config = NODE_TYPES[s.type] || { color: 0x00ffff };
+                ctx.fillStyle = '#' + config.color.toString(16).padStart(6, '0');
+                ctx.fillRect(x - 2, y - 2, 4, 4);
+            }
+        });
+
+        // Food
+        if (food) {
+            const x = ((food.x + GRID_SIZE / 2) / GRID_SIZE) * 150;
+            const y = ((food.z + GRID_SIZE / 2) / GRID_SIZE) * 150;
+            const config = NODE_TYPES[food.type];
+            ctx.fillStyle = '#' + config.color.toString(16).padStart(6, '0');
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function showBoost(text) {
+        const el = document.getElementById('speedBoost');
+        el.textContent = text;
+        el.className = 'speed-boost show';
+        setTimeout(() => el.className = 'speed-boost', 500);
+    }
+
+    // === GAME FLOW ===
+    function startGame() {
+        gameState = 'playing';
+        score = 0;
+        speedMultiplier = 1;
+        totalBandwidth = 0;
+        maxLength = 1;
+
+        // Clear old
+        snakeMeshes.forEach(m => scene.remove(m));
+        connectionLines.forEach(l => scene.remove(l));
+        if (foodMesh) scene.remove(foodMesh);
+        snakeMeshes = [];
+        connectionLines = [];
+
+        // Init snake
+        snake = [{ x: 0, z: 0, type: 'head' }];
+        direction = { x: 1, z: 0 };
+        nextDirection = { x: 1, z: 0 };
+        moveTimer = 0;
+
+        updateSnakeMeshes();
+        spawnFood();
+        updateUI();
+        updateNodeList();
+
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('gameOver').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        document.getElementById('networkInfo').classList.remove('hidden');
+        document.getElementById('miniMap').classList.remove('hidden');
+        document.getElementById('bandwidthMeter').classList.remove('hidden');
+        document.getElementById('controlsDisplay').classList.remove('hidden');
+    }
+
+    function gameOver() {
+        gameState = 'gameover';
+
+        document.getElementById('finalScore').textContent = score.toLocaleString();
+        document.getElementById('finalNodes').textContent = snake.length;
+        document.getElementById('finalBandwidth').textContent = totalBandwidth.toFixed(1);
+        document.getElementById('finalLength').textContent = maxLength;
+
+        document.getElementById('gameOver').classList.remove('hidden');
+        hideHUD();
+    }
+
+    function showMenu() {
+        gameState = 'menu';
+        document.getElementById('gameOver').classList.add('hidden');
+        document.getElementById('menuScreen').classList.remove('hidden');
+        hideHUD();
+    }
+
+    function hideHUD() {
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('networkInfo').classList.add('hidden');
+        document.getElementById('miniMap').classList.add('hidden');
+        document.getElementById('bandwidthMeter').classList.add('hidden');
+        document.getElementById('controlsDisplay').classList.add('hidden');
+    }
+
+    // === GAME LOOP ===
+    let lastTime = 0;
+
+    function animate(time) {
+        requestAnimationFrame(animate);
+
+        const delta = Math.min((time - lastTime) / 1000, 0.05);
+        lastTime = time;
+
+        if (gameState === 'playing') {
+            const interval = MOVE_INTERVAL_BASE / speedMultiplier / (boosting ? 2 : 1);
+            moveTimer += delta * 1000;
+
+            if (moveTimer >= interval) {
+                moveTimer = 0;
+                moveSnake();
+            }
+
+            // Animate food
+            if (foodMesh) {
+                foodMesh.rotation.y += delta * 2;
+                foodMesh.position.y = 1 + Math.sin(time * 0.005) * 0.3;
+            }
+
+            // Animate snake nodes
+            snakeMeshes.forEach((mesh, i) => {
+                if (i > 0) {
+                    mesh.rotation.y += delta * (i % 2 === 0 ? 1 : -1);
+                }
+            });
+
+            // Pulse connections
+            connectionLines.forEach((line, i) => {
+                line.material.opacity = 0.5 + Math.sin(time * 0.01 + i * 0.5) * 0.3;
+            });
+
+            updateMiniMap();
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    // === RESIZE ===
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate(0);
+    </script>
+</body>
+</html>
