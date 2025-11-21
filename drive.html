@@ -302,29 +302,32 @@
     <div class="toast" id="toast"></div>
 
     <script>
-    // ROii2 Drive Game - Standalone Version
+    // ROii2 Drive Game - Infinite Space Version
 
     // === THREE.JS SETUP ===
     const scene = new THREE.Scene();
 
-    // Sky gradient background
+    // Dark infinite space gradient background
     const canvas = document.createElement('canvas');
     canvas.width = 2;
-    canvas.height = 512;
+    canvas.height = 1024;
     const ctx = canvas.getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 512);
-    gradient.addColorStop(0, '#0a1628');      // Dark blue top
-    gradient.addColorStop(0.3, '#1e3a5f');    // Mid blue
-    gradient.addColorStop(0.6, '#2d5a7b');    // Lighter blue
-    gradient.addColorStop(0.85, '#4a7c9b');   // Light horizon
-    gradient.addColorStop(1, '#1a1a2e');      // Ground fade
+    const gradient = ctx.createLinearGradient(0, 0, 0, 1024);
+    gradient.addColorStop(0, '#000000');      // Pure black top
+    gradient.addColorStop(0.15, '#050510');   // Very dark
+    gradient.addColorStop(0.35, '#0a0a1a');   // Dark purple
+    gradient.addColorStop(0.5, '#0d1020');    // Dark blue horizon
+    gradient.addColorStop(0.65, '#0a0a1a');   // Fade down
+    gradient.addColorStop(0.85, '#050510');   // Very dark
+    gradient.addColorStop(1, '#000000');      // Pure black bottom
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 2, 512);
+    ctx.fillRect(0, 0, 2, 1024);
     const skyTexture = new THREE.CanvasTexture(canvas);
     skyTexture.magFilter = THREE.LinearFilter;
     scene.background = skyTexture;
 
-    scene.fog = new THREE.Fog(0x1e3a5f, 80, 400);
+    // Very subtle fog for depth perception
+    scene.fog = new THREE.FogExp2(0x050510, 0.003);
 
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 
@@ -358,59 +361,49 @@
 
     scene.add(new THREE.DirectionalLight(0x8080FF, 0.3).position.set(-30, 30, -30));
 
-    // === ENVIRONMENT ===
-    // Ground with gradient
-    const groundGeo = new THREE.PlaneGeometry(2000, 2000);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x1a2030, roughness: 0.9 });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -0.5;
-    ground.receiveShadow = true;
-    scene.add(ground);
+    // === ENVIRONMENT - Infinite Space ===
+    // No ground plane - floating in space
 
-    // Road
-    function createRoad() {
-        const roadGroup = new THREE.Group();
+    // Subtle infinite grid for motion perception
+    const gridMat = new THREE.LineBasicMaterial({
+        color: 0x10B981,
+        transparent: true,
+        opacity: 0.15
+    });
+    const gridSize = 2000;
+    const gridDivisions = 100;
+    const gridGeo = new THREE.BufferGeometry();
+    const gridPoints = [];
+    const step = gridSize / gridDivisions;
+    const half = gridSize / 2;
 
-        // Main road
-        const roadGeo = new THREE.PlaneGeometry(40, 4000);
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x222228, roughness: 0.7 });
-        const road = new THREE.Mesh(roadGeo, roadMat);
-        road.rotation.x = -Math.PI / 2;
-        road.position.y = -0.1;
-        road.receiveShadow = true;
-        roadGroup.add(road);
-
-        // Center dashed lines
-        for (let i = -1000; i < 1000; i += 20) {
-            const lineGeo = new THREE.PlaneGeometry(0.4, 12);
-            const lineMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-            const line = new THREE.Mesh(lineGeo, lineMat);
-            line.rotation.x = -Math.PI / 2;
-            line.position.set(0, 0.01, i);
-            roadGroup.add(line);
-        }
-
-        // Side lines
-        [-18, 18].forEach(x => {
-            const sideGeo = new THREE.PlaneGeometry(0.3, 4000);
-            const sideMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-            const sideLine = new THREE.Mesh(sideGeo, sideMat);
-            sideLine.rotation.x = -Math.PI / 2;
-            sideLine.position.set(x, 0.02, 0);
-            roadGroup.add(sideLine);
-        });
-
-        return roadGroup;
+    for (let i = 0; i <= gridDivisions; i++) {
+        const pos = -half + i * step;
+        gridPoints.push(-half, 0, pos, half, 0, pos);
+        gridPoints.push(pos, 0, -half, pos, 0, half);
     }
-    scene.add(createRoad());
-
-    // Grid
-    const grid = new THREE.GridHelper(500, 100, 0x4a7c9b, 0x1a2a40);
-    grid.material.opacity = 0.25;
-    grid.material.transparent = true;
-    grid.position.y = -0.3;
+    gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gridPoints, 3));
+    const grid = new THREE.LineSegments(gridGeo, gridMat);
+    grid.position.y = -1;
     scene.add(grid);
+
+    // Floating particles for space feel
+    const particleCount = 500;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+        particlePositions[i * 3] = (Math.random() - 0.5) * 1000;
+        particlePositions[i * 3 + 1] = Math.random() * 200;
+        particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 1000;
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({
+        color: 0x10B981,
+        size: 0.8,
+        transparent: true,
+        opacity: 0.4
+    }));
+    scene.add(particles);
 
     // === STATE ===
     const state = {
@@ -460,9 +453,15 @@
                 model.traverse((child) => {
                     if (child.isMesh) {
                         child.material.transparent = true;
-                        child.material.opacity = 0.75;
+                        child.material.opacity = 0.9;
                         child.material.side = THREE.DoubleSide;
                         child.castShadow = true;
+                        // Make brighter
+                        if (child.material.color) {
+                            child.material.color.multiplyScalar(1.5);
+                        }
+                        child.material.emissive = new THREE.Color(0x333333);
+                        child.material.emissiveIntensity = 0.3;
                         vehicleMeshes.push(child);
                     }
                 });
@@ -607,26 +606,26 @@
         const frontR = addDevice('lan9692', new THREE.Vector3(3.5, 4, 10), 'Front-R-9692');
         const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -10), 'Rear-9692');
 
-        // Sensors
-        const lidarFL = addDevice('lidar', new THREE.Vector3(-7.5, 12, 16), 'LiDAR-FL');
-        const lidarFR = addDevice('lidar', new THREE.Vector3(7.5, 12, 16), 'LiDAR-FR');
-        const lidarFC = addDevice('lidar', new THREE.Vector3(0, 7, 18), 'LiDAR-Front-Center');
-        const lidarRC = addDevice('lidar', new THREE.Vector3(0, 7, -18), 'LiDAR-Rear-Center');
+        // Sensors - Updated positions from reference
+        const lidarFL = addDevice('lidar', new THREE.Vector3(-8.5, 10, 16.2), 'LiDAR-FL');
+        const lidarFR = addDevice('lidar', new THREE.Vector3(8.5, 10, 16.2), 'LiDAR-FR');
+        const lidarFC = addDevice('lidar', new THREE.Vector3(0, 5.5, 18.5), 'LiDAR-Front-Center');
+        const lidarRC = addDevice('lidar', new THREE.Vector3(0, 5.5, -18.5), 'LiDAR-Rear-Center');
 
-        const camFC = addDevice('camera', new THREE.Vector3(0, 13, 17.5), 'Cam-Front-Center');
-        const camFL = addDevice('camera', new THREE.Vector3(-1, 13, 17.5), 'Cam-Front-L');
-        const camFR = addDevice('camera', new THREE.Vector3(1, 13, 17.5), 'Cam-Front-R');
-        const camSL1 = addDevice('camera', new THREE.Vector3(-7.5, 13, 16), 'Cam-Side-L1');
-        const camSR1 = addDevice('camera', new THREE.Vector3(7.5, 13, 16), 'Cam-Side-R1');
-        const camSL2 = addDevice('camera', new THREE.Vector3(-7.5, 13, -16), 'Cam-Side-L2');
-        const camSR2 = addDevice('camera', new THREE.Vector3(7.5, 13, -16), 'Cam-Side-R2');
-        const camRC = addDevice('camera', new THREE.Vector3(0, 11, -17.5), 'Cam-Rear-Center');
+        const camFC = addDevice('camera', new THREE.Vector3(0, 10.5, 18.5), 'Cam-Front-Center');
+        const camFL = addDevice('camera', new THREE.Vector3(0.6, 10.5, 18.5), 'Cam-Front-L');
+        const camFR = addDevice('camera', new THREE.Vector3(-0.6, 10.5, 18.5), 'Cam-Front-R');
+        const camSL1 = addDevice('camera', new THREE.Vector3(-8.5, 11, 16.5), 'Cam-Side-L1');
+        const camSR1 = addDevice('camera', new THREE.Vector3(8.5, 11, 16.5), 'Cam-Side-R1');
+        const camSL2 = addDevice('camera', new THREE.Vector3(-8.5, 11, 15.9), 'Cam-Side-L2');
+        const camSR2 = addDevice('camera', new THREE.Vector3(8.5, 11, 15.9), 'Cam-Side-R2');
+        const camRC = addDevice('camera', new THREE.Vector3(0, 9, -18.5), 'Cam-Rear-Center');
 
-        const radarFC = addDevice('radar', new THREE.Vector3(0, 5, 18), 'Radar-Front-Center');
-        const radarFL = addDevice('radar', new THREE.Vector3(-6.5, 5, 17), 'Radar-Front-L');
-        const radarFR = addDevice('radar', new THREE.Vector3(6.5, 5, 17), 'Radar-Front-R');
-        const radarRL = addDevice('radar', new THREE.Vector3(-6.5, 5, -17), 'Radar-Rear-L');
-        const radarRR = addDevice('radar', new THREE.Vector3(6.5, 5, -17), 'Radar-Rear-R');
+        const radarFC = addDevice('radar', new THREE.Vector3(0, 7, 18.5), 'Radar-Front-Center');
+        const radarFL = addDevice('radar', new THREE.Vector3(-7, 6.5, 17.5), 'Radar-Front-L');
+        const radarFR = addDevice('radar', new THREE.Vector3(7, 6.5, 17.5), 'Radar-Front-R');
+        const radarRL = addDevice('radar', new THREE.Vector3(-7, 6.5, -18), 'Radar-Rear-L');
+        const radarRR = addDevice('radar', new THREE.Vector3(7, 6.5, -18), 'Radar-Rear-R');
 
         // Connections
         createConnection(frontL, acuIT);
@@ -842,7 +841,18 @@
         updateDrive();
         updateCamera();
 
-        // Animate particles
+        // Infinite grid effect - follow vehicle
+        const vehiclePos = state.vehicleGroup.position;
+        const gridStep = gridSize / gridDivisions;
+        grid.position.x = Math.floor(vehiclePos.x / gridStep) * gridStep;
+        grid.position.z = Math.floor(vehiclePos.z / gridStep) * gridStep;
+
+        // Space particles follow loosely
+        particles.position.x = vehiclePos.x * 0.5;
+        particles.position.z = vehiclePos.z * 0.5;
+        particles.rotation.y += 0.0002;
+
+        // Animate connection particles
         state.connections.forEach(conn => {
             if (conn.status === 'normal') {
                 conn.particles.forEach(p => {

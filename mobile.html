@@ -23,260 +23,295 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f0f4f8;
-            color: #1e293b;
+            background: #000;
+            color: #fff;
         }
         #canvas3d { width: 100%; height: 100%; position: fixed; top: 0; left: 0; }
 
         .hud { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
 
-        /* Top Bar */
+        /* Top Bar - Minimal */
         .top-bar {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 12px;
+            top: 12px;
+            left: 12px;
+            right: 12px;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 8px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
         }
 
-        .version-links {
+        .nav-pills {
             display: flex;
             gap: 6px;
             pointer-events: auto;
-            flex-wrap: wrap;
         }
-        .version-link {
-            padding: 8px 12px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+        .nav-pill {
+            padding: 10px 14px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            border-radius: 20px;
             font-size: 11px;
-            color: #475569;
+            color: #10b981;
             text-decoration: none;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.2s;
         }
-        .version-link.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .nav-pill:hover { background: rgba(16, 185, 129, 0.3); }
+        .nav-pill.active { background: #10b981; color: #000; border-color: #10b981; }
+        .nav-pill i { margin-right: 4px; }
 
-        .stats-bar {
+        .stats-card {
             display: flex;
-            gap: 12px;
-            background: white;
-            padding: 8px 14px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
         .stat { text-align: center; }
-        .stat-value { font-size: 16px; font-weight: 700; color: #3b82f6; }
-        .stat-label { font-size: 9px; color: #64748b; text-transform: uppercase; }
+        .stat-value { font-size: 18px; font-weight: 700; color: #10b981; }
+        .stat-label { font-size: 9px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Speedometer */
+        /* Speedometer - Floating */
         .speedometer {
             position: absolute;
             top: 70px;
             right: 12px;
-            background: white;
-            padding: 12px 20px;
-            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 16px 24px;
+            border-radius: 16px;
             text-align: center;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            backdrop-filter: blur(10px);
         }
-        .speed-value { font-size: 40px; font-weight: 700; color: #10b981; line-height: 1; }
-        .speed-unit { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .speed-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #10b981;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+        .speed-unit { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
 
-        /* Touch Controls */
+        /* Touch Controls - Modern */
         .touch-controls {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 180px;
+            height: 200px;
             display: flex;
             justify-content: space-between;
-            padding: 12px;
+            align-items: flex-end;
+            padding: 20px;
             pointer-events: auto;
-            background: linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%);
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
         }
 
         .joystick-area {
             width: 140px;
             height: 140px;
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(16, 185, 129, 0.1);
             border-radius: 50%;
             position: relative;
-            border: 2px solid rgba(59, 130, 246, 0.3);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
         }
         .joystick-knob {
-            width: 56px;
-            height: 56px;
-            background: #3b82f6;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #10b981, #059669);
             border-radius: 50%;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
         }
 
         .pedals {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
         .pedal {
-            width: 90px;
-            height: 60px;
-            border-radius: 12px;
+            width: 100px;
+            height: 65px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
-            font-size: 13px;
-            gap: 6px;
+            font-weight: 700;
+            font-size: 14px;
+            gap: 8px;
             border: none;
             cursor: pointer;
+            transition: transform 0.1s, opacity 0.1s;
         }
         .pedal-gas {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #000;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
         }
         .pedal-brake {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
         }
-        .pedal.active { transform: scale(0.95); opacity: 0.8; }
+        .pedal.active { transform: scale(0.92); opacity: 0.8; }
 
-        /* Action Buttons */
-        .action-buttons {
+        /* Quick Actions */
+        .quick-actions {
             position: absolute;
-            bottom: 200px;
-            right: 12px;
+            left: 50%;
+            bottom: 220px;
+            transform: translateX(-50%);
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            gap: 12px;
             pointer-events: auto;
         }
-        .action-btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background: white;
-            border: 1px solid #e2e8f0;
+        .quick-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            color: #475569;
+            color: #fff;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.2s;
         }
-        .action-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .quick-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .quick-btn.active { background: #10b981; color: #000; border-color: #10b981; }
+        .quick-btn.danger { color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
+        .quick-btn.danger.active { background: #ef4444; color: #fff; }
 
-        /* Fault Panel */
+        /* Fault Panel - Slide Up */
         .fault-panel {
             position: absolute;
-            left: 12px;
-            bottom: 200px;
-            background: white;
-            padding: 14px;
-            border-radius: 12px;
-            width: 260px;
+            left: 50%;
+            bottom: -300px;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            width: 90%;
+            max-width: 360px;
             pointer-events: auto;
-            display: none;
-            border: 1px solid #fecaca;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-bottom: none;
+            transition: bottom 0.3s;
+            backdrop-filter: blur(20px);
         }
-        .fault-panel.visible { display: block; }
-        .fault-title { font-size: 12px; font-weight: 600; color: #dc2626; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-        .fault-item {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 8px;
+        .fault-panel.visible { bottom: 0; }
+        .fault-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .fault-title { font-size: 14px; font-weight: 600; color: #ef4444; display: flex; align-items: center; gap: 8px; }
+        .fault-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
             cursor: pointer;
         }
-        .fault-item.active { background: #fecaca; border-color: #f87171; }
-        .fault-name { font-size: 11px; font-weight: 600; color: #b91c1c; }
-        .fault-desc { font-size: 10px; color: #64748b; margin-top: 2px; }
+        .fault-item {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .fault-item:hover { background: rgba(239, 68, 68, 0.2); }
+        .fault-item.active { background: rgba(239, 68, 68, 0.3); border-color: #ef4444; }
+        .fault-name { font-size: 13px; font-weight: 600; color: #f87171; }
+        .fault-desc { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px; }
 
-        /* Properties Panel */
+        /* Properties Panel - Bottom Sheet */
         .properties {
             position: absolute;
+            left: 0;
             right: 0;
-            top: 0;
-            width: 280px;
-            height: 100%;
-            background: white;
-            border-left: 1px solid #e2e8f0;
-            transform: translateX(100%);
-            transition: transform 0.3s;
+            bottom: -100%;
+            height: 50%;
+            background: rgba(0, 0, 0, 0.95);
+            border-radius: 24px 24px 0 0;
+            transition: bottom 0.3s;
             z-index: 100;
             pointer-events: auto;
             display: flex;
             flex-direction: column;
+            backdrop-filter: blur(20px);
         }
-        .properties.visible { transform: translateX(0); }
+        .properties.visible { bottom: 0; }
+        .properties-handle {
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            margin: 12px auto;
+        }
         .properties-header {
-            height: 50px;
-            padding: 0 16px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 0 20px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        .properties-title { font-size: 13px; font-weight: 600; color: #1e293b; }
+        .properties-title { font-size: 16px; font-weight: 600; color: #fff; }
         .close-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            background: #f1f5f9;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
             border: none;
             cursor: pointer;
-            color: #64748b;
-            font-size: 12px;
+            color: #fff;
+            font-size: 14px;
         }
-        .properties-content { padding: 16px; overflow-y: auto; flex: 1; }
-        .prop-section { margin-bottom: 16px; }
+        .properties-content { padding: 20px; overflow-y: auto; flex: 1; }
+        .prop-section { margin-bottom: 20px; }
         .prop-title {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 700;
-            color: #3b82f6;
+            color: #10b981;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 10px;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
         }
-        .form-group { margin-bottom: 10px; }
-        .form-label { display: block; font-size: 10px; font-weight: 600; color: #475569; margin-bottom: 4px; }
-        .form-input {
-            width: 100%;
-            padding: 6px 10px;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-            border-radius: 6px;
-            font-size: 12px;
-            color: #1e293b;
+        .prop-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
+        .prop-label { font-size: 13px; color: rgba(255,255,255,0.6); }
+        .prop-value { font-size: 13px; font-weight: 600; color: #fff; }
         .badge {
             display: inline-block;
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-size: 9px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
             font-weight: 600;
         }
-        .badge-success { background: #dcfce7; color: #16a34a; }
-        .badge-info { background: #dbeafe; color: #2563eb; }
-        .badge-danger { background: #fee2e2; color: #dc2626; }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-info { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 
         /* Toast */
         .toast {
@@ -284,12 +319,12 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0.9);
-            padding: 14px 24px;
-            background: #1e293b;
-            color: white;
-            border-radius: 10px;
-            font-weight: 500;
-            font-size: 13px;
+            padding: 16px 28px;
+            background: rgba(16, 185, 129, 0.95);
+            color: #000;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
             opacity: 0;
             transition: all 0.3s;
             z-index: 1000;
@@ -298,14 +333,22 @@
 
         /* Landscape */
         @media (orientation: landscape) {
-            .touch-controls { height: 150px; }
+            .touch-controls { height: 160px; padding: 16px; }
             .joystick-area { width: 120px; height: 120px; }
-            .joystick-knob { width: 48px; height: 48px; }
-            .pedal { width: 80px; height: 50px; font-size: 12px; }
-            .speedometer { top: 60px; padding: 10px 16px; }
-            .speed-value { font-size: 32px; }
-            .action-buttons { bottom: 170px; }
-            .fault-panel { bottom: 170px; width: 240px; }
+            .joystick-knob { width: 50px; height: 50px; }
+            .pedal { width: 90px; height: 55px; font-size: 13px; }
+            .speedometer { top: 60px; padding: 12px 20px; }
+            .speed-value { font-size: 36px; }
+            .quick-actions { bottom: 180px; }
+            .properties { height: 60%; }
+        }
+
+        /* Small screens */
+        @media (max-width: 380px) {
+            .nav-pills { flex-wrap: wrap; gap: 4px; }
+            .nav-pill { padding: 8px 10px; font-size: 10px; }
+            .stats-card { padding: 8px 12px; gap: 10px; }
+            .stat-value { font-size: 14px; }
         }
     </style>
 </head>
@@ -314,12 +357,12 @@
 
     <div class="hud">
         <div class="top-bar">
-            <div class="version-links">
-                <a href="index.html" class="version-link"><i class="fas fa-project-diagram"></i> Network</a>
-                <a href="drive.html" class="version-link"><i class="fas fa-gamepad"></i> Drive</a>
-                <a href="mobile.html" class="version-link active"><i class="fas fa-mobile-alt"></i> Mobile</a>
+            <div class="nav-pills">
+                <a href="index.html" class="nav-pill"><i class="fas fa-project-diagram"></i>Network</a>
+                <a href="drive.html" class="nav-pill"><i class="fas fa-gamepad"></i>Drive</a>
+                <a href="mobile.html" class="nav-pill active"><i class="fas fa-mobile-alt"></i>Mobile</a>
             </div>
-            <div class="stats-bar">
+            <div class="stats-card">
                 <div class="stat">
                     <div class="stat-value" id="deviceCount">0</div>
                     <div class="stat-label">Devices</div>
@@ -340,10 +383,10 @@
             <div class="speed-unit">km/h</div>
         </div>
 
-        <div class="action-buttons">
-            <div class="action-btn" id="faultBtn" title="Fault"><i class="fas fa-bolt"></i></div>
-            <div class="action-btn" id="cameraBtn" title="Camera"><i class="fas fa-video"></i></div>
-            <div class="action-btn" id="resetBtn" title="Reset"><i class="fas fa-redo"></i></div>
+        <div class="quick-actions">
+            <div class="quick-btn danger" id="faultBtn" title="Fault"><i class="fas fa-bolt"></i></div>
+            <div class="quick-btn" id="cameraBtn" title="Camera"><i class="fas fa-video"></i></div>
+            <div class="quick-btn" id="resetBtn" title="Reset"><i class="fas fa-redo"></i></div>
         </div>
 
         <div class="touch-controls">
@@ -351,20 +394,23 @@
                 <div class="joystick-knob" id="knob"></div>
             </div>
             <div class="pedals">
-                <button class="pedal pedal-gas" id="gasBtn"><i class="fas fa-arrow-up"></i> GAS</button>
-                <button class="pedal pedal-brake" id="brakeBtn"><i class="fas fa-stop"></i> BRAKE</button>
+                <button class="pedal pedal-gas" id="gasBtn"><i class="fas fa-chevron-up"></i> GAS</button>
+                <button class="pedal pedal-brake" id="brakeBtn"><i class="fas fa-hand-paper"></i> BRAKE</button>
             </div>
         </div>
 
         <div class="fault-panel" id="faultPanel">
-            <div class="fault-title"><i class="fas fa-exclamation-triangle"></i> Fault Injection</div>
+            <div class="fault-header">
+                <div class="fault-title"><i class="fas fa-exclamation-triangle"></i> Fault Injection</div>
+                <button class="fault-close" id="faultClose"><i class="fas fa-times"></i></button>
+            </div>
             <div class="fault-item" data-fault="front-backbone">
-                <div class="fault-name">Front 10G Backbone Error</div>
+                <div class="fault-name">Front 10G Backbone</div>
                 <div class="fault-desc">Front-L <i class="fas fa-arrows-alt-h"></i> Front-R link failure</div>
             </div>
             <div class="fault-item" data-fault="front-l-link">
-                <div class="fault-name">Front-L <i class="fas fa-arrow-right"></i> HPC Error</div>
-                <div class="fault-desc">Front-L zone controller link failure</div>
+                <div class="fault-name">Front-L <i class="fas fa-arrow-right"></i> HPC</div>
+                <div class="fault-desc">Zone controller to HPC link failure</div>
             </div>
             <div class="fault-item" data-fault="sensor">
                 <div class="fault-name"><i class="fas fa-satellite-dish"></i> LiDAR-FL Sensor</div>
@@ -373,14 +419,15 @@
         </div>
 
         <div class="properties" id="properties">
+            <div class="properties-handle"></div>
             <div class="properties-header">
-                <div class="properties-title">Device Properties</div>
-                <button class="close-btn" id="closeBtn"><i class="fas fa-times"></i></button>
+                <div class="properties-title" id="propsTitle">Device Properties</div>
+                <button class="close-btn" id="closeBtn"><i class="fas fa-chevron-down"></i></button>
             </div>
             <div class="properties-content" id="propertiesContent">
-                <p style="color: #94a3b8; text-align: center; padding: 20px;">
-                    <i class="fas fa-mouse-pointer" style="font-size: 20px; display: block; margin-bottom: 8px;"></i>
-                    Tap device to view
+                <p style="color: rgba(255,255,255,0.4); text-align: center; padding: 30px;">
+                    <i class="fas fa-hand-pointer" style="font-size: 24px; display: block; margin-bottom: 12px;"></i>
+                    Tap a device to view
                 </p>
             </div>
         </div>
@@ -389,12 +436,31 @@
     <div class="toast" id="toast"></div>
 
     <script>
-    // ROii2 Mobile - Full Sensor Configuration + Mouse Support
+    // ROii2 Mobile - Dark Infinite Space Version
 
     // === THREE.JS ===
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f4f8);
-    scene.fog = new THREE.Fog(0xf0f4f8, 100, 350);
+
+    // Dark infinite space gradient
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 1024);
+    gradient.addColorStop(0, '#000000');
+    gradient.addColorStop(0.2, '#050510');
+    gradient.addColorStop(0.4, '#0a0a1a');
+    gradient.addColorStop(0.5, '#0d1020');
+    gradient.addColorStop(0.6, '#0a0a1a');
+    gradient.addColorStop(0.8, '#050510');
+    gradient.addColorStop(1, '#000000');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 2, 1024);
+    const skyTexture = new THREE.CanvasTexture(canvas);
+    skyTexture.magFilter = THREE.LinearFilter;
+    scene.background = skyTexture;
+
+    scene.fog = new THREE.FogExp2(0x050510, 0.004);
 
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 500);
 
@@ -411,50 +477,48 @@
     });
 
     // === LIGHTING ===
-    scene.add(new THREE.AmbientLight(0xFFFFFF, 0.8));
-    const mainLight = new THREE.DirectionalLight(0xFFFFFF, 0.9);
+    scene.add(new THREE.AmbientLight(0xFFFFFF, 0.5));
+    const mainLight = new THREE.DirectionalLight(0xFFFFFF, 0.8);
     mainLight.position.set(30, 60, 30);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
     mainLight.shadow.mapSize.height = 2048;
     scene.add(mainLight);
 
-    // === ENVIRONMENT ===
-    const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(1000, 1000),
-        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.8 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -0.5;
-    ground.receiveShadow = true;
-    scene.add(ground);
+    // === ENVIRONMENT - Infinite Space ===
+    // Subtle infinite grid
+    const gridMat = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.12 });
+    const gridSize = 1500;
+    const gridDivisions = 75;
+    const gridGeo = new THREE.BufferGeometry();
+    const gridPoints = [];
+    const step = gridSize / gridDivisions;
+    const half = gridSize / 2;
 
-    // Road
-    const roadGroup = new THREE.Group();
-    const road = new THREE.Mesh(
-        new THREE.PlaneGeometry(35, 2000),
-        new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.7 })
-    );
-    road.rotation.x = -Math.PI / 2;
-    road.position.y = -0.1;
-    roadGroup.add(road);
-
-    for (let i = -500; i < 500; i += 20) {
-        const line = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.3, 10),
-            new THREE.MeshBasicMaterial({ color: 0xffffff })
-        );
-        line.rotation.x = -Math.PI / 2;
-        line.position.set(0, 0.01, i);
-        roadGroup.add(line);
+    for (let i = 0; i <= gridDivisions; i++) {
+        const pos = -half + i * step;
+        gridPoints.push(-half, 0, pos, half, 0, pos);
+        gridPoints.push(pos, 0, -half, pos, 0, half);
     }
-    scene.add(roadGroup);
-
-    // Grid
-    const grid = new THREE.GridHelper(300, 60, 0x3b82f6, 0xc4d4e8);
-    grid.material.opacity = 0.3;
-    grid.material.transparent = true;
+    gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gridPoints, 3));
+    const grid = new THREE.LineSegments(gridGeo, gridMat);
+    grid.position.y = -1;
     scene.add(grid);
+
+    // Floating particles
+    const particleCount = 300;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+        particlePositions[i * 3] = (Math.random() - 0.5) * 800;
+        particlePositions[i * 3 + 1] = Math.random() * 150;
+        particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 800;
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({
+        color: 0x10b981, size: 0.6, transparent: true, opacity: 0.3
+    }));
+    scene.add(particles);
 
     // === STATE ===
     const state = {
@@ -467,26 +531,13 @@
     };
     scene.add(state.vehicleGroup);
 
-    const drive = {
-        speed: 0,
-        maxSpeed: 2.0,
-        acceleration: 0.05,
-        steerInput: 0,
-        steering: 0
-    };
-
-    const input = {
-        gas: false,
-        brake: false,
-        joystickActive: false,
-        joystickX: 0,
-        joystickY: 0
-    };
+    const drive = { speed: 0, maxSpeed: 2.0, acceleration: 0.05, steerInput: 0, steering: 0 };
+    const input = { gas: false, brake: false, joystickActive: false, joystickX: 0, joystickY: 0 };
 
     // === TEMPLATES ===
     const templates = {
-        lan9692: { label: 'LAN9692', color: 0x10b981, size: [4, 2, 4], ports: 12 },
-        hpc: { label: 'HPC', color: 0xe11d48, size: [5, 2.5, 5], ports: 4 },
+        lan9692: { label: 'LAN9692 TSN Switch', color: 0x10b981, size: [4, 2, 4], ports: 12 },
+        hpc: { label: 'ACU_IT HPC', color: 0xe11d48, size: [5, 2.5, 5], ports: 4 },
         camera: { label: 'Camera', color: 0xf59e0b, size: [0.8, 0.8, 0.8], ports: 1 },
         lidar: { label: 'LiDAR', color: 0x10b981, size: [1.2, 1.2, 1.2], ports: 1 },
         radar: { label: 'Radar', color: 0x8b5cf6, size: [1.2, 1.2, 1.2], ports: 1 }
@@ -509,25 +560,57 @@
                 model.traverse((child) => {
                     if (child.isMesh) {
                         child.material.transparent = true;
-                        child.material.opacity = 0.75;
+                        child.material.opacity = 0.9;
+                        child.material.side = THREE.DoubleSide;
                         child.castShadow = true;
+                        // Make brighter
+                        if (child.material.color) {
+                            child.material.color.multiplyScalar(1.5);
+                        }
+                        child.material.emissive = new THREE.Color(0x333333);
+                        child.material.emissiveIntensity = 0.3;
                         vehicleMeshes.push(child);
                     }
                 });
                 state.vehicleGroup.add(model);
             },
             null,
-            () => {
-                const chassis = new THREE.Mesh(
-                    new THREE.BoxGeometry(14, 8, 32),
-                    new THREE.MeshPhysicalMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.75, metalness: 0.1, roughness: 0.3 })
-                );
-                chassis.position.y = 5;
-                chassis.castShadow = true;
-                state.vehicleGroup.add(chassis);
-                vehicleMeshes.push(chassis);
-            }
+            () => createProceduralVehicle()
         );
+    }
+
+    function createProceduralVehicle() {
+        const chassisMat = new THREE.MeshPhysicalMaterial({
+            color: 0x1a1a2e, transparent: true, opacity: 0.8,
+            metalness: 0.3, roughness: 0.2, clearcoat: 0.8
+        });
+
+        const chassis = new THREE.Mesh(new THREE.BoxGeometry(14, 8, 32), chassisMat);
+        chassis.position.y = 5;
+        chassis.castShadow = true;
+        state.vehicleGroup.add(chassis);
+        vehicleMeshes.push(chassis);
+
+        const roof = new THREE.Mesh(new THREE.BoxGeometry(12, 4, 26), chassisMat.clone());
+        roof.position.y = 11;
+        roof.castShadow = true;
+        state.vehicleGroup.add(roof);
+        vehicleMeshes.push(roof);
+
+        // Glow lights
+        const frontLight = new THREE.Mesh(
+            new THREE.BoxGeometry(12, 1.5, 0.3),
+            new THREE.MeshBasicMaterial({ color: 0x10b981 })
+        );
+        frontLight.position.set(0, 5, 16.2);
+        state.vehicleGroup.add(frontLight);
+
+        const rearLight = new THREE.Mesh(
+            new THREE.BoxGeometry(12, 1.5, 0.3),
+            new THREE.MeshBasicMaterial({ color: 0xef4444 })
+        );
+        rearLight.position.set(0, 5, -16.2);
+        state.vehicleGroup.add(rearLight);
     }
 
     // === DEVICES & CONNECTIONS ===
@@ -541,7 +624,7 @@
             new THREE.BoxGeometry(...t.size);
 
         const mat = new THREE.MeshPhongMaterial({
-            color: t.color, emissive: t.color, emissiveIntensity: 0.4, shininess: 30
+            color: t.color, emissive: t.color, emissiveIntensity: 0.6, shininess: 50
         });
 
         const group = new THREE.Group();
@@ -550,7 +633,7 @@
         group.add(mesh);
         group.add(new THREE.LineSegments(
             new THREE.EdgesGeometry(geo),
-            new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.6, transparent: true })
+            new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true })
         ));
         group.position.copy(position);
         group.userData = { device };
@@ -562,35 +645,27 @@
     }
 
     function createConnection(from, to) {
-        // Determine bandwidth and color based on connection type
         let bw, color, tubeRadius;
         if (from.type === 'lan9692' && to.type === 'lan9692') {
-            bw = '10G';
-            color = 0x3b82f6; // Blue for 10G backbone
-            tubeRadius = 0.15;
+            bw = '10G'; color = 0x3b82f6; tubeRadius = 0.15;
         } else if (from.type === 'hpc' || to.type === 'hpc') {
-            bw = '10G';
-            color = 0xfbbf24; // Gold for HPC links
-            tubeRadius = 0.12;
+            bw = '10G'; color = 0xfbbf24; tubeRadius = 0.12;
         } else {
-            bw = '1G';
-            color = 0x10b981; // Green for sensor links
-            tubeRadius = 0.06;
+            bw = '1G'; color = 0x10b981; tubeRadius = 0.05;
         }
 
         const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
         const tube = new THREE.Mesh(
             new THREE.TubeGeometry(curve, 12, tubeRadius, 6, false),
-            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 })
+            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.6 })
         );
         state.vehicleGroup.add(tube);
 
         const particles = [];
         const particleCount = bw === '10G' ? 4 : 2;
-        const particleSize = bw === '10G' ? 0.18 : 0.1;
         for (let i = 0; i < particleCount; i++) {
             const p = new THREE.Mesh(
-                new THREE.SphereGeometry(particleSize, 6, 6),
+                new THREE.SphereGeometry(bw === '10G' ? 0.18 : 0.1, 6, 6),
                 new THREE.MeshBasicMaterial({ color: 0xffffff })
             );
             p.userData = { t: i / particleCount, curve };
@@ -611,52 +686,48 @@
             conn.particles.forEach(p => p.visible = false);
         } else {
             conn.tube.material.color.setHex(conn.originalColor);
-            conn.tube.material.opacity = 0.7;
+            conn.tube.material.opacity = 0.6;
             conn.particles.forEach(p => p.visible = true);
         }
     }
 
-    // === LOAD FULL SCENARIO (17 Sensors) ===
+    // === LOAD SCENARIO ===
     function loadScenario() {
         createVehicle();
 
-        // === CENTRAL HPC ===
         const acuIT = addDevice('hpc', new THREE.Vector3(0, 4, 0), 'ACU_IT');
-
-        // === ZONE CONTROLLERS (3x LAN9692) ===
         const frontL = addDevice('lan9692', new THREE.Vector3(-3.5, 4, 10), 'Front-L-9692');
         const frontR = addDevice('lan9692', new THREE.Vector3(3.5, 4, 10), 'Front-R-9692');
         const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -10), 'Rear-9692');
 
-        // === SENSORS (17 total) ===
-        // LiDAR (4)
-        const lidarFL = addDevice('lidar', new THREE.Vector3(-7.5, 12, 16), 'LiDAR-FL');
-        const lidarFR = addDevice('lidar', new THREE.Vector3(7.5, 12, 16), 'LiDAR-FR');
-        const lidarFC = addDevice('lidar', new THREE.Vector3(0, 7, 18), 'LiDAR-Front-Center');
-        const lidarRC = addDevice('lidar', new THREE.Vector3(0, 7, -18), 'LiDAR-Rear-Center');
+        // LiDAR (4) - Updated positions
+        const lidarFL = addDevice('lidar', new THREE.Vector3(-8.5, 10, 16.2), 'LiDAR-FL');
+        const lidarFR = addDevice('lidar', new THREE.Vector3(8.5, 10, 16.2), 'LiDAR-FR');
+        const lidarFC = addDevice('lidar', new THREE.Vector3(0, 5.5, 18.5), 'LiDAR-Front-Center');
+        const lidarRC = addDevice('lidar', new THREE.Vector3(0, 5.5, -18.5), 'LiDAR-Rear-Center');
 
-        // Camera (8)
-        const camFC = addDevice('camera', new THREE.Vector3(0, 13, 17.5), 'Cam-Front-Center');
-        const camFL = addDevice('camera', new THREE.Vector3(-1, 13, 17.5), 'Cam-Front-L');
-        const camFR = addDevice('camera', new THREE.Vector3(1, 13, 17.5), 'Cam-Front-R');
-        const camSL1 = addDevice('camera', new THREE.Vector3(-7.5, 13, 16), 'Cam-Side-L1');
-        const camSR1 = addDevice('camera', new THREE.Vector3(7.5, 13, 16), 'Cam-Side-R1');
-        const camSL2 = addDevice('camera', new THREE.Vector3(-7.5, 13, -16), 'Cam-Side-L2');
-        const camSR2 = addDevice('camera', new THREE.Vector3(7.5, 13, -16), 'Cam-Side-R2');
-        const camRC = addDevice('camera', new THREE.Vector3(0, 11, -17.5), 'Cam-Rear-Center');
+        // Camera (8) - Updated positions
+        const camFC = addDevice('camera', new THREE.Vector3(0, 10.5, 18.5), 'Cam-Front-Center');
+        const camFL = addDevice('camera', new THREE.Vector3(0.6, 10.5, 18.5), 'Cam-Front-L');
+        const camFR = addDevice('camera', new THREE.Vector3(-0.6, 10.5, 18.5), 'Cam-Front-R');
+        const camSL1 = addDevice('camera', new THREE.Vector3(-8.5, 11, 16.5), 'Cam-Side-L1');
+        const camSR1 = addDevice('camera', new THREE.Vector3(8.5, 11, 16.5), 'Cam-Side-R1');
+        const camSL2 = addDevice('camera', new THREE.Vector3(-8.5, 11, 15.9), 'Cam-Side-L2');
+        const camSR2 = addDevice('camera', new THREE.Vector3(8.5, 11, 15.9), 'Cam-Side-R2');
+        const camRC = addDevice('camera', new THREE.Vector3(0, 9, -18.5), 'Cam-Rear-Center');
 
-        // Radar (5)
-        const radarFC = addDevice('radar', new THREE.Vector3(0, 5, 18), 'Radar-Front-Center');
-        const radarFL = addDevice('radar', new THREE.Vector3(-6.5, 5, 17), 'Radar-Front-L');
-        const radarFR = addDevice('radar', new THREE.Vector3(6.5, 5, 17), 'Radar-Front-R');
-        const radarRL = addDevice('radar', new THREE.Vector3(-6.5, 5, -17), 'Radar-Rear-L');
-        const radarRR = addDevice('radar', new THREE.Vector3(6.5, 5, -17), 'Radar-Rear-R');
+        // Radar (5) - Updated positions
+        const radarFC = addDevice('radar', new THREE.Vector3(0, 7, 18.5), 'Radar-Front-Center');
+        const radarFL = addDevice('radar', new THREE.Vector3(-7, 6.5, 17.5), 'Radar-Front-L');
+        const radarFR = addDevice('radar', new THREE.Vector3(7, 6.5, 17.5), 'Radar-Front-R');
+        const radarRL = addDevice('radar', new THREE.Vector3(-7, 6.5, -18), 'Radar-Rear-L');
+        const radarRR = addDevice('radar', new THREE.Vector3(7, 6.5, -18), 'Radar-Rear-R');
 
-        // === CONNECTIONS ===
+        // Connections
         createConnection(frontL, acuIT);
         createConnection(frontR, acuIT);
         createConnection(rear, acuIT);
-        createConnection(frontL, frontR); // 10G backbone
+        createConnection(frontL, frontR);
 
         createConnection(frontL, lidarFL);
         createConnection(frontL, lidarFC);
@@ -679,17 +750,14 @@
         createConnection(rear, radarRR);
 
         updateStats();
-        showToast('17 Sensors loaded!');
+        showToast('17 Sensors Ready');
     }
 
     function updateStats() {
         document.getElementById('deviceCount').textContent = state.devices.size;
         document.getElementById('linkCount').textContent = state.connections.length;
-        // Calculate total bandwidth
         let totalBW = 0;
-        state.connections.forEach(c => {
-            totalBW += c.bandwidth === '10G' ? 10 : 1;
-        });
+        state.connections.forEach(c => totalBW += c.bandwidth === '10G' ? 10 : 1);
         document.getElementById('bandwidth').textContent = totalBW;
     }
 
@@ -706,7 +774,7 @@
                 }
             });
             document.querySelector(`[data-fault="${faultType}"]`)?.classList.remove('active');
-            showToast('Fault cleared');
+            showToast('Fault Cleared');
             return;
         }
 
@@ -738,10 +806,10 @@
         }
 
         document.querySelector(`[data-fault="${faultType}"]`)?.classList.add('active');
-        showToast('Fault injected');
+        showToast('Fault Injected');
     }
 
-    // === DRIVE PHYSICS ===
+    // === DRIVING ===
     function updateDrive() {
         if (input.gas) {
             drive.speed = Math.min(drive.speed + drive.acceleration, drive.maxSpeed);
@@ -788,7 +856,7 @@
         const rect = joystick.getBoundingClientRect();
         joystickRect.cx = rect.left + rect.width / 2;
         joystickRect.cy = rect.top + rect.height / 2;
-        joystickRect.radius = rect.width / 2 - 28;
+        joystickRect.radius = rect.width / 2 - 30;
     }
 
     function handleJoystickMove(clientX, clientY) {
@@ -827,7 +895,7 @@
     });
     joystick.addEventListener('touchend', resetJoystick);
 
-    // Mouse events for joystick
+    // Mouse events
     joystick.addEventListener('mousedown', (e) => {
         e.preventDefault();
         input.joystickActive = true;
@@ -841,26 +909,23 @@
         if (input.joystickActive) resetJoystick();
     });
 
-    // Pedals - Touch
+    // Pedals
     const gasBtn = document.getElementById('gasBtn');
     const brakeBtn = document.getElementById('brakeBtn');
 
     gasBtn.addEventListener('touchstart', (e) => { e.preventDefault(); input.gas = true; gasBtn.classList.add('active'); });
     gasBtn.addEventListener('touchend', () => { input.gas = false; gasBtn.classList.remove('active'); });
-
     brakeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); input.brake = true; brakeBtn.classList.add('active'); });
     brakeBtn.addEventListener('touchend', () => { input.brake = false; brakeBtn.classList.remove('active'); });
 
-    // Pedals - Mouse
     gasBtn.addEventListener('mousedown', (e) => { e.preventDefault(); input.gas = true; gasBtn.classList.add('active'); });
     gasBtn.addEventListener('mouseup', () => { input.gas = false; gasBtn.classList.remove('active'); });
     gasBtn.addEventListener('mouseleave', () => { input.gas = false; gasBtn.classList.remove('active'); });
-
     brakeBtn.addEventListener('mousedown', (e) => { e.preventDefault(); input.brake = true; brakeBtn.classList.add('active'); });
     brakeBtn.addEventListener('mouseup', () => { input.brake = false; brakeBtn.classList.remove('active'); });
     brakeBtn.addEventListener('mouseleave', () => { input.brake = false; brakeBtn.classList.remove('active'); });
 
-    // Keyboard support
+    // Keyboard
     window.addEventListener('keydown', (e) => {
         switch (e.key.toLowerCase()) {
             case 'w': case 'arrowup': input.gas = true; break;
@@ -878,9 +943,15 @@
         }
     });
 
-    // Action buttons
+    // === UI EVENTS ===
     document.getElementById('faultBtn').addEventListener('click', () => {
         document.getElementById('faultPanel').classList.toggle('visible');
+        document.getElementById('faultBtn').classList.toggle('active');
+    });
+
+    document.getElementById('faultClose').addEventListener('click', () => {
+        document.getElementById('faultPanel').classList.remove('visible');
+        document.getElementById('faultBtn').classList.remove('active');
     });
 
     document.getElementById('cameraBtn').addEventListener('click', () => {
@@ -925,22 +996,21 @@
 
         if (device) {
             showProperties(device);
-            showToast(`${device.label}`);
         }
     }
 
     function showProperties(device) {
         const content = document.getElementById('propertiesContent');
-        const deviceConns = state.connections.filter(c =>
-            c.from.id === device.id || c.to.id === device.id
-        );
+        document.getElementById('propsTitle').textContent = device.label;
+
+        const deviceConns = state.connections.filter(c => c.from.id === device.id || c.to.id === device.id);
         const usedPorts = deviceConns.length;
         const totalPorts = templates[device.type].ports || 1;
 
         let connList = deviceConns.map(c => {
             const other = c.from.id === device.id ? c.to : c.from;
-            return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #e2e8f0;">
-                <span style="color:#475569;font-size:11px;">${other.label}</span>
+            return `<div class="prop-row">
+                <span class="prop-label">${other.label}</span>
                 <span class="badge ${c.bandwidth === '10G' ? 'badge-info' : 'badge-success'}">${c.bandwidth}</span>
             </div>`;
         }).join('');
@@ -948,15 +1018,12 @@
         content.innerHTML = `
             <div class="prop-section">
                 <div class="prop-title">Device Info</div>
-                <div class="form-group">
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-input" value="${device.label}" readonly>
+                <div class="prop-row">
+                    <span class="prop-label">Type</span>
+                    <span class="prop-value">${templates[device.type].label}</span>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Type</label>
-                    <input type="text" class="form-input" value="${templates[device.type].label}" readonly>
-                </div>
-                <div style="margin-top:10px;">
+                <div class="prop-row">
+                    <span class="prop-label">Status</span>
                     <span class="badge ${device.status === 'fault' ? 'badge-danger' : 'badge-success'}">
                         ${device.status === 'fault' ? 'FAULT' : 'Active'}
                     </span>
@@ -964,26 +1031,22 @@
             </div>
             <div class="prop-section">
                 <div class="prop-title">Port Usage</div>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    <div style="flex:1;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden;">
-                        <div style="width:${(usedPorts/totalPorts)*100}%;height:100%;background:#3b82f6;"></div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="flex:1;background:rgba(255,255,255,0.1);border-radius:4px;height:8px;overflow:hidden;">
+                        <div style="width:${(usedPorts/totalPorts)*100}%;height:100%;background:#10b981;"></div>
                     </div>
-                    <span style="font-size:11px;font-weight:600;color:#1e293b;">${usedPorts}/${totalPorts}</span>
+                    <span class="prop-value">${usedPorts}/${totalPorts}</span>
                 </div>
             </div>
             <div class="prop-section">
                 <div class="prop-title">Connections (${deviceConns.length})</div>
-                <div style="font-size:11px;">
-                    ${connList || '<span style="color:#94a3b8;">No connections</span>'}
-                </div>
+                ${connList || '<span style="color:rgba(255,255,255,0.4);">No connections</span>'}
             </div>
         `;
         document.getElementById('properties').classList.add('visible');
     }
 
-    // Tap detection on canvas
     renderer.domElement.addEventListener('click', (e) => {
-        // Only handle if not interacting with controls
         if (!input.joystickActive && !input.gas && !input.brake) {
             handleDeviceTap(e.clientX, e.clientY);
         }
@@ -1008,6 +1071,17 @@
         updateDrive();
         updateCamera();
 
+        // Infinite grid effect
+        const vehiclePos = state.vehicleGroup.position;
+        const gridStep = gridSize / gridDivisions;
+        grid.position.x = Math.floor(vehiclePos.x / gridStep) * gridStep;
+        grid.position.z = Math.floor(vehiclePos.z / gridStep) * gridStep;
+
+        // Particles follow
+        particles.position.x = vehiclePos.x * 0.5;
+        particles.position.z = vehiclePos.z * 0.5;
+        particles.rotation.y += 0.0003;
+
         state.connections.forEach(conn => {
             if (conn.status === 'normal') {
                 conn.particles.forEach(p => {
@@ -1027,7 +1101,9 @@
 
     // Prevent scroll
     document.addEventListener('touchmove', (e) => {
-        if (!e.target.closest('.fault-panel')) e.preventDefault();
+        if (!e.target.closest('.fault-panel') && !e.target.closest('.properties-content')) {
+            e.preventDefault();
+        }
     }, { passive: false });
     </script>
 </body>

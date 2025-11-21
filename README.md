@@ -14,6 +14,7 @@
 | **Editor** | [editor.html](https://hwkim3330.github.io/roii2/editor.html) | Network topology editor |
 | **Dark** | [dark.html](https://hwkim3330.github.io/roii2/dark.html) | Cyberpunk neon theme |
 | **Simple** | [simple.html](https://hwkim3330.github.io/roii2/simple.html) | Minimal clean view |
+| **Initial D** | [initiald.html](https://hwkim3330.github.io/roii2/initiald.html) | Racing drift mode |
 
 ## Architecture
 
@@ -122,6 +123,14 @@
 - White background
 - Essential controls only
 - Auto-rotate by default
+
+### Initial D Mode (initiald.html)
+- Night mountain racing aesthetic
+- Drift mechanics (Space key)
+- Speed lines effect
+- Digital speedometer & tachometer
+- Eurobeat-style UI
+- Orange neon color scheme
 
 ## Fault Simulation
 

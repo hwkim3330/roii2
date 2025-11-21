@@ -60,67 +60,24 @@ fillLight.position.set(-30, 30, -30);
 scene.add(fillLight);
 
 // === ENVIRONMENT ===
-// Infinite Road
-function createRoad() {
-    const roadGroup = new THREE.Group();
-
-    // Main road surface
-    const roadGeo = new THREE.PlaneGeometry(30, 2000);
-    const roadMat = new THREE.MeshStandardMaterial({
-        color: 0x333333,
-        roughness: 0.8
-    });
-    const road = new THREE.Mesh(roadGeo, roadMat);
-    road.rotation.x = -Math.PI / 2;
-    road.position.y = -0.1;
-    road.receiveShadow = true;
-    roadGroup.add(road);
-
-    // Center line (dashed)
-    for (let i = -500; i < 500; i += 15) {
-        const lineGeo = new THREE.PlaneGeometry(0.3, 8);
-        const lineMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-        const line = new THREE.Mesh(lineGeo, lineMat);
-        line.rotation.x = -Math.PI / 2;
-        line.position.set(0, 0, i);
-        roadGroup.add(line);
-    }
-
-    // Side lines
-    [-14, 14].forEach(x => {
-        const sideGeo = new THREE.PlaneGeometry(0.2, 2000);
-        const sideMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-        const sideLine = new THREE.Mesh(sideGeo, sideMat);
-        sideLine.rotation.x = -Math.PI / 2;
-        sideLine.position.set(x, 0.01, 0);
-        roadGroup.add(sideLine);
-    });
-
-    return roadGroup;
-}
-
-// Grid Helper
-const gridHelper = new THREE.GridHelper(400, 100, 0x3B82F6, 0xc4d4e8);
-gridHelper.material.opacity = 0.4;
+// Clean grid for network visualization (no road)
+const gridHelper = new THREE.GridHelper(200, 40, 0x3B82F6, 0xd4e4f8);
+gridHelper.material.opacity = 0.5;
 gridHelper.material.transparent = true;
 gridHelper.position.y = -0.2;
 scene.add(gridHelper);
 
-// Ground plane for shadows
-const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+// Subtle ground plane for shadows
+const groundGeo = new THREE.PlaneGeometry(500, 500);
 const groundMat = new THREE.MeshStandardMaterial({
-    color: 0xe2e8f0,
-    roughness: 0.8
+    color: 0xf0f4f8,
+    roughness: 0.9
 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = -0.3;
 ground.receiveShadow = true;
 scene.add(ground);
-
-// Add road
-const road = createRoad();
-scene.add(road);
 
 // === STATE MANAGEMENT ===
 const state = {
