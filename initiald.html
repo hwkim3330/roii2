@@ -475,7 +475,7 @@
     skyCtx.fillStyle = skyGrad;
     skyCtx.fillRect(0, 0, 2, 512);
     scene.background = new THREE.CanvasTexture(skyCanvas);
-    scene.fog = new THREE.FogExp2(0x0a0515, 0.003);
+    scene.fog = new THREE.FogExp2(0x1a1530, 0.002);
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -483,11 +483,17 @@
     renderer.shadowMap.enabled = true;
     document.getElementById('canvas3d').appendChild(renderer.domElement);
 
-    // Lighting
-    scene.add(new THREE.AmbientLight(0x404060, 0.4));
-    const moonLight = new THREE.DirectionalLight(0x8888ff, 0.3);
+    // Lighting - brighter for visibility
+    scene.add(new THREE.AmbientLight(0x6080b0, 0.8));
+    const moonLight = new THREE.DirectionalLight(0xaabbff, 0.8);
     moonLight.position.set(100, 200, 100);
+    moonLight.castShadow = true;
     scene.add(moonLight);
+
+    // Additional fill light
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    fillLight.position.set(-50, 100, -50);
+    scene.add(fillLight);
 
     // Car headlights
     const headlightL = new THREE.SpotLight(0xffffee, 2, 100, Math.PI / 6, 0.5);
@@ -507,8 +513,8 @@
             // Road segment
             const roadGeo = new THREE.PlaneGeometry(p1.width, 30);
             const roadMat = new THREE.MeshStandardMaterial({
-                color: 0x222222,
-                roughness: 0.9,
+                color: 0x444444,
+                roughness: 0.8,
                 metalness: 0.1
             });
             const road = new THREE.Mesh(roadGeo, roadMat);
@@ -582,7 +588,7 @@
 
         // Trees along the road
         const treeGeo = new THREE.ConeGeometry(3, 15, 6);
-        const treeMat = new THREE.MeshStandardMaterial({ color: 0x0a3010 });
+        const treeMat = new THREE.MeshStandardMaterial({ color: 0x1a5020 });
         const trunkGeo = new THREE.CylinderGeometry(0.5, 0.8, 5);
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2817 });
 
@@ -674,13 +680,15 @@
     loader.load('roii.glb', (gltf) => {
         vehicleModel = gltf.scene;
 
-        // Scale like drive.html
+        // Scale and position
         const box = new THREE.Box3().setFromObject(vehicleModel);
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
         const scale = 8 / Math.max(size.x, size.y, size.z);
         vehicleModel.scale.set(scale, scale, scale);
-        vehicleModel.position.set(-center.x * scale, 0, -center.z * scale);
+        // Raise vehicle above ground
+        const yOffset = size.y * scale * 0.5 + 0.5;
+        vehicleModel.position.set(-center.x * scale, yOffset, -center.z * scale);
         vehicleModel.rotation.y = Math.PI;
 
         vehicleModel.traverse((child) => {
@@ -688,13 +696,13 @@
                 child.castShadow = true;
                 if (child.material) {
                     child.material.transparent = true;
-                    child.material.opacity = 0.9;
+                    child.material.opacity = 0.95;
                     child.material.side = THREE.DoubleSide;
                     if (child.material.color) {
-                        child.material.color.multiplyScalar(1.5);
+                        child.material.color.multiplyScalar(2.5);
                     }
-                    child.material.emissive = new THREE.Color(0x333333);
-                    child.material.emissiveIntensity = 0.2;
+                    child.material.emissive = new THREE.Color(0x666666);
+                    child.material.emissiveIntensity = 0.4;
                 }
             }
         });
