@@ -400,19 +400,19 @@
         addDevice('lidar', new THREE.Vector3(0, 5.5, -18.5), 'LIDAR-RC');
 
         addDevice('camera', new THREE.Vector3(0, 10.5, 18.5), 'CAM-FC');
-        addDevice('camera', new THREE.Vector3(-2.5, 10.5, 18.5), 'CAM-FL');
-        addDevice('camera', new THREE.Vector3(2.5, 10.5, 18.5), 'CAM-FR');
-        addDevice('camera', new THREE.Vector3(-9.5, 8, 8), 'CAM-SL1');
-        addDevice('camera', new THREE.Vector3(9.5, 8, 8), 'CAM-SR1');
-        addDevice('camera', new THREE.Vector3(-9.5, 8, -8), 'CAM-SL2');
-        addDevice('camera', new THREE.Vector3(9.5, 8, -8), 'CAM-SR2');
-        addDevice('camera', new THREE.Vector3(0, 10.5, -18.5), 'CAM-RC');
+        addDevice('camera', new THREE.Vector3(0.6, 10.5, 18.5), 'CAM-FL');
+        addDevice('camera', new THREE.Vector3(-0.6, 10.5, 18.5), 'CAM-FR');
+        addDevice('camera', new THREE.Vector3(-8.5, 11, 16.5), 'CAM-SL1');
+        addDevice('camera', new THREE.Vector3(8.5, 11, 16.5), 'CAM-SR1');
+        addDevice('camera', new THREE.Vector3(-8.5, 11, 15.9), 'CAM-SL2');
+        addDevice('camera', new THREE.Vector3(8.5, 11, 15.9), 'CAM-SR2');
+        addDevice('camera', new THREE.Vector3(0, 9, -18.5), 'CAM-RC');
 
-        addDevice('radar', new THREE.Vector3(0, 3, 18.5), 'RADAR-FC');
-        addDevice('radar', new THREE.Vector3(-7, 3, 17.5), 'RADAR-FL');
-        addDevice('radar', new THREE.Vector3(7, 3, 17.5), 'RADAR-FR');
-        addDevice('radar', new THREE.Vector3(-7, 3, -17.5), 'RADAR-RL');
-        addDevice('radar', new THREE.Vector3(7, 3, -17.5), 'RADAR-RR');
+        addDevice('radar', new THREE.Vector3(0, 7, 18.5), 'RADAR-FC');
+        addDevice('radar', new THREE.Vector3(-7, 6.5, 17.5), 'RADAR-FL');
+        addDevice('radar', new THREE.Vector3(7, 6.5, 17.5), 'RADAR-FR');
+        addDevice('radar', new THREE.Vector3(-7, 6.5, -18), 'RADAR-RL');
+        addDevice('radar', new THREE.Vector3(7, 6.5, -18), 'RADAR-RR');
 
         // Connections
         createConnection(frontL, acuIT);
