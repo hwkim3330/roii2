@@ -15,115 +15,227 @@
             overflow: hidden;
             color: white;
             touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         #game { width: 100vw; height: 100vh; }
 
+        /* Screen effects */
+        .screen-flash {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 50;
+        }
+        .screen-flash.damage {
+            background: radial-gradient(circle, transparent 30%, rgba(255,0,50,0.6) 100%);
+            animation: flashDamage 0.3s ease-out;
+        }
+        .screen-flash.collect {
+            background: radial-gradient(circle, rgba(0,255,255,0.3) 0%, transparent 70%);
+            animation: flashCollect 0.2s ease-out;
+        }
+        .screen-flash.powerup {
+            background: radial-gradient(circle, rgba(0,255,0,0.4) 0%, transparent 70%);
+            animation: flashPowerup 0.4s ease-out;
+        }
+        @keyframes flashDamage { 0% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes flashCollect { 0% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes flashPowerup { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+        /* HUD */
         .hud {
             position: absolute;
             top: 0; left: 0; right: 0;
-            padding: 15px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
             pointer-events: none;
+            z-index: 10;
         }
-        .hud-item {
-            background: rgba(0,20,40,0.9);
-            border: 2px solid #00ffff;
-            padding: 8px 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0,255,255,0.3);
-        }
-        .hud-label { font-size: 9px; color: #00aaaa; letter-spacing: 1px; }
-        .hud-value { font-size: 20px; color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+        .hud-left, .hud-right { display: flex; flex-direction: column; gap: 10px; }
+        .hud-center { text-align: center; }
 
-        .network-status {
-            position: absolute;
-            top: 70px;
-            left: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .score-display {
+            font-size: 32px;
+            font-weight: 900;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+            letter-spacing: 2px;
         }
-        .sensor-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 10px;
-        }
-        .sensor-icon {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            font-weight: bold;
-        }
-        .sensor-icon.lidar { background: #9966ff; }
-        .sensor-icon.camera { background: #4488ff; }
-        .sensor-icon.radar { background: #ffaa00; }
-        .sensor-progress {
-            width: 80px;
-            height: 6px;
-            background: #111;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .sensor-fill {
-            height: 100%;
-            transition: width 0.3s;
-        }
-        .sensor-fill.lidar { background: linear-gradient(90deg, #9966ff, #cc88ff); }
-        .sensor-fill.camera { background: linear-gradient(90deg, #4488ff, #66aaff); }
-        .sensor-fill.radar { background: linear-gradient(90deg, #ffaa00, #ffcc44); }
+        .score-label { font-size: 10px; color: #00aaaa; letter-spacing: 3px; }
 
-        .bandwidth-display {
-            position: absolute;
-            top: 180px;
-            left: 15px;
+        .stat-box {
             background: rgba(0,20,40,0.9);
             border: 1px solid #00ffff;
+            padding: 8px 15px;
             border-radius: 8px;
-            padding: 10px;
-            font-size: 10px;
+            min-width: 100px;
         }
-        .bandwidth-title { color: #00aaaa; margin-bottom: 5px; }
-        .bandwidth-value {
-            font-size: 18px;
-            color: #00ff00;
-            text-shadow: 0 0 10px #00ff00;
+        .stat-label { font-size: 9px; color: #00aaaa; letter-spacing: 1px; }
+        .stat-value { font-size: 18px; color: #00ffff; }
+
+        /* Combo display */
+        .combo-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 20;
+        }
+        .combo-text {
+            font-size: 48px;
+            font-weight: 900;
+            opacity: 0;
+            transform: scale(0.5);
+            text-shadow: 0 0 30px currentColor;
+        }
+        .combo-text.show {
+            animation: comboPopup 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes comboPopup {
+            0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+            50% { opacity: 1; transform: scale(1.2) translateY(-10px); }
+            100% { opacity: 0; transform: scale(1) translateY(-30px); }
         }
 
-        .zone-indicators {
+        /* Streak counter */
+        .streak-display {
             position: absolute;
-            bottom: 80px;
+            top: 100px;
+            right: 20px;
+            text-align: right;
+            pointer-events: none;
+        }
+        .streak-count {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffaa00;
+            text-shadow: 0 0 20px #ffaa00;
+        }
+        .streak-label { font-size: 10px; color: #aa7700; }
+        .streak-multiplier {
+            font-size: 14px;
+            color: #ff6600;
+            margin-top: 5px;
+        }
+
+        /* Power-up indicators */
+        .powerup-bar {
+            position: absolute;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 20px;
+            gap: 15px;
+            pointer-events: none;
         }
-        .zone {
-            text-align: center;
-            padding: 8px 15px;
+        .powerup-slot {
+            width: 50px;
+            height: 50px;
             background: rgba(0,20,40,0.8);
-            border: 1px solid #00ffff;
-            border-radius: 5px;
-            opacity: 0.5;
+            border: 2px solid #333;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            opacity: 0.3;
             transition: all 0.3s;
+            position: relative;
         }
-        .zone.active {
+        .powerup-slot.active {
             opacity: 1;
-            box-shadow: 0 0 20px rgba(0,255,255,0.5);
             border-color: #00ff00;
+            box-shadow: 0 0 20px rgba(0,255,0,0.5);
         }
-        .zone-name { font-size: 10px; color: #00aaaa; }
-        .zone-status { font-size: 8px; color: #00ff00; }
+        .powerup-timer {
+            position: absolute;
+            bottom: -5px;
+            left: 0; right: 0;
+            height: 4px;
+            background: #00ff00;
+            border-radius: 2px;
+            transform-origin: left;
+        }
 
-        .game-over, .menu-screen, .level-complete {
+        /* Health bar */
+        .health-container {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            pointer-events: none;
+        }
+        .health-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00ffaa);
+            transition: width 0.3s, background 0.3s;
+            border-radius: 4px;
+        }
+        .health-fill.warning { background: linear-gradient(90deg, #ffaa00, #ff6600); }
+        .health-fill.danger { background: linear-gradient(90deg, #ff0044, #ff0000); }
+        .health-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Lane indicators */
+        .lane-indicators {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+            pointer-events: none;
+        }
+        .lane-dot {
+            width: 12px;
+            height: 12px;
+            border: 2px solid #00ffff;
+            border-radius: 50%;
+            opacity: 0.3;
+            transition: all 0.2s;
+        }
+        .lane-dot.active {
+            opacity: 1;
+            background: #00ffff;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        /* Touch zones */
+        .touch-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 25%;
+            z-index: 5;
+            display: none;
+        }
+        .touch-zone.left { left: 0; }
+        .touch-zone.right { right: 0; }
+        @media (pointer: coarse) {
+            .touch-zone { display: block; }
+        }
+
+        /* Menu screens */
+        .menu-screen, .game-over {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,10,20,0.95);
+            background: rgba(0,5,15,0.97);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -131,139 +243,99 @@
             z-index: 100;
         }
         .menu-screen h1 {
-            font-size: 42px;
-            margin-bottom: 10px;
+            font-size: 48px;
             color: #00ffff;
-            text-shadow: 0 0 30px #00ffff;
+            text-shadow: 0 0 40px #00ffff, 0 0 80px #00ffff;
+            margin-bottom: 10px;
+            letter-spacing: 5px;
         }
-        .menu-screen .subtitle {
+        .subtitle {
             font-size: 14px;
             color: #00aaaa;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            letter-spacing: 3px;
         }
         .game-over h1 {
-            font-size: 36px;
             color: #ff0054;
-            text-shadow: 0 0 30px #ff0054;
+            text-shadow: 0 0 40px #ff0054;
         }
-        .level-complete h1 {
-            font-size: 36px;
-            color: #00ff00;
-            text-shadow: 0 0 30px #00ff00;
+
+        .high-score {
+            font-size: 12px;
+            color: #ffaa00;
+            margin-bottom: 30px;
         }
+        .high-score span { font-size: 20px; }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
-            margin: 20px 0;
+            margin: 30px 0;
         }
         .stat-item {
             text-align: center;
-            padding: 15px;
-            background: rgba(0,255,255,0.1);
-            border: 1px solid #00ffff;
-            border-radius: 8px;
+            padding: 15px 25px;
+            background: rgba(0,255,255,0.05);
+            border: 1px solid rgba(0,255,255,0.3);
+            border-radius: 10px;
         }
-        .stat-value { font-size: 24px; color: #00ffff; }
-        .stat-label { font-size: 10px; color: #00aaaa; margin-top: 5px; }
+        .stat-item .value { font-size: 28px; color: #00ffff; }
+        .stat-item .label { font-size: 10px; color: #00aaaa; margin-top: 5px; }
 
         .btn {
-            padding: 12px 35px;
+            padding: 15px 50px;
             font-family: 'Orbitron', sans-serif;
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: bold;
             background: transparent;
             border: 2px solid #00ffff;
             color: #00ffff;
             cursor: pointer;
-            margin: 8px;
+            margin: 10px;
             transition: all 0.3s;
             border-radius: 5px;
+            letter-spacing: 3px;
             text-transform: uppercase;
-            letter-spacing: 2px;
         }
-        .btn:hover {
+        .btn:hover, .btn:active {
             background: #00ffff;
             color: #000;
-            box-shadow: 0 0 30px #00ffff;
+            box-shadow: 0 0 40px #00ffff;
+            transform: scale(1.05);
         }
 
-        .controls-hint {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
+        .controls-info {
+            margin-top: 40px;
             font-size: 11px;
-            color: #555;
+            color: #444;
             text-align: center;
+            line-height: 2;
         }
-        .controls-hint span { color: #00ffff; }
+        .controls-info span { color: #00ffff; }
 
-        .packet-counter {
+        /* Sound toggle */
+        .sound-toggle {
             position: absolute;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-        }
-        .packet-type {
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0,20,40,0.8);
+            border: 1px solid #00ffff;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 5px;
-            padding: 5px 12px;
-            background: rgba(0,20,40,0.9);
-            border-radius: 15px;
-            font-size: 12px;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 101;
+            transition: all 0.3s;
         }
-        .packet-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-        .packet-dot.lidar { background: #9966ff; box-shadow: 0 0 8px #9966ff; }
-        .packet-dot.camera { background: #4488ff; box-shadow: 0 0 8px #4488ff; }
-        .packet-dot.radar { background: #ffaa00; box-shadow: 0 0 8px #ffaa00; }
+        .sound-toggle:hover { background: rgba(0,255,255,0.2); }
+        .sound-toggle.muted { opacity: 0.5; }
 
-        .combo-display {
-            position: absolute;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 36px;
-            font-weight: 900;
-            pointer-events: none;
-            opacity: 0;
-            color: #00ffff;
-            text-shadow: 0 0 20px #00ffff;
-        }
-        .combo-display.show {
-            animation: comboAnim 0.6s ease-out;
-        }
-        @keyframes comboAnim {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-        }
-
-        .network-graph {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            width: 120px;
-            height: 60px;
-            background: rgba(0,20,40,0.9);
-            border: 1px solid #00ffff;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .network-graph canvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        .hidden { display: none !important; }
-
+        /* Loading */
         .loading {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -283,207 +355,389 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text {
-            margin-top: 20px;
-            color: #00ffff;
-            font-size: 14px;
-        }
+        .loading-text { margin-top: 20px; color: #00ffff; font-size: 14px; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div class="loading" id="loading">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Loading TSN Network...</div>
+        <div class="loading-text">INITIALIZING TSN NETWORK...</div>
     </div>
 
     <div id="game"></div>
+    <div class="screen-flash" id="screenFlash"></div>
 
+    <!-- Touch zones for mobile -->
+    <div class="touch-zone left" id="touchLeft"></div>
+    <div class="touch-zone right" id="touchRight"></div>
+
+    <!-- HUD -->
     <div class="hud hidden" id="hud">
-        <div class="hud-item">
-            <div class="hud-label">THROUGHPUT</div>
-            <div class="hud-value" id="score">0</div>
-        </div>
-        <div class="hud-item">
-            <div class="hud-label">DISTANCE</div>
-            <div class="hud-value" id="distance">0m</div>
-        </div>
-        <div class="hud-item">
-            <div class="hud-label">LEVEL</div>
-            <div class="hud-value" id="level">1</div>
-        </div>
-        <div class="hud-item">
-            <div class="hud-label">BANDWIDTH</div>
-            <div class="hud-value" id="speed">0 Gbps</div>
-        </div>
-    </div>
-
-    <div class="network-status hidden" id="networkStatus">
-        <div class="sensor-bar">
-            <div class="sensor-icon lidar">L</div>
-            <span>LiDAR</span>
-            <div class="sensor-progress"><div class="sensor-fill lidar" id="lidarFill" style="width:0%"></div></div>
-            <span id="lidarCount">0</span>
-        </div>
-        <div class="sensor-bar">
-            <div class="sensor-icon camera">C</div>
-            <span>Camera</span>
-            <div class="sensor-progress"><div class="sensor-fill camera" id="cameraFill" style="width:0%"></div></div>
-            <span id="cameraCount">0</span>
-        </div>
-        <div class="sensor-bar">
-            <div class="sensor-icon radar">R</div>
-            <span>Radar</span>
-            <div class="sensor-progress"><div class="sensor-fill radar" id="radarFill" style="width:0%"></div></div>
-            <span id="radarCount">0</span>
-        </div>
-    </div>
-
-    <div class="bandwidth-display hidden" id="bandwidthDisplay">
-        <div class="bandwidth-title">NETWORK HEALTH</div>
-        <div class="bandwidth-value" id="networkHealth">100%</div>
-    </div>
-
-    <div class="zone-indicators hidden" id="zoneIndicators">
-        <div class="zone" id="zoneFL">
-            <div class="zone-name">FRONT-L</div>
-            <div class="zone-status">9692</div>
-        </div>
-        <div class="zone" id="zoneACU">
-            <div class="zone-name">ACU_IT</div>
-            <div class="zone-status">HPC</div>
-        </div>
-        <div class="zone" id="zoneFR">
-            <div class="zone-name">FRONT-R</div>
-            <div class="zone-status">9692</div>
-        </div>
-    </div>
-
-    <div class="combo-display" id="combo"></div>
-
-    <div class="network-graph hidden" id="networkGraph">
-        <canvas id="graphCanvas"></canvas>
-    </div>
-
-    <div class="menu-screen" id="menuScreen">
-        <h1>TSN DATA RUNNER</h1>
-        <div class="subtitle">Collect sensor data packets | Avoid network faults</div>
-        <img src="keti.png" style="width:80px;margin:20px;opacity:0.8;">
-        <div style="margin:20px;padding:20px;background:rgba(0,255,255,0.1);border-radius:10px;max-width:350px;">
-            <div style="font-size:12px;color:#00aaaa;margin-bottom:10px;">MISSION OBJECTIVE</div>
-            <div style="font-size:11px;color:#888;line-height:1.6;">
-                Collect data packets from LiDAR, Camera, and Radar sensors.
-                Avoid network faults and packet loss events.
-                Reach the bandwidth threshold to complete each level.
+        <div class="hud-left">
+            <div class="stat-box">
+                <div class="stat-label">LEVEL</div>
+                <div class="stat-value" id="level">1</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">DISTANCE</div>
+                <div class="stat-value" id="distance">0m</div>
             </div>
         </div>
-        <button class="btn" onclick="startGame()">START TRANSMISSION</button>
-        <div style="margin-top:30px;font-size:11px;color:#444;">
-            <p>← → or A/D : Switch Lanes</p>
-            <p>↑ or SPACE : Jump</p>
-            <p>Swipe on mobile</p>
+        <div class="hud-center">
+            <div class="score-label">THROUGHPUT</div>
+            <div class="score-display" id="score">0</div>
+        </div>
+        <div class="hud-right">
+            <div class="stat-box">
+                <div class="stat-label">SPEED</div>
+                <div class="stat-value" id="speed">0 Gbps</div>
+            </div>
         </div>
     </div>
 
+    <!-- Streak display -->
+    <div class="streak-display hidden" id="streakDisplay">
+        <div class="streak-count" id="streakCount">0</div>
+        <div class="streak-label">STREAK</div>
+        <div class="streak-multiplier" id="multiplier">x1.0</div>
+    </div>
+
+    <!-- Combo popup -->
+    <div class="combo-container" id="comboContainer">
+        <div class="combo-text" id="comboText"></div>
+    </div>
+
+    <!-- Power-up bar -->
+    <div class="powerup-bar hidden" id="powerupBar">
+        <div class="powerup-slot" id="powerShield" title="Shield">🛡️</div>
+        <div class="powerup-slot" id="powerMagnet" title="Magnet">🧲</div>
+        <div class="powerup-slot" id="powerDouble" title="2x Score">✨</div>
+    </div>
+
+    <!-- Lane indicators -->
+    <div class="lane-indicators hidden" id="laneIndicators">
+        <div class="lane-dot" id="lane-1"></div>
+        <div class="lane-dot active" id="lane0"></div>
+        <div class="lane-dot" id="lane1"></div>
+    </div>
+
+    <!-- Health bar -->
+    <div class="health-container hidden" id="healthContainer">
+        <div class="health-bar">
+            <div class="health-fill" id="healthFill" style="width: 100%"></div>
+        </div>
+        <div class="health-label">
+            <span>NETWORK HEALTH</span>
+            <span id="healthPercent">100%</span>
+        </div>
+    </div>
+
+    <!-- Sound toggle -->
+    <div class="sound-toggle" id="soundToggle">🔊</div>
+
+    <!-- Menu screen -->
+    <div class="menu-screen" id="menuScreen">
+        <h1>TSN RUNNER</h1>
+        <div class="subtitle">COLLECT DATA • AVOID FAULTS • SURVIVE</div>
+        <img src="keti.png" style="width:70px;margin:20px;opacity:0.7;">
+        <div class="high-score" id="highScoreDisplay">HIGH SCORE: <span>0</span></div>
+        <button class="btn" onclick="startGame()">START</button>
+        <div class="controls-info">
+            <span>←</span> <span>→</span> or <span>A</span> <span>D</span> : Switch Lanes<br>
+            <span>SPACE</span> or <span>↑</span> : Jump (Double Jump!)<br>
+            <span>↓</span> or <span>S</span> : Slide<br>
+            <span>Mobile</span>: Tap sides to move, Swipe up/down
+        </div>
+    </div>
+
+    <!-- Game over screen -->
     <div class="game-over hidden" id="gameOver">
         <h1>NETWORK FAILURE</h1>
-        <div class="subtitle" style="color:#ff6666;">Connection Lost</div>
+        <div class="subtitle">CONNECTION TERMINATED</div>
         <div class="stats-grid">
             <div class="stat-item">
-                <div class="stat-value" id="finalScore">0</div>
-                <div class="stat-label">THROUGHPUT</div>
+                <div class="value" id="finalScore">0</div>
+                <div class="label">THROUGHPUT</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="finalDistance">0m</div>
-                <div class="stat-label">DISTANCE</div>
+                <div class="value" id="finalDistance">0m</div>
+                <div class="label">DISTANCE</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="finalPackets">0</div>
-                <div class="stat-label">PACKETS</div>
+                <div class="value" id="finalStreak">0</div>
+                <div class="label">BEST STREAK</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="finalLevel">1</div>
-                <div class="stat-label">LEVEL</div>
+                <div class="value" id="finalLevel">1</div>
+                <div class="label">LEVEL</div>
             </div>
         </div>
-        <button class="btn" onclick="startGame()">RECONNECT</button>
-        <button class="btn" onclick="showMenu()">MAIN MENU</button>
-    </div>
-
-    <div class="level-complete hidden" id="levelComplete">
-        <h1>TSN SYNCHRONIZED!</h1>
-        <div class="subtitle" style="color:#00ff00;">Level <span id="completedLevel">1</span> Complete</div>
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-value" id="levelScore">0</div>
-                <div class="stat-label">THROUGHPUT</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="levelPackets">0</div>
-                <div class="stat-label">PACKETS</div>
-            </div>
-        </div>
-        <button class="btn" onclick="nextLevel()">NEXT LEVEL</button>
-    </div>
-
-    <div class="controls-hint hidden" id="controlsHint">
-        <span>←</span> <span>→</span> Switch Lanes | <span>SPACE</span> Jump | Collect TSN Data Packets
+        <div id="newHighScore" class="hidden" style="color:#ffaa00;font-size:18px;margin:10px;">NEW HIGH SCORE!</div>
+        <button class="btn" onclick="startGame()">RETRY</button>
+        <button class="btn" onclick="showMenu()" style="border-color:#666;color:#666;">MENU</button>
     </div>
 
     <script>
-    // === GAME CONFIG ===
-    const LANE_WIDTH = 4;
-    const LANE_COUNT = 3;
-    const SPAWN_DISTANCE = 120;
+    // ==================== AUDIO ENGINE ====================
+    class AudioEngine {
+        constructor() {
+            this.ctx = null;
+            this.enabled = true;
+            this.masterGain = null;
+            this.sounds = {};
+        }
+
+        init() {
+            if (this.ctx) return;
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.connect(this.ctx.destination);
+            this.masterGain.gain.value = 0.3;
+        }
+
+        resume() {
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        }
+
+        toggle() {
+            this.enabled = !this.enabled;
+            if (this.masterGain) {
+                this.masterGain.gain.value = this.enabled ? 0.3 : 0;
+            }
+            return this.enabled;
+        }
+
+        // Synthesize sounds
+        playJump() {
+            if (!this.ctx || !this.enabled) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.15);
+        }
+
+        playDoubleJump() {
+            if (!this.ctx || !this.enabled) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(500, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1000, this.ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.15);
+        }
+
+        playSlide() {
+            if (!this.ctx || !this.enabled) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.1);
+        }
+
+        playCollect(type) {
+            if (!this.ctx || !this.enabled) return;
+            const freqs = { lidar: 800, camera: 600, radar: 700 };
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.type = 'sine';
+            const baseFreq = freqs[type] || 600;
+            osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, this.ctx.currentTime + 0.05);
+            osc.frequency.exponentialRampToValueAtTime(baseFreq * 2, this.ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.15);
+        }
+
+        playCombo(level) {
+            if (!this.ctx || !this.enabled) return;
+            const baseFreq = 400 + level * 50;
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.type = 'sine';
+                    osc.frequency.value = baseFreq + i * 200;
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.1);
+                }, i * 50);
+            }
+        }
+
+        playDamage() {
+            if (!this.ctx || !this.enabled) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.25);
+        }
+
+        playPowerup() {
+            if (!this.ctx || !this.enabled) return;
+            const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+            notes.forEach((freq, i) => {
+                setTimeout(() => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.15);
+                }, i * 80);
+            });
+        }
+
+        playGameOver() {
+            if (!this.ctx || !this.enabled) return;
+            const notes = [400, 350, 300, 200];
+            notes.forEach((freq, i) => {
+                setTimeout(() => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.type = 'sawtooth';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.3);
+                }, i * 150);
+            });
+        }
+
+        playLevelUp() {
+            if (!this.ctx || !this.enabled) return;
+            const notes = [523, 659, 784, 1047, 1319];
+            notes.forEach((freq, i) => {
+                setTimeout(() => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.2);
+                }, i * 100);
+            });
+        }
+    }
+
+    const audio = new AudioEngine();
+
+    // ==================== GAME CONFIG ====================
+    const CONFIG = {
+        LANE_WIDTH: 4,
+        LANE_COUNT: 3,
+        SPAWN_DISTANCE: 100,
+        BASE_SPEED: 30,
+        MAX_SPEED: 100,
+        GRAVITY: 70,
+        JUMP_FORCE: 22,
+        DOUBLE_JUMP_FORCE: 18,
+        SLIDE_DURATION: 0.5,
+        LEVEL_DISTANCE: [500, 1200, 2000, 3000, 4500, 6500, 9000, 12000],
+        POWERUP_DURATION: 8,
+    };
+
     const PACKET_TYPES = ['lidar', 'camera', 'radar'];
     const PACKET_COLORS = { lidar: 0x9966ff, camera: 0x4488ff, radar: 0xffaa00 };
     const PACKET_VALUES = { lidar: 100, camera: 50, radar: 75 };
-    const LEVEL_TARGETS = [1000, 2500, 5000, 10000, 20000];
 
-    // === GAME STATE ===
+    // ==================== GAME STATE ====================
     let gameState = 'loading';
     let score = 0;
     let distance = 0;
     let level = 1;
-    let networkHealth = 100;
-    let speed = 25;
-    let packetCounts = { lidar: 0, camera: 0, radar: 0 };
-    let totalPackets = 0;
-    let combo = 0;
-    let isInvincible = false;
-    let lastDamageTime = 0;
-    let graphData = [];
+    let health = 100;
+    let speed = CONFIG.BASE_SPEED;
+    let streak = 0;
+    let maxStreak = 0;
+    let multiplier = 1;
+    let highScore = parseInt(localStorage.getItem('runner_highscore') || '0');
 
-    // Player state
+    // Player physics
     let playerLane = 0;
     let playerY = 0;
     let velocityY = 0;
-    let isJumping = false;
-    const GRAVITY = 60;
-    const JUMP_FORCE = 20;
+    let jumpCount = 0;
+    let isSliding = false;
+    let slideTimer = 0;
+
+    // Power-ups
+    let powerups = { shield: 0, magnet: 0, double: 0 };
+
+    // Screen shake
+    let shakeAmount = 0;
+    let shakeDecay = 0.9;
 
     // Objects
     let objects = [];
     let particles = [];
-    let vehicleModel = null;
-    let sensorEffects = [];
+    let trails = [];
 
-    // === THREE.JS SETUP ===
+    // ==================== THREE.JS SETUP ====================
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000815);
-    scene.fog = new THREE.FogExp2(0x000815, 0.012);
+    scene.background = new THREE.Color(0x000510);
+    scene.fog = new THREE.FogExp2(0x000510, 0.008);
 
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 6, 12);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 5, 10);
     camera.lookAt(0, 1, -20);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.getElementById('game').appendChild(renderer.domElement);
 
     // Lighting
-    scene.add(new THREE.AmbientLight(0x404080, 0.6));
+    scene.add(new THREE.AmbientLight(0x404080, 0.5));
+
     const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
     mainLight.position.set(10, 30, 10);
     mainLight.castShadow = true;
@@ -491,421 +745,403 @@
     mainLight.shadow.mapSize.height = 2048;
     scene.add(mainLight);
 
-    // Cyan rim light
-    const rimLight = new THREE.DirectionalLight(0x00ffff, 0.4);
+    const rimLight = new THREE.DirectionalLight(0x00ffff, 0.3);
     rimLight.position.set(-10, 10, -10);
     scene.add(rimLight);
 
-    // === NETWORK ROAD ===
-    function createNetworkRoad() {
-        // Main road surface
-        const roadGeo = new THREE.PlaneGeometry(15, 300);
+    // ==================== TRACK ====================
+    function createTrack() {
+        // Main road
+        const roadGeo = new THREE.PlaneGeometry(18, 400);
         const roadMat = new THREE.MeshStandardMaterial({
-            color: 0x050510,
-            metalness: 0.3,
-            roughness: 0.8
+            color: 0x030308,
+            metalness: 0.2,
+            roughness: 0.9
         });
         const road = new THREE.Mesh(roadGeo, roadMat);
         road.rotation.x = -Math.PI / 2;
-        road.position.z = -100;
+        road.position.z = -150;
         road.receiveShadow = true;
         scene.add(road);
 
-        // Network grid lines
-        const gridGroup = new THREE.Group();
-        const lineMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.15 });
-
-        // Horizontal lines
-        for (let z = -200; z <= 50; z += 5) {
+        // Grid lines
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.1 });
+        for (let z = -300; z <= 50; z += 5) {
             const geo = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(-7, 0.02, z),
-                new THREE.Vector3(7, 0.02, z)
+                new THREE.Vector3(-9, 0.01, z),
+                new THREE.Vector3(9, 0.01, z)
             ]);
-            gridGroup.add(new THREE.Line(geo, lineMat));
+            scene.add(new THREE.Line(geo, lineMat));
         }
 
-        // Vertical lines (lane markers)
-        for (let x = -6; x <= 6; x += 2) {
-            const geo = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(x, 0.02, -200),
-                new THREE.Vector3(x, 0.02, 50)
-            ]);
-            gridGroup.add(new THREE.Line(geo, lineMat));
-        }
-        scene.add(gridGroup);
+        // Lane dividers
+        const dividerMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.3 });
+        [-CONFIG.LANE_WIDTH, CONFIG.LANE_WIDTH].forEach(x => {
+            for (let z = -300; z < 50; z += 8) {
+                const divGeo = new THREE.PlaneGeometry(0.15, 4);
+                const div = new THREE.Mesh(divGeo, dividerMat);
+                div.rotation.x = -Math.PI / 2;
+                div.position.set(x, 0.02, z);
+                scene.add(div);
+            }
+        });
 
-        // Lane center indicators
-        for (let i = -1; i <= 1; i++) {
-            const laneGeo = new THREE.PlaneGeometry(0.3, 300);
-            const laneMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
-                transparent: true,
-                opacity: 0.2
-            });
-            const lane = new THREE.Mesh(laneGeo, laneMat);
-            lane.rotation.x = -Math.PI / 2;
-            lane.position.set(i * LANE_WIDTH, 0.03, -100);
-            scene.add(lane);
-        }
-
-        // Side rails (network backbone)
-        [-8, 8].forEach(x => {
-            const railGeo = new THREE.BoxGeometry(0.3, 0.5, 300);
-            const railMat = new THREE.MeshStandardMaterial({
-                color: 0x003344,
+        // Side barriers with glow
+        [-10, 10].forEach(x => {
+            const barrierGeo = new THREE.BoxGeometry(0.5, 1, 400);
+            const barrierMat = new THREE.MeshStandardMaterial({
+                color: 0x001020,
                 emissive: 0x001122,
-                metalness: 0.8
+                metalness: 0.9
             });
-            const rail = new THREE.Mesh(railGeo, railMat);
-            rail.position.set(x, 0.25, -100);
-            scene.add(rail);
+            const barrier = new THREE.Mesh(barrierGeo, barrierMat);
+            barrier.position.set(x, 0.5, -150);
+            scene.add(barrier);
 
-            // Glowing top
-            const glowGeo = new THREE.BoxGeometry(0.1, 0.1, 300);
+            // Glow strip
+            const glowGeo = new THREE.BoxGeometry(0.1, 0.1, 400);
             const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
             const glow = new THREE.Mesh(glowGeo, glowMat);
-            glow.position.set(x, 0.55, -100);
+            glow.position.set(x - Math.sign(x) * 0.25, 1, -150);
             scene.add(glow);
         });
     }
-    createNetworkRoad();
+    createTrack();
 
-    // === PLAYER GROUP ===
+    // ==================== PLAYER ====================
     const playerGroup = new THREE.Group();
     scene.add(playerGroup);
 
-    // Sensor visualization group
-    const sensorGroup = new THREE.Group();
-    playerGroup.add(sensorGroup);
-
-    // === LOAD VEHICLE MODEL ===
+    let vehicleModel = null;
     const loader = new THREE.GLTFLoader();
+
     loader.load('roii.glb', (gltf) => {
         vehicleModel = gltf.scene;
-        vehicleModel.scale.set(3.5, 3.5, 3.5);
+
+        const box = new THREE.Box3().setFromObject(vehicleModel);
+        const size = box.getSize(new THREE.Vector3());
+        const scale = 5 / Math.max(size.x, size.y, size.z);
+        vehicleModel.scale.set(scale, scale, scale);
         vehicleModel.rotation.y = Math.PI;
 
         vehicleModel.traverse((child) => {
-            if (child.isMesh) {
+            if (child.isMesh && child.material) {
                 child.castShadow = true;
-                child.receiveShadow = true;
-                if (child.material) {
+                child.material.transparent = true;
+                child.material.opacity = 0.9;
+                if (child.material.color) {
                     child.material.color.multiplyScalar(1.5);
-                    child.material.emissive = new THREE.Color(0x333333);
-                    child.material.emissiveIntensity = 0.2;
                 }
+                child.material.emissive = new THREE.Color(0x333333);
+                child.material.emissiveIntensity = 0.2;
             }
         });
 
         playerGroup.add(vehicleModel);
-        createSensorEffects();
-
-        document.getElementById('loading').classList.add('hidden');
-        gameState = 'menu';
-    }, undefined, (error) => {
-        console.error('Error loading model:', error);
+        createPlayerEffects();
+        finishLoading();
+    }, undefined, () => {
         createFallbackVehicle();
-        document.getElementById('loading').classList.add('hidden');
-        gameState = 'menu';
+        finishLoading();
     });
 
     function createFallbackVehicle() {
-        // Fallback box vehicle if model fails to load
-        const bodyGeo = new THREE.BoxGeometry(2, 0.8, 3.5);
+        const bodyGeo = new THREE.BoxGeometry(2.5, 1, 4);
         const bodyMat = new THREE.MeshStandardMaterial({
             color: 0x00ffff,
-            metalness: 0.8,
-            roughness: 0.2,
             emissive: 0x004444,
-            emissiveIntensity: 0.3
+            metalness: 0.8,
+            roughness: 0.2
         });
         const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.y = 0.6;
+        body.position.y = 0.7;
         body.castShadow = true;
         playerGroup.add(body);
-        createSensorEffects();
+        createPlayerEffects();
     }
 
-    function createSensorEffects() {
-        // LiDAR pulse effect (top of vehicle)
-        const lidarGeo = new THREE.RingGeometry(0.1, 0.4, 32);
+    function createPlayerEffects() {
+        // Engine glow
+        const glowGeo = new THREE.BoxGeometry(0.4, 0.2, 0.1);
+        const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+        [-0.6, 0.6].forEach(x => {
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            glow.position.set(x, 0.5, 2);
+            playerGroup.add(glow);
+        });
+
+        // LiDAR ring on top
+        const lidarGeo = new THREE.RingGeometry(0.2, 0.4, 16);
         const lidarMat = new THREE.MeshBasicMaterial({
-            color: 0x9966ff,
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide
+            color: 0x9966ff, transparent: true, opacity: 0.8, side: THREE.DoubleSide
         });
         const lidar = new THREE.Mesh(lidarGeo, lidarMat);
         lidar.rotation.x = -Math.PI / 2;
-        lidar.position.set(0, 1.8, 0);
-        sensorGroup.add(lidar);
-        sensorEffects.push({ mesh: lidar, type: 'lidar', phase: 0 });
-
-        // Camera indicators (front)
-        const camGeo = new THREE.BoxGeometry(0.15, 0.15, 0.05);
-        const camMat = new THREE.MeshBasicMaterial({ color: 0x4488ff });
-        [-0.6, 0, 0.6].forEach(x => {
-            const cam = new THREE.Mesh(camGeo, camMat);
-            cam.position.set(x, 1.2, -1.8);
-            sensorGroup.add(cam);
-            sensorEffects.push({ mesh: cam, type: 'camera', phase: Math.random() * Math.PI * 2 });
-        });
-
-        // Radar indicators (corners)
-        const radarGeo = new THREE.ConeGeometry(0.1, 0.2, 4);
-        const radarMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
-        [[-1, 1.0, -1.5], [1, 1.0, -1.5]].forEach(pos => {
-            const radar = new THREE.Mesh(radarGeo, radarMat);
-            radar.position.set(...pos);
-            radar.rotation.x = Math.PI / 2;
-            sensorGroup.add(radar);
-            sensorEffects.push({ mesh: radar, type: 'radar', phase: Math.random() * Math.PI * 2 });
-        });
-
-        // Engine glow
-        const glowGeo = new THREE.BoxGeometry(0.3, 0.15, 0.1);
-        const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-        [-0.5, 0.5].forEach(x => {
-            const glow = new THREE.Mesh(glowGeo, glowMat);
-            glow.position.set(x, 0.4, 1.8);
-            sensorGroup.add(glow);
-        });
+        lidar.position.y = 2;
+        playerGroup.add(lidar);
+        playerGroup.userData.lidar = lidar;
     }
 
-    // === DATA PACKET CREATION ===
+    function finishLoading() {
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('highScoreDisplay').querySelector('span').textContent = highScore.toLocaleString();
+        gameState = 'menu';
+    }
+
+    // ==================== GAME OBJECTS ====================
     function createDataPacket(x, z, type) {
         const group = new THREE.Group();
         const color = PACKET_COLORS[type];
 
-        // Core geometry varies by type
         let coreGeo;
-        if (type === 'lidar') {
-            coreGeo = new THREE.OctahedronGeometry(0.4);
-        } else if (type === 'camera') {
-            coreGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-        } else {
-            coreGeo = new THREE.TetrahedronGeometry(0.4);
-        }
+        if (type === 'lidar') coreGeo = new THREE.OctahedronGeometry(0.5);
+        else if (type === 'camera') coreGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+        else coreGeo = new THREE.TetrahedronGeometry(0.5);
 
         const coreMat = new THREE.MeshStandardMaterial({
-            color: color,
-            emissive: color,
-            emissiveIntensity: 1.5,
-            metalness: 1,
-            roughness: 0
+            color, emissive: color, emissiveIntensity: 2, metalness: 1, roughness: 0
         });
-        const core = new THREE.Mesh(coreGeo, coreMat);
-        group.add(core);
+        group.add(new THREE.Mesh(coreGeo, coreMat));
 
-        // Outer glow ring
-        const ringGeo = new THREE.RingGeometry(0.5, 0.6, 16);
-        const ringMat = new THREE.MeshBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.5,
-            side: THREE.DoubleSide
-        });
+        // Outer ring
+        const ringGeo = new THREE.RingGeometry(0.6, 0.75, 16);
+        const ringMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
         const ring = new THREE.Mesh(ringGeo, ringMat);
         ring.rotation.x = Math.PI / 2;
         group.add(ring);
 
-        // Point light
-        const light = new THREE.PointLight(color, 0.5, 3);
-        group.add(light);
+        // Light
+        group.add(new THREE.PointLight(color, 0.5, 4));
 
         group.position.set(x, 1.5, z);
         scene.add(group);
-
         return { type: 'packet', packetType: type, mesh: group, x, z, y: 1.5, active: true };
     }
 
-    // === NETWORK FAULT (OBSTACLE) ===
-    function createNetworkFault(x, z) {
+    function createObstacle(x, z, obstacleType = 'fault') {
         const group = new THREE.Group();
 
-        // Error box
-        const boxGeo = new THREE.BoxGeometry(1.2, 2, 1.2);
-        const boxMat = new THREE.MeshStandardMaterial({
-            color: 0xff0044,
-            emissive: 0x330011,
-            metalness: 0.5,
-            roughness: 0.3
-        });
-        const box = new THREE.Mesh(boxGeo, boxMat);
-        box.position.y = 1;
-        box.castShadow = true;
-        group.add(box);
+        if (obstacleType === 'fault') {
+            // Tall obstacle - must jump
+            const boxGeo = new THREE.BoxGeometry(1.5, 2.5, 1.5);
+            const boxMat = new THREE.MeshStandardMaterial({
+                color: 0xff0044, emissive: 0x330011, metalness: 0.5
+            });
+            const box = new THREE.Mesh(boxGeo, boxMat);
+            box.position.y = 1.25;
+            box.castShadow = true;
+            group.add(box);
 
-        // Warning wireframe
-        const wireGeo = new THREE.BoxGeometry(1.4, 2.2, 1.4);
-        const wireMat = new THREE.MeshBasicMaterial({
-            color: 0xff0044,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.6
-        });
-        const wire = new THREE.Mesh(wireGeo, wireMat);
-        wire.position.y = 1;
-        group.add(wire);
+            // Wireframe
+            const wireMat = new THREE.MeshBasicMaterial({ color: 0xff0044, wireframe: true, transparent: true, opacity: 0.5 });
+            const wire = new THREE.Mesh(new THREE.BoxGeometry(1.7, 2.7, 1.7), wireMat);
+            wire.position.y = 1.25;
+            group.add(wire);
 
-        // X symbol on top
-        const xMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
-        const xGeo = new THREE.BoxGeometry(0.8, 0.1, 0.15);
-        [Math.PI / 4, -Math.PI / 4].forEach(rot => {
-            const xBar = new THREE.Mesh(xGeo, xMat);
-            xBar.rotation.z = rot;
-            xBar.position.y = 2.2;
-            group.add(xBar);
-        });
+            group.add(new THREE.PointLight(0xff0044, 0.6, 5));
+        } else if (obstacleType === 'low') {
+            // Low obstacle - must slide
+            const boxGeo = new THREE.BoxGeometry(2, 1, 1.5);
+            const boxMat = new THREE.MeshStandardMaterial({
+                color: 0xff6600, emissive: 0x331100, metalness: 0.5
+            });
+            const box = new THREE.Mesh(boxGeo, boxMat);
+            box.position.y = 1.8;
+            box.castShadow = true;
+            group.add(box);
 
-        // Danger light
-        const light = new THREE.PointLight(0xff0044, 0.8, 5);
-        light.position.y = 2.5;
-        group.add(light);
+            group.add(new THREE.PointLight(0xff6600, 0.4, 4));
+        } else {
+            // Laser gate - must slide
+            const poleGeo = new THREE.CylinderGeometry(0.1, 0.1, 3);
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            [-1, 1].forEach(side => {
+                const pole = new THREE.Mesh(poleGeo, poleMat);
+                pole.position.set(side * 1.2, 1.5, 0);
+                group.add(pole);
+            });
+
+            // Laser beam
+            const laserGeo = new THREE.BoxGeometry(2.4, 0.1, 0.1);
+            const laserMat = new THREE.MeshBasicMaterial({ color: 0xff0066 });
+            const laser = new THREE.Mesh(laserGeo, laserMat);
+            laser.position.y = 2;
+            group.add(laser);
+            group.userData.laser = laser;
+
+            group.add(new THREE.PointLight(0xff0066, 0.5, 4));
+        }
 
         group.position.set(x, 0, z);
         scene.add(group);
-
-        return { type: 'fault', mesh: group, x, z, active: true };
+        return { type: 'obstacle', obstacleType, mesh: group, x, z, active: true };
     }
 
-    // === PACKET LOSS EVENT ===
-    function createPacketLoss(x, z) {
+    function createPowerup(x, z, powerType) {
         const group = new THREE.Group();
+        const colors = { shield: 0x00ff00, magnet: 0xff00ff, double: 0xffff00 };
+        const color = colors[powerType];
 
-        // Glitchy cube
-        const geo = new THREE.IcosahedronGeometry(0.6);
-        const mat = new THREE.MeshBasicMaterial({
-            color: 0xff6600,
-            wireframe: true
+        // Sphere
+        const sphereGeo = new THREE.SphereGeometry(0.5, 16, 16);
+        const sphereMat = new THREE.MeshStandardMaterial({
+            color, emissive: color, emissiveIntensity: 1, metalness: 0.9, roughness: 0.1
         });
-        const mesh = new THREE.Mesh(geo, mat);
-        group.add(mesh);
+        group.add(new THREE.Mesh(sphereGeo, sphereMat));
 
-        // Inner warning
-        const innerGeo = new THREE.IcosahedronGeometry(0.4);
-        const innerMat = new THREE.MeshStandardMaterial({
-            color: 0xff3300,
-            emissive: 0xff2200,
-            emissiveIntensity: 0.5
-        });
-        group.add(new THREE.Mesh(innerGeo, innerMat));
-
-        group.position.set(x, 1, z);
-        scene.add(group);
-
-        return { type: 'packetloss', mesh: group, x, z, active: true };
-    }
-
-    // === ZONE BONUS ===
-    function createZoneBonus(x, z, zone) {
-        const group = new THREE.Group();
-
-        const geo = new THREE.CylinderGeometry(0.6, 0.6, 0.3, 6);
-        const mat = new THREE.MeshStandardMaterial({
-            color: 0x00ff00,
-            emissive: 0x00ff00,
-            emissiveIntensity: 1,
-            metalness: 0.9
-        });
-        const mesh = new THREE.Mesh(geo, mat);
-        group.add(mesh);
-
-        // Ring
-        const ringGeo = new THREE.TorusGeometry(0.8, 0.05, 8, 16);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        // Outer ring
+        const ringGeo = new THREE.TorusGeometry(0.7, 0.05, 8, 16);
+        const ringMat = new THREE.MeshBasicMaterial({ color });
         const ring = new THREE.Mesh(ringGeo, ringMat);
-        ring.rotation.x = Math.PI / 2;
         group.add(ring);
+        group.userData.ring = ring;
 
-        group.position.set(x, 1.2, z);
+        group.add(new THREE.PointLight(color, 0.6, 5));
+
+        group.position.set(x, 1.5, z);
         scene.add(group);
-
-        return { type: 'zone', zone: zone, mesh: group, x, z, y: 1.2, active: true };
+        return { type: 'powerup', powerType, mesh: group, x, z, y: 1.5, active: true };
     }
 
-    // === PARTICLE SYSTEM ===
-    function spawnParticles(x, y, z, color, count = 15) {
+    // ==================== PARTICLES ====================
+    function spawnParticles(x, y, z, color, count = 20) {
         for (let i = 0; i < count; i++) {
-            const geo = new THREE.OctahedronGeometry(0.08);
+            const geo = new THREE.OctahedronGeometry(0.1);
             const mat = new THREE.MeshBasicMaterial({ color });
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(x, y, z);
             scene.add(mesh);
-
             particles.push({
                 mesh,
-                vx: (Math.random() - 0.5) * 8,
-                vy: Math.random() * 6 + 2,
-                vz: (Math.random() - 0.5) * 8,
+                vx: (Math.random() - 0.5) * 10,
+                vy: Math.random() * 8 + 3,
+                vz: (Math.random() - 0.5) * 10,
                 life: 1
             });
         }
     }
 
-    // === SPAWNING ===
+    function spawnTrail() {
+        if (gameState !== 'playing') return;
+        const geo = new THREE.BoxGeometry(0.3, 0.1, 0.3);
+        const mat = new THREE.MeshBasicMaterial({
+            color: 0x00ffff, transparent: true, opacity: 0.6
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.copy(playerGroup.position);
+        mesh.position.y = 0.1;
+        scene.add(mesh);
+        trails.push({ mesh, life: 1 });
+    }
+
+    // ==================== SPAWNING ====================
     let spawnTimer = 0;
+    let lastSpawnZ = -30;
 
     function spawnObjects(delta) {
         if (gameState !== 'playing') return;
 
         spawnTimer += delta;
-        if (spawnTimer < 0.3) return;
+        if (spawnTimer < 0.25) return;
         spawnTimer = 0;
 
+        // Find furthest object
         let furthestZ = -30;
-        objects.forEach(obj => {
-            if (obj.z < furthestZ) furthestZ = obj.z;
-        });
+        objects.forEach(obj => { if (obj.z < furthestZ) furthestZ = obj.z; });
 
-        if (furthestZ > -SPAWN_DISTANCE) {
-            const spawnZ = furthestZ - (10 + Math.random() * 15);
-
+        if (furthestZ > -CONFIG.SPAWN_DISTANCE) {
+            const spawnZ = furthestZ - (12 + Math.random() * 10);
             const rand = Math.random();
 
-            if (rand < 0.5) {
-                // Data packet
-                const lane = Math.floor(Math.random() * LANE_COUNT) - 1;
+            if (rand < 0.45) {
+                // Data packets
+                const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT) - 1;
                 const type = PACKET_TYPES[Math.floor(Math.random() * PACKET_TYPES.length)];
-                objects.push(createDataPacket(lane * LANE_WIDTH, spawnZ, type));
-            } else if (rand < 0.8) {
-                // Network fault
-                const faultCount = level >= 2 && Math.random() > 0.7 ? 2 : 1;
-                const usedLanes = [];
-                for (let i = 0; i < faultCount; i++) {
-                    let lane;
-                    do { lane = Math.floor(Math.random() * LANE_COUNT) - 1; }
-                    while (usedLanes.includes(lane));
-                    usedLanes.push(lane);
-                    objects.push(createNetworkFault(lane * LANE_WIDTH, spawnZ));
+                objects.push(createDataPacket(lane * CONFIG.LANE_WIDTH, spawnZ, type));
+
+                // Sometimes spawn in multiple lanes
+                if (Math.random() > 0.6) {
+                    const otherLane = lane === 0 ? (Math.random() > 0.5 ? -1 : 1) : -lane;
+                    const otherType = PACKET_TYPES[Math.floor(Math.random() * PACKET_TYPES.length)];
+                    objects.push(createDataPacket(otherLane * CONFIG.LANE_WIDTH, spawnZ, otherType));
                 }
-            } else if (rand < 0.9) {
-                // Packet loss
-                const lane = Math.floor(Math.random() * LANE_COUNT) - 1;
-                objects.push(createPacketLoss(lane * LANE_WIDTH, spawnZ));
+            } else if (rand < 0.85) {
+                // Obstacles
+                const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT) - 1;
+                const obstacleTypes = ['fault', 'fault', 'low', 'laser'];
+                const obstacleType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+                objects.push(createObstacle(lane * CONFIG.LANE_WIDTH, spawnZ, obstacleType));
+
+                // Multi-lane obstacles at higher levels
+                if (level >= 3 && Math.random() > 0.7) {
+                    const otherLane = lane === 0 ? (Math.random() > 0.5 ? -1 : 1) : (lane === 1 ? 0 : 0);
+                    objects.push(createObstacle(otherLane * CONFIG.LANE_WIDTH, spawnZ - 2, obstacleType));
+                }
             } else {
-                // Zone bonus (rare)
-                const lane = Math.floor(Math.random() * LANE_COUNT) - 1;
-                const zones = ['FL', 'ACU', 'FR'];
-                objects.push(createZoneBonus(lane * LANE_WIDTH, spawnZ, zones[Math.floor(Math.random() * zones.length)]));
+                // Power-ups (rare)
+                const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT) - 1;
+                const powerTypes = ['shield', 'magnet', 'double'];
+                const powerType = powerTypes[Math.floor(Math.random() * powerTypes.length)];
+                objects.push(createPowerup(lane * CONFIG.LANE_WIDTH, spawnZ, powerType));
             }
         }
     }
 
-    // === INPUT ===
+    // ==================== INPUT ====================
     let touchStartX = 0, touchStartY = 0;
+    let inputBuffer = { left: false, right: false, jump: false, slide: false };
+
+    function moveLeft() {
+        if (playerLane > -1) {
+            playerLane--;
+            updateLaneIndicators();
+        }
+    }
+
+    function moveRight() {
+        if (playerLane < 1) {
+            playerLane++;
+            updateLaneIndicators();
+        }
+    }
+
+    function jump() {
+        if (jumpCount < 2 && !isSliding) {
+            velocityY = jumpCount === 0 ? CONFIG.JUMP_FORCE : CONFIG.DOUBLE_JUMP_FORCE;
+            jumpCount++;
+            if (jumpCount === 1) audio.playJump();
+            else audio.playDoubleJump();
+        }
+    }
+
+    function slide() {
+        if (!isSliding && jumpCount === 0) {
+            isSliding = true;
+            slideTimer = CONFIG.SLIDE_DURATION;
+            audio.playSlide();
+        }
+    }
 
     document.addEventListener('keydown', (e) => {
         if (gameState !== 'playing') return;
 
-        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-            playerLane = Math.max(playerLane - 1, -1);
-        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-            playerLane = Math.min(playerLane + 1, 1);
-        } else if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') && !isJumping) {
-            isJumping = true;
-            velocityY = JUMP_FORCE;
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') moveLeft();
+        else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') moveRight();
+        else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
+            e.preventDefault();
+            jump();
         }
+        else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') slide();
+    });
+
+    // Touch controls
+    document.getElementById('touchLeft').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (gameState === 'playing') moveLeft();
+    });
+    document.getElementById('touchRight').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (gameState === 'playing') moveRight();
     });
 
     document.addEventListener('touchstart', (e) => {
@@ -915,247 +1151,255 @@
 
     document.addEventListener('touchend', (e) => {
         if (gameState !== 'playing') return;
-
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
 
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-            if (dx > 0) playerLane = Math.min(playerLane + 1, 1);
-            else playerLane = Math.max(playerLane - 1, -1);
-        } else if (dy < -30 && !isJumping) {
-            isJumping = true;
-            velocityY = JUMP_FORCE;
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 30) {
+            if (dy < 0) jump();
+            else slide();
         }
     });
 
-    // === COLLISION ===
+    // ==================== COLLISION ====================
     function checkCollisions() {
-        const px = playerLane * LANE_WIDTH;
+        const px = playerLane * CONFIG.LANE_WIDTH;
         const py = playerY;
+        const playerHeight = isSliding ? 0.5 : 1.5;
 
         objects.forEach(obj => {
             if (!obj.active) return;
 
-            const dx = Math.abs(obj.x - px);
+            let dx = Math.abs(obj.x - px);
             const dz = Math.abs(obj.z);
 
-            if (dx < 1.5 && dz < 2.5) {
-                if (obj.type === 'fault' || obj.type === 'packetloss') {
-                    if (py > 2) return; // Jumped over
+            // Magnet effect
+            if (powerups.magnet > 0 && obj.type === 'packet') {
+                if (dx < 6 && dz < 8) {
+                    obj.x += (px - obj.x) * 0.1;
+                    obj.mesh.position.x = obj.x;
+                    dx = Math.abs(obj.x - px);
+                }
+            }
 
-                    if (!isInvincible) {
-                        takeDamage(obj.type === 'fault' ? 20 : 10);
-                        obj.active = false;
-                        scene.remove(obj.mesh);
-                        spawnParticles(obj.x, 1, obj.z, 0xff0044, 20);
-                    }
-                } else if (obj.type === 'packet') {
-                    if (Math.abs(obj.y - py - 1) < 2) {
-                        collectPacket(obj.packetType, obj.x, obj.y, obj.z);
-                        obj.active = false;
-                        scene.remove(obj.mesh);
-                    }
-                } else if (obj.type === 'zone') {
-                    if (Math.abs(obj.y - py - 1) < 2) {
-                        collectZoneBonus(obj.zone);
-                        obj.active = false;
-                        scene.remove(obj.mesh);
-                        spawnParticles(obj.x, obj.y, obj.z, 0x00ff00, 25);
+            if (dx < 1.5 && dz < 2) {
+                if (obj.type === 'packet') {
+                    collectPacket(obj);
+                    obj.active = false;
+                } else if (obj.type === 'powerup') {
+                    collectPowerup(obj);
+                    obj.active = false;
+                } else if (obj.type === 'obstacle') {
+                    // Check if avoided
+                    const avoided = (
+                        (obj.obstacleType === 'fault' && py > 1.5) ||
+                        ((obj.obstacleType === 'low' || obj.obstacleType === 'laser') && isSliding)
+                    );
+
+                    if (!avoided) {
+                        if (powerups.shield > 0) {
+                            powerups.shield = 0;
+                            updatePowerupUI();
+                            spawnParticles(obj.x, 1.5, obj.z, 0x00ff00, 30);
+                            obj.active = false;
+                        } else {
+                            takeDamage(25);
+                            obj.active = false;
+                        }
                     }
                 }
             }
         });
     }
 
-    function takeDamage(amount) {
-        networkHealth -= amount;
-        combo = 0;
-        isInvincible = true;
-        lastDamageTime = Date.now();
-
-        showCombo('FAULT!', '#ff0044');
-
-        if (networkHealth <= 0) {
-            networkHealth = 0;
-            gameOver();
-        }
-        updateNetworkHealthUI();
-    }
-
-    function collectPacket(type, x, y, z) {
-        const value = PACKET_VALUES[type];
-        const comboMultiplier = Math.min(1 + combo * 0.1, 3);
-        const points = Math.floor(value * comboMultiplier);
+    function collectPacket(obj) {
+        const value = PACKET_VALUES[obj.packetType];
+        const bonusMultiplier = powerups.double > 0 ? 2 : 1;
+        const points = Math.floor(value * multiplier * bonusMultiplier);
 
         score += points;
-        packetCounts[type]++;
-        totalPackets++;
-        combo++;
+        streak++;
+        maxStreak = Math.max(maxStreak, streak);
+        multiplier = Math.min(1 + streak * 0.05, 5);
 
-        spawnParticles(x, y, z, PACKET_COLORS[type]);
-        showCombo('+' + points, '#' + PACKET_COLORS[type].toString(16).padStart(6, '0'));
+        audio.playCollect(obj.packetType);
+        spawnParticles(obj.x, obj.y, obj.z, PACKET_COLORS[obj.packetType], 15);
+        showCombo('+' + points, PACKET_COLORS[obj.packetType]);
+        screenFlash('collect');
 
-        // Heal slightly
-        networkHealth = Math.min(100, networkHealth + 2);
+        // Combo sound at milestones
+        if (streak % 10 === 0) audio.playCombo(Math.floor(streak / 10));
+
+        // Small heal
+        health = Math.min(100, health + 1);
 
         updateUI();
-        updateSensorBars();
+    }
 
-        // Check level completion
-        if (score >= LEVEL_TARGETS[level - 1]) {
-            levelComplete();
+    function collectPowerup(obj) {
+        powerups[obj.powerType] = CONFIG.POWERUP_DURATION;
+        audio.playPowerup();
+        spawnParticles(obj.x, obj.y, obj.z, obj.mesh.children[0].material.color.getHex(), 25);
+        showCombo(obj.powerType.toUpperCase() + '!', obj.mesh.children[0].material.color.getHex());
+        screenFlash('powerup');
+        updatePowerupUI();
+    }
+
+    function takeDamage(amount) {
+        health -= amount;
+        streak = 0;
+        multiplier = 1;
+        shakeAmount = 0.5;
+
+        audio.playDamage();
+        screenFlash('damage');
+        showCombo('FAULT!', 0xff0044);
+
+        if (health <= 0) {
+            health = 0;
+            gameOver();
         }
-    }
-
-    function collectZoneBonus(zone) {
-        score += 300;
-        networkHealth = Math.min(100, networkHealth + 20);
-        showCombo('ZONE BONUS +300', '#00ff00');
-
-        // Highlight zone
-        const zoneEl = document.getElementById('zone' + zone);
-        zoneEl.classList.add('active');
-        setTimeout(() => zoneEl.classList.remove('active'), 2000);
-
         updateUI();
-        updateNetworkHealthUI();
     }
 
-    // === UI UPDATES ===
+    // ==================== UI ====================
     function updateUI() {
         document.getElementById('score').textContent = score.toLocaleString();
         document.getElementById('distance').textContent = Math.floor(distance) + 'm';
         document.getElementById('level').textContent = level;
         document.getElementById('speed').textContent = (speed / 10).toFixed(1) + ' Gbps';
+        document.getElementById('streakCount').textContent = streak;
+        document.getElementById('multiplier').textContent = 'x' + multiplier.toFixed(1);
+
+        // Health bar
+        const healthFill = document.getElementById('healthFill');
+        healthFill.style.width = health + '%';
+        healthFill.className = 'health-fill' + (health < 25 ? ' danger' : health < 50 ? ' warning' : '');
+        document.getElementById('healthPercent').textContent = Math.floor(health) + '%';
     }
 
-    function updateNetworkHealthUI() {
-        const el = document.getElementById('networkHealth');
-        el.textContent = Math.floor(networkHealth) + '%';
-        el.style.color = networkHealth > 50 ? '#00ff00' : networkHealth > 25 ? '#ffaa00' : '#ff0044';
-    }
-
-    function updateSensorBars() {
-        const maxPackets = Math.max(10, Math.max(packetCounts.lidar, packetCounts.camera, packetCounts.radar));
-
-        PACKET_TYPES.forEach(type => {
-            document.getElementById(type + 'Fill').style.width = (packetCounts[type] / maxPackets * 100) + '%';
-            document.getElementById(type + 'Count').textContent = packetCounts[type];
+    function updateLaneIndicators() {
+        [-1, 0, 1].forEach(lane => {
+            const el = document.getElementById('lane' + lane);
+            el.classList.toggle('active', lane === playerLane);
         });
     }
 
-    function showCombo(text, color = '#00ffff') {
-        const el = document.getElementById('combo');
+    function updatePowerupUI() {
+        ['shield', 'magnet', 'double'].forEach(type => {
+            const el = document.getElementById('power' + type.charAt(0).toUpperCase() + type.slice(1));
+            el.classList.toggle('active', powerups[type] > 0);
+        });
+    }
+
+    function showCombo(text, color) {
+        const el = document.getElementById('comboText');
         el.textContent = text;
-        el.style.color = color;
-        el.style.textShadow = '0 0 20px ' + color;
-        el.className = 'combo-display show';
-        setTimeout(() => el.className = 'combo-display', 600);
+        el.style.color = '#' + (typeof color === 'number' ? color.toString(16).padStart(6, '0') : color);
+        el.classList.remove('show');
+        void el.offsetWidth; // Trigger reflow
+        el.classList.add('show');
     }
 
-    function updateGraph() {
-        graphData.push(networkHealth);
-        if (graphData.length > 50) graphData.shift();
-
-        const canvas = document.getElementById('graphCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 120;
-        canvas.height = 60;
-
-        ctx.clearRect(0, 0, 120, 60);
-        ctx.strokeStyle = '#00ffff';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-
-        graphData.forEach((val, i) => {
-            const x = (i / 50) * 120;
-            const y = 60 - (val / 100) * 50;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
+    function screenFlash(type) {
+        const el = document.getElementById('screenFlash');
+        el.className = 'screen-flash ' + type;
+        setTimeout(() => el.className = 'screen-flash', 400);
     }
 
-    // === GAME FLOW ===
+    // ==================== GAME FLOW ====================
     function startGame() {
+        audio.init();
+        audio.resume();
+
         gameState = 'playing';
         score = 0;
         distance = 0;
-        networkHealth = 100;
-        speed = 25 + (level - 1) * 8;
-        packetCounts = { lidar: 0, camera: 0, radar: 0 };
-        totalPackets = 0;
-        combo = 0;
+        level = 1;
+        health = 100;
+        speed = CONFIG.BASE_SPEED;
+        streak = 0;
+        maxStreak = 0;
+        multiplier = 1;
         playerLane = 0;
         playerY = 0;
-        isJumping = false;
-        graphData = [];
+        velocityY = 0;
+        jumpCount = 0;
+        isSliding = false;
+        powerups = { shield: 0, magnet: 0, double: 0 };
 
+        // Clear objects
         objects.forEach(obj => scene.remove(obj.mesh));
         objects = [];
         particles.forEach(p => scene.remove(p.mesh));
         particles = [];
+        trails.forEach(t => scene.remove(t.mesh));
+        trails = [];
+
+        playerGroup.position.set(0, 0, 0);
+        playerGroup.rotation.set(0, 0, 0);
+        playerGroup.scale.set(1, 1, 1);
 
         updateUI();
-        updateNetworkHealthUI();
-        updateSensorBars();
+        updateLaneIndicators();
+        updatePowerupUI();
 
         document.getElementById('menuScreen').classList.add('hidden');
         document.getElementById('gameOver').classList.add('hidden');
-        document.getElementById('levelComplete').classList.add('hidden');
         document.getElementById('hud').classList.remove('hidden');
-        document.getElementById('networkStatus').classList.remove('hidden');
-        document.getElementById('bandwidthDisplay').classList.remove('hidden');
-        document.getElementById('zoneIndicators').classList.remove('hidden');
-        document.getElementById('networkGraph').classList.remove('hidden');
-        document.getElementById('controlsHint').classList.remove('hidden');
+        document.getElementById('streakDisplay').classList.remove('hidden');
+        document.getElementById('powerupBar').classList.remove('hidden');
+        document.getElementById('laneIndicators').classList.remove('hidden');
+        document.getElementById('healthContainer').classList.remove('hidden');
     }
 
     function gameOver() {
         gameState = 'gameover';
+        audio.playGameOver();
+
+        // Check high score
+        const isNewHighScore = score > highScore;
+        if (isNewHighScore) {
+            highScore = score;
+            localStorage.setItem('runner_highscore', highScore.toString());
+        }
+
         document.getElementById('finalScore').textContent = score.toLocaleString();
         document.getElementById('finalDistance').textContent = Math.floor(distance) + 'm';
-        document.getElementById('finalPackets').textContent = totalPackets;
+        document.getElementById('finalStreak').textContent = maxStreak;
         document.getElementById('finalLevel').textContent = level;
+        document.getElementById('newHighScore').classList.toggle('hidden', !isNewHighScore);
+
+        hideHUD();
         document.getElementById('gameOver').classList.remove('hidden');
-        hideHUD();
-        level = 1;
-    }
-
-    function levelComplete() {
-        gameState = 'levelcomplete';
-        document.getElementById('completedLevel').textContent = level;
-        document.getElementById('levelScore').textContent = score.toLocaleString();
-        document.getElementById('levelPackets').textContent = totalPackets;
-        document.getElementById('levelComplete').classList.remove('hidden');
-        hideHUD();
-    }
-
-    function nextLevel() {
-        level++;
-        startGame();
     }
 
     function showMenu() {
         gameState = 'menu';
-        level = 1;
         document.getElementById('gameOver').classList.add('hidden');
         document.getElementById('menuScreen').classList.remove('hidden');
+        document.getElementById('highScoreDisplay').querySelector('span').textContent = highScore.toLocaleString();
         hideHUD();
     }
 
     function hideHUD() {
         document.getElementById('hud').classList.add('hidden');
-        document.getElementById('networkStatus').classList.add('hidden');
-        document.getElementById('bandwidthDisplay').classList.add('hidden');
-        document.getElementById('zoneIndicators').classList.add('hidden');
-        document.getElementById('networkGraph').classList.add('hidden');
-        document.getElementById('controlsHint').classList.add('hidden');
+        document.getElementById('streakDisplay').classList.add('hidden');
+        document.getElementById('powerupBar').classList.add('hidden');
+        document.getElementById('laneIndicators').classList.add('hidden');
+        document.getElementById('healthContainer').classList.add('hidden');
     }
 
-    // === GAME LOOP ===
+    // ==================== SOUND TOGGLE ====================
+    document.getElementById('soundToggle').addEventListener('click', () => {
+        audio.init();
+        const enabled = audio.toggle();
+        document.getElementById('soundToggle').textContent = enabled ? '🔊' : '🔇';
+        document.getElementById('soundToggle').classList.toggle('muted', !enabled);
+    });
+
+    // ==================== GAME LOOP ====================
     let lastTime = 0;
-    let graphTimer = 0;
+    let trailTimer = 0;
 
     function animate(time) {
         requestAnimationFrame(animate);
@@ -1164,52 +1408,86 @@
         lastTime = time;
 
         if (gameState === 'playing') {
+            // Speed increases over time
+            speed = Math.min(CONFIG.MAX_SPEED, CONFIG.BASE_SPEED + distance * 0.01 + (level - 1) * 5);
             distance += speed * delta;
-            speed = Math.min(80, 25 + (level - 1) * 8 + distance * 0.003);
+
+            // Level up
+            if (level < CONFIG.LEVEL_DISTANCE.length && distance >= CONFIG.LEVEL_DISTANCE[level - 1]) {
+                level++;
+                audio.playLevelUp();
+                showCombo('LEVEL ' + level, 0x00ff00);
+                screenFlash('powerup');
+            }
 
             // Player horizontal movement
-            const targetX = playerLane * LANE_WIDTH;
-            playerGroup.position.x += (targetX - playerGroup.position.x) * delta * 12;
+            const targetX = playerLane * CONFIG.LANE_WIDTH;
+            playerGroup.position.x += (targetX - playerGroup.position.x) * delta * 15;
 
             // Jump physics
-            if (isJumping) {
+            if (jumpCount > 0 || playerY > 0) {
                 playerY += velocityY * delta;
-                velocityY -= GRAVITY * delta;
+                velocityY -= CONFIG.GRAVITY * delta;
 
                 if (playerY <= 0) {
                     playerY = 0;
-                    isJumping = false;
+                    jumpCount = 0;
                     velocityY = 0;
                 }
             }
-            playerGroup.position.y = playerY;
 
-            // Banking
-            const xDiff = targetX - playerGroup.position.x;
-            playerGroup.rotation.z = -xDiff * 0.12;
-            playerGroup.rotation.x = isJumping ? -0.08 : 0;
+            // Slide timer
+            if (isSliding) {
+                slideTimer -= delta;
+                if (slideTimer <= 0) {
+                    isSliding = false;
+                }
+            }
+
+            // Apply player transform
+            playerGroup.position.y = playerY;
+            playerGroup.scale.y = isSliding ? 0.5 : 1;
+            playerGroup.rotation.z = (targetX - playerGroup.position.x) * -0.1;
+            playerGroup.rotation.x = jumpCount > 0 ? -0.1 : (isSliding ? 0.1 : 0);
+
+            // Screen shake
+            if (shakeAmount > 0.01) {
+                camera.position.x = (Math.random() - 0.5) * shakeAmount;
+                camera.position.y = 5 + (Math.random() - 0.5) * shakeAmount;
+                shakeAmount *= shakeDecay;
+            } else {
+                camera.position.x = 0;
+                camera.position.y = 5;
+            }
+
+            // Power-up timers
+            Object.keys(powerups).forEach(key => {
+                if (powerups[key] > 0) {
+                    powerups[key] -= delta;
+                    if (powerups[key] <= 0) powerups[key] = 0;
+                }
+            });
+            updatePowerupUI();
 
             // Move objects
             objects.forEach(obj => {
                 obj.z += speed * delta;
                 obj.mesh.position.z = obj.z;
 
-                if (obj.type === 'packet' || obj.type === 'zone') {
-                    obj.mesh.rotation.y += delta * 2;
-                    obj.mesh.position.y = obj.y + Math.sin(time * 0.004) * 0.15;
+                if (obj.type === 'packet' || obj.type === 'powerup') {
+                    obj.mesh.rotation.y += delta * 3;
+                    obj.mesh.position.y = obj.y + Math.sin(time * 0.005) * 0.2;
+                    if (obj.mesh.userData.ring) {
+                        obj.mesh.userData.ring.rotation.x += delta * 2;
+                        obj.mesh.userData.ring.rotation.y += delta;
+                    }
                 }
-                if (obj.type === 'packetloss') {
-                    obj.mesh.rotation.x += delta * 3;
-                    obj.mesh.rotation.y += delta * 2;
-                }
-                if (obj.type === 'fault') {
-                    // Pulsing effect
-                    const pulse = 0.9 + Math.sin(time * 0.01) * 0.1;
-                    obj.mesh.scale.setScalar(pulse);
+                if (obj.type === 'obstacle' && obj.mesh.userData.laser) {
+                    obj.mesh.userData.laser.material.opacity = 0.5 + Math.sin(time * 0.02) * 0.5;
                 }
             });
 
-            // Remove off-screen
+            // Remove off-screen objects
             objects = objects.filter(obj => {
                 if (obj.z > 15 || !obj.active) {
                     scene.remove(obj.mesh);
@@ -1221,34 +1499,23 @@
             spawnObjects(delta);
             checkCollisions();
 
-            // Invincibility
-            if (isInvincible && Date.now() - lastDamageTime > 1500) {
-                isInvincible = false;
+            // LiDAR pulse effect
+            if (playerGroup.userData && playerGroup.userData.lidar) {
+                const s = 1 + Math.sin(time * 0.008) * 0.3;
+                playerGroup.userData.lidar.scale.set(s, s, s);
             }
-            playerGroup.visible = isInvincible ? Math.floor(Date.now() / 80) % 2 === 0 : true;
 
-            // Sensor effects
-            sensorEffects.forEach((effect, i) => {
-                effect.phase += delta * 3;
-                if (effect.type === 'lidar') {
-                    effect.mesh.scale.setScalar(1 + Math.sin(effect.phase) * 0.3);
-                    effect.mesh.material.opacity = 0.5 + Math.sin(effect.phase) * 0.3;
-                } else {
-                    effect.mesh.material.opacity = 0.5 + Math.sin(effect.phase) * 0.5;
-                }
-            });
-
-            // Graph update
-            graphTimer += delta;
-            if (graphTimer > 0.5) {
-                graphTimer = 0;
-                updateGraph();
+            // Trail effect
+            trailTimer += delta;
+            if (trailTimer > 0.05) {
+                trailTimer = 0;
+                spawnTrail();
             }
 
             updateUI();
         }
 
-        // Particles
+        // Update particles
         particles = particles.filter(p => {
             p.life -= delta * 2;
             if (p.life <= 0) {
@@ -1258,15 +1525,27 @@
             p.mesh.position.x += p.vx * delta;
             p.mesh.position.y += p.vy * delta;
             p.mesh.position.z += p.vz * delta;
-            p.vy -= 15 * delta;
+            p.vy -= 20 * delta;
             p.mesh.scale.setScalar(p.life);
+            return true;
+        });
+
+        // Update trails
+        trails = trails.filter(t => {
+            t.life -= delta * 3;
+            if (t.life <= 0) {
+                scene.remove(t.mesh);
+                return false;
+            }
+            t.mesh.material.opacity = t.life * 0.6;
+            t.mesh.scale.setScalar(t.life);
             return true;
         });
 
         renderer.render(scene, camera);
     }
 
-    // === RESIZE ===
+    // ==================== RESIZE ====================
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
