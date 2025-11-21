@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROii2 - Data Flow Visualization</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/OrbitControls.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a1a;
+            overflow: hidden;
+            color: white;
+        }
+        #canvas3d { width: 100vw; height: 100vh; }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 40px;
+            border-radius: 30px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .header h1 { font-size: 20px; font-weight: 500; }
+        .header p { font-size: 11px; color: #64748b; margin-top: 3px; }
+
+        .traffic-panel {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            width: 300px;
+        }
+        .traffic-panel h3 {
+            font-size: 13px;
+            color: #3B82F6;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .traffic-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .traffic-item .info { display: flex; align-items: center; gap: 10px; }
+        .traffic-item .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .traffic-item .name { font-size: 12px; }
+        .traffic-item .rate { font-size: 14px; font-weight: 600; color: #10B981; }
+
+        .realtime-stats {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+        .realtime-stat {
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px 25px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .realtime-stat .value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #3B82F6;
+        }
+        .realtime-stat .label {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 3px;
+        }
+        .realtime-stat .unit {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .flow-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+        }
+        .flow-legend h4 { font-size: 11px; color: #64748b; margin-bottom: 10px; }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 0;
+            font-size: 11px;
+        }
+        .legend-item .line {
+            width: 30px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .controls {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+        }
+        .controls h4 { font-size: 11px; color: #64748b; margin-bottom: 10px; }
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .speed-control input {
+            width: 100px;
+            accent-color: #3B82F6;
+        }
+        .speed-control span { font-size: 12px; color: #3B82F6; }
+
+        .nav-links {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 8px;
+        }
+        .nav-links a {
+            padding: 8px 14px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            background: #3B82F6;
+            border-color: #3B82F6;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas3d"></div>
+
+    <div class="nav-links">
+        <a href="index.html">Network</a>
+        <a href="dataflow.html" class="active">Data Flow</a>
+        <a href="heatmap.html">Heatmap</a>
+        <a href="wireframe.html">Wireframe</a>
+    </div>
+
+    <div class="header">
+        <h1><i class="fas fa-wave-square"></i> Real-Time Data Flow</h1>
+        <p>TSN Network Traffic Visualization</p>
+    </div>
+
+    <div class="traffic-panel">
+        <h3><i class="fas fa-chart-line"></i> Live Traffic</h3>
+        <div class="traffic-item">
+            <div class="info">
+                <div class="dot" style="background:#10B981;"></div>
+                <span class="name">LiDAR Stream</span>
+            </div>
+            <span class="rate" id="lidarRate">0</span>
+        </div>
+        <div class="traffic-item">
+            <div class="info">
+                <div class="dot" style="background:#d66b00;"></div>
+                <span class="name">Camera Feed</span>
+            </div>
+            <span class="rate" id="cameraRate">0</span>
+        </div>
+        <div class="traffic-item">
+            <div class="info">
+                <div class="dot" style="background:#952aff;"></div>
+                <span class="name">Radar Data</span>
+            </div>
+            <span class="rate" id="radarRate">0</span>
+        </div>
+        <div class="traffic-item">
+            <div class="info">
+                <div class="dot" style="background:#FFD700;"></div>
+                <span class="name">Control Messages</span>
+            </div>
+            <span class="rate" id="controlRate">0</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <h4>FLOW SPEED</h4>
+        <div class="speed-control">
+            <input type="range" id="speedSlider" min="1" max="10" value="5">
+            <span id="speedValue">1.0x</span>
+        </div>
+    </div>
+
+    <div class="flow-legend">
+        <h4>DATA TYPES</h4>
+        <div class="legend-item"><div class="line" style="background:#10B981;"></div><span>LiDAR (100 Mbps)</span></div>
+        <div class="legend-item"><div class="line" style="background:#d66b00;"></div><span>Camera (400 Mbps)</span></div>
+        <div class="legend-item"><div class="line" style="background:#952aff;"></div><span>Radar (20 Mbps)</span></div>
+        <div class="legend-item"><div class="line" style="background:#FFD700;"></div><span>10G Backbone</span></div>
+    </div>
+
+    <div class="realtime-stats">
+        <div class="realtime-stat">
+            <div class="value" id="totalPackets">0</div>
+            <div class="label">PACKETS/SEC</div>
+        </div>
+        <div class="realtime-stat">
+            <div class="value" id="totalBandwidth">0</div>
+            <div class="label">THROUGHPUT</div>
+            <div class="unit">Gbps</div>
+        </div>
+        <div class="realtime-stat">
+            <div class="value" id="avgLatency">0</div>
+            <div class="label">AVG LATENCY</div>
+            <div class="unit">μs</div>
+        </div>
+    </div>
+
+    <script>
+    // === THREE.JS SETUP ===
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a1a);
+    scene.fog = new THREE.FogExp2(0x0a0a1a, 0.008);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(50, 40, 50);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('canvas3d').appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.3;
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x404060, 0.5));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(50, 100, 50);
+    scene.add(dirLight);
+
+    // Grid
+    const grid = new THREE.GridHelper(200, 40, 0x1e3a5f, 0x0f1f30);
+    scene.add(grid);
+
+    // === STATE ===
+    const vehicleGroup = new THREE.Group();
+    scene.add(vehicleGroup);
+
+    const devices = new Map();
+    const connections = [];
+    const dataPackets = [];
+    let deviceCounter = 1;
+    let flowSpeed = 1.0;
+
+    const templates = {
+        lan9692: { color: 0x3B82F6, size: [4, 2, 4] },
+        hpc: { color: 0xE11D48, size: [5, 2.5, 5] },
+        camera: { color: 0xd66b00, size: [0.8, 0.8, 0.8] },
+        lidar: { color: 0x10B981, size: [1.2, 1.2, 1.2] },
+        radar: { color: 0x952aff, size: [1.2, 1.2, 1.2] }
+    };
+
+    // === VEHICLE ===
+    function createVehicle() {
+        const loader = new THREE.GLTFLoader();
+        loader.load('./roii.glb', (gltf) => {
+            const model = gltf.scene;
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            const scale = 40 / Math.max(size.x, size.y, size.z);
+            model.scale.set(scale, scale, scale);
+            model.position.set(-center.x, -center.y + size.y * scale * 0.5, -center.z);
+
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.material = new THREE.MeshStandardMaterial({
+                        color: 0x1a1a2e,
+                        metalness: 0.8,
+                        roughness: 0.2,
+                        transparent: true,
+                        opacity: 0.7
+                    });
+                }
+            });
+            vehicleGroup.add(model);
+        });
+    }
+
+    // === DEVICE ===
+    function addDevice(type, position, label) {
+        const t = templates[type];
+        const id = `device-${deviceCounter++}`;
+        const group = new THREE.Group();
+
+        const geo = new THREE.BoxGeometry(...t.size);
+        const mat = new THREE.MeshStandardMaterial({
+            color: t.color,
+            emissive: t.color,
+            emissiveIntensity: 0.3,
+            metalness: 0.5,
+            roughness: 0.3
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        group.add(mesh);
+
+        // Glow ring
+        const ringGeo = new THREE.RingGeometry(t.size[0] * 0.8, t.size[0] * 1.0, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: t.color,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = -t.size[1] / 2;
+        group.add(ring);
+
+        group.position.copy(position);
+        vehicleGroup.add(group);
+
+        const device = { id, type, label, position: position.clone(), mesh: group };
+        devices.set(id, device);
+        return device;
+    }
+
+    function createConnection(from, to) {
+        const isBackbone = (from.type === 'lan9692' && to.type === 'lan9692') || from.type === 'hpc' || to.type === 'hpc';
+        const color = isBackbone ? 0xFFD700 : (templates[to.type]?.color || 0x3B82F6);
+        const bandwidth = isBackbone ? '10G' : '1G';
+
+        // Connection line (tube)
+        const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
+        const tubeGeo = new THREE.TubeGeometry(curve, 20, isBackbone ? 0.15 : 0.08, 8, false);
+        const tubeMat = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.4
+        });
+        const tube = new THREE.Mesh(tubeGeo, tubeMat);
+        vehicleGroup.add(tube);
+
+        connections.push({
+            from, to, tube, curve, color, bandwidth,
+            dataType: to.type || 'control'
+        });
+    }
+
+    // === DATA PACKETS ===
+    function createDataPacket(connection) {
+        const colors = {
+            lidar: 0x10B981,
+            camera: 0xd66b00,
+            radar: 0x952aff,
+            control: 0xFFD700,
+            lan9692: 0xFFD700,
+            hpc: 0xFFD700
+        };
+
+        const color = colors[connection.dataType] || 0x3B82F6;
+        const size = connection.bandwidth === '10G' ? 0.4 : 0.25;
+
+        const geo = new THREE.SphereGeometry(size, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: color });
+        const packet = new THREE.Mesh(geo, mat);
+
+        // Glow effect
+        const glowGeo = new THREE.SphereGeometry(size * 1.5, 8, 8);
+        const glowMat = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.3
+        });
+        const glow = new THREE.Mesh(glowGeo, glowMat);
+        packet.add(glow);
+
+        vehicleGroup.add(packet);
+
+        return {
+            mesh: packet,
+            connection: connection,
+            t: 0,
+            speed: (0.005 + Math.random() * 0.01) * (connection.bandwidth === '10G' ? 1.5 : 1)
+        };
+    }
+
+    // === LOAD SCENARIO ===
+    function loadScenario() {
+        createVehicle();
+
+        const acuIT = addDevice('hpc', new THREE.Vector3(0, 4, 0), 'ACU_IT');
+        const frontL = addDevice('lan9692', new THREE.Vector3(-3.5, 4, 10), 'FRONT-L');
+        const frontR = addDevice('lan9692', new THREE.Vector3(3.5, 4, 10), 'FRONT-R');
+        const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -10), 'REAR');
+
+        // Sensors
+        const sensors = [];
+        [[-8.5, 10, 16.2], [8.5, 10, 16.2], [0, 5.5, 18.5], [0, 5.5, -18.5]].forEach(p => {
+            sensors.push(addDevice('lidar', new THREE.Vector3(...p), 'LIDAR'));
+        });
+
+        [[0, 10.5, 18.5], [-2.5, 10.5, 18.5], [2.5, 10.5, 18.5], [-9.5, 8, 8], [9.5, 8, 8], [-9.5, 8, -8], [9.5, 8, -8], [0, 10.5, -18.5]].forEach(p => {
+            sensors.push(addDevice('camera', new THREE.Vector3(...p), 'CAM'));
+        });
+
+        [[0, 3, 18.5], [-7, 3, 17.5], [7, 3, 17.5], [-7, 3, -17.5], [7, 3, -17.5]].forEach(p => {
+            sensors.push(addDevice('radar', new THREE.Vector3(...p), 'RADAR'));
+        });
+
+        // Connections
+        createConnection(frontL, acuIT);
+        createConnection(frontR, acuIT);
+        createConnection(rear, acuIT);
+        createConnection(frontL, frontR);
+
+        devices.forEach(d => {
+            if (['lidar', 'camera', 'radar'].includes(d.type)) {
+                const zone = d.position.z > 0 ? (d.position.x < 0 ? frontL : frontR) : rear;
+                createConnection(d, zone); // Data flows FROM sensor TO zone
+            }
+        });
+
+        // Initial packets
+        connections.forEach(conn => {
+            for (let i = 0; i < 3; i++) {
+                const packet = createDataPacket(conn);
+                packet.t = Math.random();
+                dataPackets.push(packet);
+            }
+        });
+    }
+
+    // === CONTROLS ===
+    document.getElementById('speedSlider').addEventListener('input', function() {
+        flowSpeed = this.value / 5;
+        document.getElementById('speedValue').textContent = flowSpeed.toFixed(1) + 'x';
+    });
+
+    // === STATS UPDATE ===
+    function updateStats() {
+        const rates = { lidar: 0, camera: 0, radar: 0, control: 0 };
+        dataPackets.forEach(p => {
+            const type = p.connection.dataType;
+            if (rates[type] !== undefined) rates[type]++;
+        });
+
+        document.getElementById('lidarRate').textContent = (rates.lidar * 25).toFixed(0) + ' Mbps';
+        document.getElementById('cameraRate').textContent = (rates.camera * 50).toFixed(0) + ' Mbps';
+        document.getElementById('radarRate').textContent = (rates.radar * 5).toFixed(0) + ' Mbps';
+        document.getElementById('controlRate').textContent = (rates.control * 100).toFixed(0) + ' Mbps';
+
+        document.getElementById('totalPackets').textContent = Math.floor(dataPackets.length * 1000 * flowSpeed);
+        document.getElementById('totalBandwidth').textContent = (2.5 + Math.random() * 0.5).toFixed(1);
+        document.getElementById('avgLatency').textContent = (1.2 + Math.random() * 0.3).toFixed(1);
+    }
+
+    // === ANIMATION ===
+    let frameCount = 0;
+    function animate() {
+        requestAnimationFrame(animate);
+        frameCount++;
+
+        controls.update();
+
+        // Animate packets
+        dataPackets.forEach(packet => {
+            packet.t += packet.speed * flowSpeed;
+            if (packet.t > 1) {
+                packet.t = 0;
+                // Randomly change direction sometimes
+                if (Math.random() > 0.7) {
+                    const newConn = connections[Math.floor(Math.random() * connections.length)];
+                    packet.connection = newConn;
+                }
+            }
+            const pos = packet.connection.curve.getPoint(packet.t);
+            packet.mesh.position.copy(pos);
+        });
+
+        // Spawn new packets occasionally
+        if (frameCount % 30 === 0 && dataPackets.length < 100) {
+            const conn = connections[Math.floor(Math.random() * connections.length)];
+            dataPackets.push(createDataPacket(conn));
+        }
+
+        // Update stats every 30 frames
+        if (frameCount % 30 === 0) {
+            updateStats();
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    loadScenario();
+    animate();
+    </script>
+</body>
+</html>

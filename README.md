@@ -4,6 +4,7 @@
 
 ## Live Demo
 
+### Core Views
 | Version | URL | Description |
 |---------|-----|-------------|
 | **Network** | [index.html](https://hwkim3330.github.io/roii2/) | Network topology visualization |
@@ -12,6 +13,16 @@
 | **Dashboard** | [dashboard.html](https://hwkim3330.github.io/roii2/dashboard.html) | Real-time monitoring dashboard |
 | **Presentation** | [presentation.html](https://hwkim3330.github.io/roii2/presentation.html) | Auto-demo presentation mode |
 | **Editor** | [editor.html](https://hwkim3330.github.io/roii2/editor.html) | Network topology editor |
+
+### Visual Themes
+| Version | URL | Description |
+|---------|-----|-------------|
+| **Blueprint** | [blueprint.html](https://hwkim3330.github.io/roii2/blueprint.html) | Technical drawing style |
+| **Heatmap** | [heatmap.html](https://hwkim3330.github.io/roii2/heatmap.html) | Sensor coverage visualization |
+| **Wireframe** | [wireframe.html](https://hwkim3330.github.io/roii2/wireframe.html) | TRON/retro neon style |
+| **Data Flow** | [dataflow.html](https://hwkim3330.github.io/roii2/dataflow.html) | Animated data packets |
+| **Hologram** | [hologram.html](https://hwkim3330.github.io/roii2/hologram.html) | Sci-fi holographic display |
+| **Night Vision** | [nightvision.html](https://hwkim3330.github.io/roii2/nightvision.html) | Military green NV style |
 | **Dark** | [dark.html](https://hwkim3330.github.io/roii2/dark.html) | Cyberpunk neon theme |
 | **Simple** | [simple.html](https://hwkim3330.github.io/roii2/simple.html) | Minimal clean view |
 | **Initial D** | [initiald.html](https://hwkim3330.github.io/roii2/initiald.html) | Racing drift mode |
@@ -132,6 +143,49 @@
 - Eurobeat-style UI
 - Orange neon color scheme
 
+### Blueprint View (blueprint.html)
+- Technical drawing style with blue lines
+- Dashed connection lines
+- Title block with drawing info
+- Specifications panel
+- Auto-rotate with grid
+
+### Heatmap View (heatmap.html)
+- Sensor coverage cone visualization
+- Toggle layers (LiDAR/Camera/Radar)
+- Coverage analysis percentages
+- Signal strength legend
+- Interactive layer controls
+
+### Wireframe / TRON (wireframe.html)
+- Retro TRON movie aesthetic
+- Neon cyan wireframe vehicle
+- Glowing edges and particles
+- Scanline overlay effect
+- Pulsing device lights
+
+### Data Flow (dataflow.html)
+- Animated data packets flowing through network
+- Real-time traffic statistics
+- Speed control slider
+- Per-sensor bandwidth display
+- Packet count visualization
+
+### Hologram (hologram.html)
+- Sci-fi holographic display
+- Rotating platform rings
+- Vertical scan effect
+- Hexagonal stat displays
+- Translucent wireframe vehicle
+
+### Night Vision (nightvision.html)
+- Military night vision green style
+- Scanline and noise effects
+- Crosshair overlay
+- Tactical information display
+- Blinking sensor indicators
+- Real-time clock
+
 ## Fault Simulation
 
 Simulate network failures to test redundancy:
@@ -186,8 +240,15 @@ roii2/
 ├── dashboard.html    # Monitoring dashboard
 ├── presentation.html # Auto-demo mode
 ├── editor.html       # Topology editor
-├── dark.html         # Dark/neon theme
+├── blueprint.html    # Technical drawing style
+├── heatmap.html      # Sensor coverage visualization
+├── wireframe.html    # TRON/retro style
+├── dataflow.html     # Animated data packets
+├── hologram.html     # Sci-fi holographic
+├── nightvision.html  # Military NV style
+├── dark.html         # Cyberpunk neon theme
 ├── simple.html       # Minimal view
+├── initiald.html     # Racing drift mode
 ├── script.js         # Main application logic
 ├── roii.glb          # 3D vehicle model
 ├── keti.png          # KETI logo
