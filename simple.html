@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROii2 - Simple View</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/OrbitControls.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #fff; overflow: hidden; }
+        #canvas3d { width: 100vw; height: 100vh; }
+
+        .nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 10px;
+            z-index: 10;
+        }
+        .nav a {
+            padding: 10px 16px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav a:hover { background: #e2e8f0; color: #1e293b; }
+        .nav a.active { background: #1e293b; color: white; }
+
+        .stats {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+            background: white;
+            padding: 16px 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            z-index: 10;
+        }
+        .stat { text-align: center; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #1e293b; }
+        .stat-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        .control-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .control-btn:hover { background: #f8fafc; color: #1e293b; }
+        .control-btn.active { background: #1e293b; color: white; border-color: #1e293b; }
+
+        .info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            max-width: 280px;
+            z-index: 10;
+        }
+        .info-title { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 12px; }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+        }
+        .info-label { color: #64748b; }
+        .info-value { color: #1e293b; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div id="canvas3d"></div>
+
+    <nav class="nav">
+        <a href="index.html"><i class="fas fa-project-diagram"></i> Network</a>
+        <a href="drive.html"><i class="fas fa-gamepad"></i> Drive</a>
+        <a href="simple.html" class="active"><i class="fas fa-expand"></i> Simple</a>
+        <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+    </nav>
+
+    <div class="stats">
+        <div class="stat"><div class="stat-value" id="deviceCount">21</div><div class="stat-label">Devices</div></div>
+        <div class="stat"><div class="stat-value" id="linkCount">22</div><div class="stat-label">Links</div></div>
+        <div class="stat"><div class="stat-value" id="bandwidth">57</div><div class="stat-label">Gbps</div></div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn active" id="rotateBtn" title="Auto Rotate"><i class="fas fa-sync-alt"></i></button>
+        <button class="control-btn" id="resetBtn" title="Reset View"><i class="fas fa-crosshairs"></i></button>
+    </div>
+
+    <div class="info">
+        <div class="info-title">ROii2 Architecture</div>
+        <div class="info-item"><span class="info-label">HPC</span><span class="info-value">ACU_IT</span></div>
+        <div class="info-item"><span class="info-label">Zone Controllers</span><span class="info-value">3x LAN9692</span></div>
+        <div class="info-item"><span class="info-label">LiDAR</span><span class="info-value">4 Units</span></div>
+        <div class="info-item"><span class="info-label">Cameras</span><span class="info-value">8 Units</span></div>
+        <div class="info-item"><span class="info-label">Radar</span><span class="info-value">5 Units</span></div>
+        <div class="info-item"><span class="info-label">Backbone</span><span class="info-value">10G TSN</span></div>
+    </div>
+
+    <script>
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    scene.fog = new THREE.Fog(0xffffff, 100, 300);
+
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 500);
+    camera.position.set(55, 40, 65);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.getElementById('canvas3d').appendChild(renderer.domElement);
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+    controls.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+
+    // Soft lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+    const light = new THREE.DirectionalLight(0xffffff, 0.6);
+    light.position.set(50, 80, 50);
+    light.castShadow = true;
+    scene.add(light);
+
+    // Minimal grid
+    const grid = new THREE.GridHelper(200, 40, 0xe2e8f0, 0xf1f5f9);
+    grid.material.opacity = 0.6;
+    grid.material.transparent = true;
+    scene.add(grid);
+
+    const state = { vehicleGroup: new THREE.Group(), devices: new Map(), connections: [], deviceCounter: 1 };
+    scene.add(state.vehicleGroup);
+
+    const templates = {
+        lan9692: { color: 0x10b981, size: [4, 2, 4] },
+        hpc: { color: 0x3b82f6, size: [5, 2.5, 5] },
+        camera: { color: 0xf59e0b, size: [0.8, 0.8, 0.8] },
+        lidar: { color: 0x10b981, size: [1.2, 1.2, 1.2] },
+        radar: { color: 0x8b5cf6, size: [1.2, 1.2, 1.2] }
+    };
+
+    function createVehicle() {
+        const loader = new THREE.GLTFLoader();
+        loader.load('./roii.glb', (gltf) => {
+            const model = gltf.scene;
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            const scale = 40 / Math.max(size.x, size.y, size.z);
+            model.scale.set(scale, scale, scale);
+            model.position.set(-center.x, -center.y + size.y * scale * 0.5, -center.z);
+            model.traverse((c) => {
+                if (c.isMesh) {
+                    c.material.transparent = true;
+                    c.material.opacity = 0.25;
+                    c.castShadow = true;
+                }
+            });
+            state.vehicleGroup.add(model);
+        });
+    }
+
+    function addDevice(type, position, label) {
+        const t = templates[type];
+        const id = `dev-${state.deviceCounter++}`;
+        const device = { id, type, label, position: position.clone() };
+
+        const geo = new THREE.BoxGeometry(...t.size);
+        const mat = new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.4, metalness: 0.1 });
+        const group = new THREE.Group();
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        group.add(mesh);
+        group.position.copy(position);
+        device.mesh = group;
+
+        state.vehicleGroup.add(group);
+        state.devices.set(id, device);
+        return device;
+    }
+
+    function createConnection(from, to) {
+        const color = from.type === 'lan9692' && to.type === 'lan9692' ? 0x3b82f6 :
+                      from.type === 'hpc' || to.type === 'hpc' ? 0x3b82f6 : 0x94a3b8;
+        const bw = (from.type === 'hpc' || to.type === 'hpc' || (from.type === 'lan9692' && to.type === 'lan9692')) ? '10G' : '1G';
+
+        const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
+        const tube = new THREE.Mesh(
+            new THREE.TubeGeometry(curve, 16, bw === '10G' ? 0.1 : 0.04, 8, false),
+            new THREE.MeshStandardMaterial({ color, roughness: 0.5 })
+        );
+        state.vehicleGroup.add(tube);
+
+        const particles = [];
+        const count = bw === '10G' ? 3 : 2;
+        for (let i = 0; i < count; i++) {
+            const p = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshBasicMaterial({ color: 0x1e293b }));
+            p.userData = { t: i / count, curve };
+            state.vehicleGroup.add(p);
+            particles.push(p);
+        }
+
+        const conn = { from, to, tube, particles, bandwidth: bw };
+        state.connections.push(conn);
+        return conn;
+    }
+
+    function loadScenario() {
+        createVehicle();
+
+        const acuIT = addDevice('hpc', new THREE.Vector3(0, 4, 0), 'ACU_IT');
+        const frontL = addDevice('lan9692', new THREE.Vector3(-3.5, 4, 10), 'Front-L');
+        const frontR = addDevice('lan9692', new THREE.Vector3(3.5, 4, 10), 'Front-R');
+        const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -10), 'Rear');
+
+        // Sensors
+        [[-7.5, 12, 16], [7.5, 12, 16], [0, 7, 18], [0, 7, -18]].forEach(p => addDevice('lidar', new THREE.Vector3(...p), 'LiDAR'));
+        [[0, 13, 17.5], [-1, 13, 17.5], [1, 13, 17.5], [-7.5, 13, 16], [7.5, 13, 16], [-7.5, 13, -16], [7.5, 13, -16], [0, 11, -17.5]].forEach(p => addDevice('camera', new THREE.Vector3(...p), 'Cam'));
+        [[0, 5, 18], [-6.5, 5, 17], [6.5, 5, 17], [-6.5, 5, -17], [6.5, 5, -17]].forEach(p => addDevice('radar', new THREE.Vector3(...p), 'Radar'));
+
+        createConnection(frontL, acuIT); createConnection(frontR, acuIT); createConnection(rear, acuIT); createConnection(frontL, frontR);
+
+        state.devices.forEach(d => {
+            if (['lidar', 'camera', 'radar'].includes(d.type)) {
+                const zone = d.position.z > 0 ? (d.position.x < 0 ? frontL : frontR) : rear;
+                createConnection(zone, d);
+            }
+        });
+
+        updateStats();
+    }
+
+    function updateStats() {
+        document.getElementById('deviceCount').textContent = state.devices.size;
+        document.getElementById('linkCount').textContent = state.connections.length;
+        let bw = 0;
+        state.connections.forEach(c => bw += c.bandwidth === '10G' ? 10 : 1);
+        document.getElementById('bandwidth').textContent = bw;
+    }
+
+    document.getElementById('rotateBtn').addEventListener('click', function() {
+        controls.autoRotate = !controls.autoRotate;
+        this.classList.toggle('active');
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        camera.position.set(55, 40, 65);
+        controls.target.set(0, 0, 0);
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        state.connections.forEach(c => {
+            c.particles.forEach(p => {
+                p.userData.t += 0.006;
+                if (p.userData.t > 1) p.userData.t = 0;
+                p.position.copy(p.userData.curve.getPoint(p.userData.t));
+            });
+        });
+        renderer.render(scene, camera);
+    }
+
+    loadScenario();
+    animate();
+    </script>
+</body>
+</html>

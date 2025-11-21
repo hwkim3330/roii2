@@ -9,6 +9,11 @@
 | **Network** | [index.html](https://hwkim3330.github.io/roii2/) | Network topology visualization |
 | **Drive** | [drive.html](https://hwkim3330.github.io/roii2/drive.html) | Driving simulator (WASD) |
 | **Mobile** | [mobile.html](https://hwkim3330.github.io/roii2/mobile.html) | Touch/mouse controls |
+| **Dashboard** | [dashboard.html](https://hwkim3330.github.io/roii2/dashboard.html) | Real-time monitoring dashboard |
+| **Presentation** | [presentation.html](https://hwkim3330.github.io/roii2/presentation.html) | Auto-demo presentation mode |
+| **Editor** | [editor.html](https://hwkim3330.github.io/roii2/editor.html) | Network topology editor |
+| **Dark** | [dark.html](https://hwkim3330.github.io/roii2/dark.html) | Cyberpunk neon theme |
+| **Simple** | [simple.html](https://hwkim3330.github.io/roii2/simple.html) | Minimal clean view |
 
 ## Architecture
 
@@ -61,19 +66,21 @@
 | Camera | 8 | Front (3), Side (4), Rear (1) |
 | Radar | 5 | Front (3), Rear (2) |
 
-## Features
+## Version Details
 
 ### Network View (index.html)
 - 3D visualization with Three.js
-- Click devices to view properties
+- Click devices to view properties (port usage, connections, bandwidth)
 - Fault injection simulation
 - JSON configuration export
 - Auto-rotate view
+- Bandwidth-based connection styling (10G thick, 1G thin)
 
 ### Drive Mode (drive.html)
 - WASD keyboard controls
 - Multiple camera views (V key)
 - Speedometer
+- Sky gradient background
 - Fault simulation while driving
 
 ### Mobile (mobile.html)
@@ -81,7 +88,40 @@
 - Gas/brake pedals
 - Mouse support for desktop
 - Keyboard (WASD/arrows) support
-- Full 17-sensor network
+- Full 17-sensor network with properties panel
+
+### Dashboard (dashboard.html)
+- Real-time network monitoring
+- Traffic visualization with animated charts
+- Device list with status indicators
+- Connection bandwidth usage
+- Alert system
+
+### Presentation (presentation.html)
+- Auto-rotating demo mode
+- Fullscreen optimized (F key)
+- Animated fault demonstration
+- Recovery simulation
+- Pause/Resume (Space key)
+
+### Editor (editor.html)
+- Add devices by clicking
+- Create connections between devices
+- Delete devices and connections
+- Import/Export JSON topology
+- Load vehicle template
+
+### Dark Mode (dark.html)
+- Cyberpunk neon aesthetic
+- Wireframe vehicle model
+- Glowing connections
+- Scanline overlay effect
+
+### Simple View (simple.html)
+- Minimal clean design
+- White background
+- Essential controls only
+- Auto-rotate by default
 
 ## Fault Simulation
 
@@ -106,6 +146,13 @@ Simulate network failures to test redundancy:
 | Space | Brake |
 | V | Change camera |
 
+### Presentation Mode
+| Key | Action |
+|-----|--------|
+| F | Fullscreen |
+| Space | Pause/Resume |
+| R | Reset |
+
 ### Mobile (mobile.html)
 - **Left joystick**: Steering
 - **GAS button**: Accelerate
@@ -124,13 +171,17 @@ Simulate network failures to test redundancy:
 
 ```
 roii2/
-├── index.html      # Network topology viewer
-├── drive.html      # Driving simulator
-├── mobile.html     # Touch-optimized version
-├── script.js       # Main application logic
-├── styles.css      # Stylesheet
-├── roii.glb        # 3D vehicle model
-├── keti.png        # KETI logo
+├── index.html        # Network topology viewer
+├── drive.html        # Driving simulator
+├── mobile.html       # Touch-optimized version
+├── dashboard.html    # Monitoring dashboard
+├── presentation.html # Auto-demo mode
+├── editor.html       # Topology editor
+├── dark.html         # Dark/neon theme
+├── simple.html       # Minimal view
+├── script.js         # Main application logic
+├── roii.glb          # 3D vehicle model
+├── keti.png          # KETI logo
 ├── libs/
 │   ├── three.min.js
 │   ├── OrbitControls.js

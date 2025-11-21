@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROii2 - TSN Network Dashboard</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/OrbitControls.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+        .app { display: grid; grid-template-columns: 280px 1fr 320px; grid-template-rows: 60px 1fr; height: 100vh; }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .logo { height: 36px; filter: brightness(0) invert(1); }
+        .title h1 { font-size: 16px; font-weight: 700; color: #f8fafc; }
+        .title p { font-size: 10px; color: #64748b; }
+
+        .status-indicators { display: flex; gap: 20px; }
+        .status-item { display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; animation: pulse 2s infinite; }
+        .status-dot.green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .status-dot.yellow { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+        .status-label { font-size: 11px; color: #94a3b8; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .version-links { display: flex; gap: 6px; }
+        .version-link {
+            padding: 6px 12px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .version-link:hover { border-color: #3b82f6; color: #3b82f6; }
+        .version-link.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+        /* Sidebar */
+        .sidebar {
+            background: #1e293b;
+            border-right: 1px solid #334155;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .sidebar-section { margin-bottom: 20px; }
+        .section-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #3b82f6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-card {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            border: 1px solid #475569;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+        .stat-value { font-size: 28px; font-weight: 700; color: #3b82f6; }
+        .stat-label { font-size: 10px; color: #64748b; text-transform: uppercase; margin-top: 4px; }
+        .stat-card.success .stat-value { color: #10b981; }
+        .stat-card.warning .stat-value { color: #f59e0b; }
+        .stat-card.danger .stat-value { color: #ef4444; }
+
+        /* Device List */
+        .device-list { display: flex; flex-direction: column; gap: 8px; }
+        .device-item {
+            background: #334155;
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .device-item:hover { background: #475569; }
+        .device-item.active { border: 1px solid #3b82f6; }
+        .device-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .device-icon.hpc { background: rgba(225, 29, 72, 0.2); color: #f43f5e; }
+        .device-icon.switch { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .device-icon.sensor { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .device-info { flex: 1; }
+        .device-name { font-size: 12px; font-weight: 600; color: #f8fafc; }
+        .device-type { font-size: 10px; color: #64748b; }
+        .device-status { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
+
+        /* Main Canvas */
+        .main { position: relative; background: #0f172a; }
+        #canvas3d { width: 100%; height: 100%; }
+
+        /* Right Panel */
+        .right-panel {
+            background: #1e293b;
+            border-left: 1px solid #334155;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        /* Traffic Chart */
+        .chart-container {
+            background: #334155;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .chart-title { font-size: 12px; font-weight: 600; color: #f8fafc; margin-bottom: 12px; }
+        .chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 100px; }
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(to top, #3b82f6, #60a5fa);
+            border-radius: 3px 3px 0 0;
+            transition: height 0.3s;
+        }
+
+        /* Connection List */
+        .connection-item {
+            background: #334155;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .connection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .connection-name { font-size: 11px; font-weight: 600; color: #f8fafc; }
+        .connection-bw {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+        .connection-bar {
+            height: 4px;
+            background: #475569;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .connection-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+
+        /* Alerts */
+        .alert-item {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .alert-item.warning { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); }
+        .alert-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .alert-icon { color: #ef4444; font-size: 12px; }
+        .alert-item.warning .alert-icon { color: #f59e0b; }
+        .alert-title { font-size: 11px; font-weight: 600; color: #f8fafc; }
+        .alert-time { font-size: 10px; color: #64748b; }
+
+        /* Time */
+        .time-display {
+            text-align: center;
+            padding: 16px;
+            background: #334155;
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+        .current-time { font-size: 32px; font-weight: 700; color: #f8fafc; font-family: monospace; }
+        .current-date { font-size: 11px; color: #64748b; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="header-left">
+                <img src="keti.png" alt="KETI" class="logo" onerror="this.style.display='none'">
+                <div class="title">
+                    <h1>ROii2 - TSN Network Dashboard</h1>
+                    <p>Real-time Automotive Network Monitoring</p>
+                </div>
+            </div>
+            <div class="status-indicators">
+                <div class="status-item">
+                    <div class="status-dot green"></div>
+                    <span class="status-label">Network OK</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot green"></div>
+                    <span class="status-label">PTP Sync</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot yellow" id="faultIndicator" style="display:none;"></div>
+                    <span class="status-label" id="faultLabel" style="display:none;">Fault Active</span>
+                </div>
+            </div>
+            <div class="version-links">
+                <a href="index.html" class="version-link"><i class="fas fa-project-diagram"></i></a>
+                <a href="drive.html" class="version-link"><i class="fas fa-gamepad"></i></a>
+                <a href="mobile.html" class="version-link"><i class="fas fa-mobile-alt"></i></a>
+                <a href="dashboard.html" class="version-link active"><i class="fas fa-chart-line"></i></a>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-chart-pie"></i> Network Stats</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="deviceCount">0</div>
+                        <div class="stat-label">Devices</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-value" id="linkCount">0</div>
+                        <div class="stat-label">Links</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="bandwidth">0</div>
+                        <div class="stat-label">Gbps</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-value" id="faultCount">0</div>
+                        <div class="stat-label">Faults</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-server"></i> Zone Controllers</div>
+                <div class="device-list" id="controllerList"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-satellite-dish"></i> Sensors (<span id="sensorCount">0</span>)</div>
+                <div class="device-list" id="sensorList"></div>
+            </div>
+        </div>
+
+        <div class="main">
+            <div id="canvas3d"></div>
+        </div>
+
+        <div class="right-panel">
+            <div class="time-display">
+                <div class="current-time" id="currentTime">00:00:00</div>
+                <div class="current-date" id="currentDate">2024-01-01</div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-wave-square"></i> Traffic Monitor</div>
+                <div class="chart-container">
+                    <div class="chart-title">Bandwidth Usage (Mbps)</div>
+                    <div class="chart-bars" id="trafficChart"></div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-network-wired"></i> Active Connections</div>
+                <div id="connectionList"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-bell"></i> Alerts</div>
+                <div id="alertList">
+                    <div class="alert-item warning">
+                        <div class="alert-header">
+                            <i class="fas fa-exclamation-triangle alert-icon"></i>
+                            <span class="alert-title">High Latency Warning</span>
+                        </div>
+                        <div class="alert-time">2 min ago - Front-L Zone</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Dashboard-specific Three.js setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f172a);
+    scene.fog = new THREE.Fog(0x0f172a, 100, 300);
+
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 500);
+    camera.position.set(40, 30, 50);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.shadowMap.enabled = true;
+
+    const container = document.getElementById('canvas3d');
+    function updateSize() {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+    updateSize();
+    container.appendChild(renderer.domElement);
+    window.addEventListener('resize', updateSize);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const light = new THREE.DirectionalLight(0xffffff, 0.8);
+    light.position.set(30, 50, 30);
+    light.castShadow = true;
+    scene.add(light);
+
+    // Grid
+    const grid = new THREE.GridHelper(200, 50, 0x3b82f6, 0x1e293b);
+    grid.material.opacity = 0.3;
+    grid.material.transparent = true;
+    scene.add(grid);
+
+    // State
+    const state = {
+        vehicleGroup: new THREE.Group(),
+        devices: new Map(),
+        connections: [],
+        deviceCounter: 1
+    };
+    scene.add(state.vehicleGroup);
+
+    const templates = {
+        lan9692: { label: 'LAN9692', color: 0x10b981, size: [3, 1.5, 3], ports: 12 },
+        hpc: { label: 'HPC', color: 0xe11d48, size: [4, 2, 4], ports: 4 },
+        camera: { label: 'Camera', color: 0xf59e0b, size: [0.6, 0.6, 0.6], ports: 1 },
+        lidar: { label: 'LiDAR', color: 0x10b981, size: [1, 1, 1], ports: 1 },
+        radar: { label: 'Radar', color: 0x8b5cf6, size: [1, 1, 1], ports: 1 }
+    };
+
+    // Vehicle
+    function createVehicle() {
+        const loader = new THREE.GLTFLoader();
+        loader.load('./roii.glb', (gltf) => {
+            const model = gltf.scene;
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            const scale = 30 / Math.max(size.x, size.y, size.z);
+            model.scale.set(scale, scale, scale);
+            model.position.set(-center.x, -center.y + size.y * scale * 0.5, -center.z);
+            model.traverse((c) => {
+                if (c.isMesh) {
+                    c.material.transparent = true;
+                    c.material.opacity = 0.6;
+                }
+            });
+            state.vehicleGroup.add(model);
+        });
+    }
+
+    function addDevice(type, position, label) {
+        const t = templates[type];
+        const id = `dev-${state.deviceCounter++}`;
+        const device = { id, type, label, position: position.clone(), status: 'normal' };
+
+        const geo = type === 'lidar' && !label.includes('Center') ?
+            new THREE.CylinderGeometry(t.size[0] * 0.4, t.size[0] * 0.4, t.size[1], 12) :
+            new THREE.BoxGeometry(...t.size);
+        const mat = new THREE.MeshPhongMaterial({ color: t.color, emissive: t.color, emissiveIntensity: 0.6 });
+        const group = new THREE.Group();
+        group.add(new THREE.Mesh(geo, mat));
+        group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true })));
+        group.position.copy(position);
+        group.userData = { device };
+        device.mesh = group;
+
+        state.vehicleGroup.add(group);
+        state.devices.set(id, device);
+        return device;
+    }
+
+    function createConnection(from, to) {
+        let bw, color, radius;
+        if (from.type === 'lan9692' && to.type === 'lan9692') {
+            bw = '10G'; color = 0x3b82f6; radius = 0.12;
+        } else if (from.type === 'hpc' || to.type === 'hpc') {
+            bw = '10G'; color = 0xfbbf24; radius = 0.1;
+        } else {
+            bw = '1G'; color = 0x10b981; radius = 0.05;
+        }
+
+        const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
+        const tube = new THREE.Mesh(
+            new THREE.TubeGeometry(curve, 12, radius, 6, false),
+            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 })
+        );
+        state.vehicleGroup.add(tube);
+
+        const particles = [];
+        const count = bw === '10G' ? 3 : 2;
+        for (let i = 0; i < count; i++) {
+            const p = new THREE.Mesh(new THREE.SphereGeometry(bw === '10G' ? 0.15 : 0.08, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            p.userData = { t: i / count, curve };
+            state.vehicleGroup.add(p);
+            particles.push(p);
+        }
+
+        const conn = { from, to, tube, particles, bandwidth: bw, status: 'normal', color };
+        state.connections.push(conn);
+        return conn;
+    }
+
+    function loadScenario() {
+        createVehicle();
+
+        const acuIT = addDevice('hpc', new THREE.Vector3(0, 3, 0), 'ACU_IT');
+        const frontL = addDevice('lan9692', new THREE.Vector3(-3, 3, 8), 'Front-L-9692');
+        const frontR = addDevice('lan9692', new THREE.Vector3(3, 3, 8), 'Front-R-9692');
+        const rear = addDevice('lan9692', new THREE.Vector3(0, 3, -8), 'Rear-9692');
+
+        const lidarFL = addDevice('lidar', new THREE.Vector3(-6, 10, 13), 'LiDAR-FL');
+        const lidarFR = addDevice('lidar', new THREE.Vector3(6, 10, 13), 'LiDAR-FR');
+        const lidarFC = addDevice('lidar', new THREE.Vector3(0, 6, 15), 'LiDAR-Front-Center');
+        const lidarRC = addDevice('lidar', new THREE.Vector3(0, 6, -15), 'LiDAR-Rear-Center');
+
+        const camFC = addDevice('camera', new THREE.Vector3(0, 11, 14), 'Cam-Front-Center');
+        const camFL = addDevice('camera', new THREE.Vector3(-1, 11, 14), 'Cam-Front-L');
+        const camFR = addDevice('camera', new THREE.Vector3(1, 11, 14), 'Cam-Front-R');
+        const camSL1 = addDevice('camera', new THREE.Vector3(-6, 11, 13), 'Cam-Side-L1');
+        const camSR1 = addDevice('camera', new THREE.Vector3(6, 11, 13), 'Cam-Side-R1');
+        const camSL2 = addDevice('camera', new THREE.Vector3(-6, 11, -13), 'Cam-Side-L2');
+        const camSR2 = addDevice('camera', new THREE.Vector3(6, 11, -13), 'Cam-Side-R2');
+        const camRC = addDevice('camera', new THREE.Vector3(0, 9, -14), 'Cam-Rear-Center');
+
+        const radarFC = addDevice('radar', new THREE.Vector3(0, 4, 15), 'Radar-Front-Center');
+        const radarFL = addDevice('radar', new THREE.Vector3(-5, 4, 14), 'Radar-Front-L');
+        const radarFR = addDevice('radar', new THREE.Vector3(5, 4, 14), 'Radar-Front-R');
+        const radarRL = addDevice('radar', new THREE.Vector3(-5, 4, -14), 'Radar-Rear-L');
+        const radarRR = addDevice('radar', new THREE.Vector3(5, 4, -14), 'Radar-Rear-R');
+
+        createConnection(frontL, acuIT);
+        createConnection(frontR, acuIT);
+        createConnection(rear, acuIT);
+        createConnection(frontL, frontR);
+
+        createConnection(frontL, lidarFL);
+        createConnection(frontL, lidarFC);
+        createConnection(frontL, camFL);
+        createConnection(frontL, camSL1);
+        createConnection(frontL, radarFL);
+
+        createConnection(frontR, lidarFR);
+        createConnection(frontR, camFC);
+        createConnection(frontR, camFR);
+        createConnection(frontR, camSR1);
+        createConnection(frontR, radarFC);
+        createConnection(frontR, radarFR);
+
+        createConnection(rear, lidarRC);
+        createConnection(rear, camRC);
+        createConnection(rear, camSL2);
+        createConnection(rear, camSR2);
+        createConnection(rear, radarRL);
+        createConnection(rear, radarRR);
+
+        updateDashboard();
+    }
+
+    function updateDashboard() {
+        document.getElementById('deviceCount').textContent = state.devices.size;
+        document.getElementById('linkCount').textContent = state.connections.length;
+        let totalBW = 0;
+        state.connections.forEach(c => totalBW += c.bandwidth === '10G' ? 10 : 1);
+        document.getElementById('bandwidth').textContent = totalBW;
+
+        // Controller list
+        const controllerList = document.getElementById('controllerList');
+        controllerList.innerHTML = '';
+        state.devices.forEach(d => {
+            if (d.type === 'hpc' || d.type === 'lan9692') {
+                controllerList.innerHTML += `
+                    <div class="device-item">
+                        <div class="device-icon ${d.type === 'hpc' ? 'hpc' : 'switch'}">
+                            <i class="fas fa-${d.type === 'hpc' ? 'microchip' : 'network-wired'}"></i>
+                        </div>
+                        <div class="device-info">
+                            <div class="device-name">${d.label}</div>
+                            <div class="device-type">${templates[d.type].label}</div>
+                        </div>
+                        <div class="device-status"></div>
+                    </div>`;
+            }
+        });
+
+        // Sensor list
+        let sensorCount = 0;
+        const sensorList = document.getElementById('sensorList');
+        sensorList.innerHTML = '';
+        state.devices.forEach(d => {
+            if (['camera', 'lidar', 'radar'].includes(d.type)) {
+                sensorCount++;
+                sensorList.innerHTML += `
+                    <div class="device-item">
+                        <div class="device-icon sensor">
+                            <i class="fas fa-${d.type === 'camera' ? 'video' : d.type === 'lidar' ? 'broadcast-tower' : 'satellite-dish'}"></i>
+                        </div>
+                        <div class="device-info">
+                            <div class="device-name">${d.label}</div>
+                            <div class="device-type">${templates[d.type].label}</div>
+                        </div>
+                        <div class="device-status"></div>
+                    </div>`;
+            }
+        });
+        document.getElementById('sensorCount').textContent = sensorCount;
+
+        // Connection list
+        const connList = document.getElementById('connectionList');
+        connList.innerHTML = '';
+        state.connections.slice(0, 6).forEach(c => {
+            const usage = Math.floor(Math.random() * 60) + 20;
+            connList.innerHTML += `
+                <div class="connection-item">
+                    <div class="connection-header">
+                        <span class="connection-name">${c.from.label} → ${c.to.label}</span>
+                        <span class="connection-bw">${c.bandwidth}</span>
+                    </div>
+                    <div class="connection-bar">
+                        <div class="connection-fill" style="width: ${usage}%"></div>
+                    </div>
+                </div>`;
+        });
+
+        // Traffic chart
+        const chart = document.getElementById('trafficChart');
+        chart.innerHTML = '';
+        for (let i = 0; i < 20; i++) {
+            const h = Math.floor(Math.random() * 80) + 20;
+            chart.innerHTML += `<div class="chart-bar" style="height: ${h}%"></div>`;
+        }
+    }
+
+    // Time update
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('ko-KR');
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Animate traffic
+    setInterval(() => {
+        document.querySelectorAll('.connection-fill').forEach(el => {
+            el.style.width = (Math.floor(Math.random() * 60) + 20) + '%';
+        });
+        document.querySelectorAll('.chart-bar').forEach(el => {
+            el.style.height = (Math.floor(Math.random() * 80) + 20) + '%';
+        });
+    }, 2000);
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        state.connections.forEach(conn => {
+            conn.particles.forEach(p => {
+                p.userData.t += 0.01;
+                if (p.userData.t > 1) p.userData.t = 0;
+                p.position.copy(p.userData.curve.getPoint(p.userData.t));
+            });
+        });
+        renderer.render(scene, camera);
+    }
+
+    loadScenario();
+    animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROii2 - Network Topology Editor</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/OrbitControls.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1e293b;
+            overflow: hidden;
+        }
+        .app { display: flex; height: 100vh; }
+
+        /* Toolbar */
+        .toolbar {
+            width: 280px;
+            background: #0f172a;
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+        }
+        .toolbar-header {
+            padding: 16px;
+            border-bottom: 1px solid #334155;
+        }
+        .toolbar-title { font-size: 14px; font-weight: 700; color: #f8fafc; }
+        .toolbar-sub { font-size: 10px; color: #64748b; margin-top: 4px; }
+
+        .tool-section {
+            padding: 16px;
+            border-bottom: 1px solid #334155;
+        }
+        .section-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #3b82f6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        /* Mode buttons */
+        .mode-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .mode-btn {
+            flex: 1;
+            min-width: 70px;
+            padding: 10px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #94a3b8;
+            font-size: 11px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .mode-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+        .mode-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .mode-btn i { display: block; font-size: 18px; margin-bottom: 4px; }
+
+        /* Device palette */
+        .device-palette { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .device-btn {
+            padding: 12px 8px;
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .device-btn:hover { border-color: #3b82f6; transform: scale(1.02); }
+        .device-btn.selected { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .device-btn i { font-size: 24px; margin-bottom: 6px; display: block; }
+        .device-btn.hpc i { color: #f43f5e; }
+        .device-btn.switch i { color: #10b981; }
+        .device-btn.camera i { color: #f59e0b; }
+        .device-btn.lidar i { color: #10b981; }
+        .device-btn.radar i { color: #8b5cf6; }
+        .device-name { font-size: 10px; color: #94a3b8; }
+
+        /* Actions */
+        .action-buttons { display: flex; flex-direction: column; gap: 8px; }
+        .action-btn {
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .action-btn.primary { background: #3b82f6; color: white; }
+        .action-btn.primary:hover { background: #2563eb; }
+        .action-btn.success { background: #10b981; color: white; }
+        .action-btn.success:hover { background: #059669; }
+        .action-btn.danger { background: #ef4444; color: white; }
+        .action-btn.danger:hover { background: #dc2626; }
+        .action-btn.secondary { background: #334155; color: #94a3b8; }
+        .action-btn.secondary:hover { background: #475569; }
+
+        /* Stats */
+        .stats { display: flex; gap: 12px; padding: 16px; background: #1e293b; margin-top: auto; }
+        .stat { text-align: center; flex: 1; }
+        .stat-value { font-size: 20px; font-weight: 700; color: #3b82f6; }
+        .stat-label { font-size: 9px; color: #64748b; text-transform: uppercase; }
+
+        /* Main canvas */
+        .main { flex: 1; position: relative; }
+        #canvas3d { width: 100%; height: 100%; }
+
+        /* Help bar */
+        .help-bar {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9);
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            font-size: 12px;
+            display: flex;
+            gap: 24px;
+        }
+        .help-item b { color: #f8fafc; }
+
+        /* Properties panel */
+        .properties {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            display: none;
+        }
+        .properties.visible { display: block; }
+        .properties-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .properties-title { font-size: 13px; font-weight: 600; color: #f8fafc; }
+        .close-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: #334155;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+        .properties-content { padding: 16px; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 10px; font-weight: 600; color: #64748b; margin-bottom: 6px; }
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f8fafc;
+            font-size: 12px;
+        }
+
+        /* Version links */
+        .version-links {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            gap: 6px;
+        }
+        .version-link {
+            padding: 8px 12px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 11px;
+        }
+        .version-link:hover { border-color: #3b82f6; color: #3b82f6; }
+        .version-link.active { background: #3b82f6; color: white; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            padding: 12px 24px;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            font-size: 13px;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="toolbar">
+            <div class="toolbar-header">
+                <div class="toolbar-title"><i class="fas fa-edit"></i> Network Editor</div>
+                <div class="toolbar-sub">Click to place, drag to move</div>
+            </div>
+
+            <div class="tool-section">
+                <div class="section-title">Edit Mode</div>
+                <div class="mode-buttons">
+                    <div class="mode-btn active" data-mode="select"><i class="fas fa-mouse-pointer"></i>Select</div>
+                    <div class="mode-btn" data-mode="add"><i class="fas fa-plus"></i>Add</div>
+                    <div class="mode-btn" data-mode="connect"><i class="fas fa-link"></i>Connect</div>
+                    <div class="mode-btn" data-mode="delete"><i class="fas fa-trash"></i>Delete</div>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <div class="section-title">Device Types</div>
+                <div class="device-palette">
+                    <div class="device-btn hpc" data-type="hpc"><i class="fas fa-microchip"></i><span class="device-name">HPC</span></div>
+                    <div class="device-btn switch" data-type="lan9692"><i class="fas fa-network-wired"></i><span class="device-name">LAN9692</span></div>
+                    <div class="device-btn camera" data-type="camera"><i class="fas fa-video"></i><span class="device-name">Camera</span></div>
+                    <div class="device-btn lidar" data-type="lidar"><i class="fas fa-broadcast-tower"></i><span class="device-name">LiDAR</span></div>
+                    <div class="device-btn radar" data-type="radar"><i class="fas fa-satellite-dish"></i><span class="device-name">Radar</span></div>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <div class="section-title">Quick Actions</div>
+                <div class="action-buttons">
+                    <button class="action-btn success" id="loadTemplateBtn"><i class="fas fa-car"></i> Load Vehicle Template</button>
+                    <button class="action-btn primary" id="exportBtn"><i class="fas fa-download"></i> Export JSON</button>
+                    <button class="action-btn secondary" id="importBtn"><i class="fas fa-upload"></i> Import JSON</button>
+                    <button class="action-btn danger" id="clearBtn"><i class="fas fa-trash-alt"></i> Clear All</button>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="deviceCount">0</div>
+                    <div class="stat-label">Devices</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="linkCount">0</div>
+                    <div class="stat-label">Links</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="bandwidth">0</div>
+                    <div class="stat-label">Gbps</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <div id="canvas3d"></div>
+
+            <div class="version-links">
+                <a href="index.html" class="version-link"><i class="fas fa-project-diagram"></i></a>
+                <a href="dashboard.html" class="version-link"><i class="fas fa-chart-line"></i></a>
+                <a href="editor.html" class="version-link active"><i class="fas fa-edit"></i></a>
+            </div>
+
+            <div class="help-bar">
+                <span class="help-item"><b>Left Click</b> Place/Select</span>
+                <span class="help-item"><b>Right Drag</b> Rotate View</span>
+                <span class="help-item"><b>Scroll</b> Zoom</span>
+                <span class="help-item"><b>Del</b> Delete Selected</span>
+            </div>
+
+            <div class="properties" id="properties">
+                <div class="properties-header">
+                    <span class="properties-title">Device Properties</span>
+                    <button class="close-btn" id="closeBtn"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="properties-content" id="propertiesContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+
+    <script>
+    // Editor Mode
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1e293b);
+
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500);
+    camera.position.set(50, 40, 60);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.shadowMap.enabled = true;
+
+    const container = document.getElementById('canvas3d');
+    function updateSize() {
+        const w = container.clientWidth, h = container.clientHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+    }
+    updateSize();
+    container.appendChild(renderer.domElement);
+    window.addEventListener('resize', updateSize);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+
+    // Lighting & Grid
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const light = new THREE.DirectionalLight(0xffffff, 0.8);
+    light.position.set(30, 50, 30);
+    scene.add(light);
+
+    const grid = new THREE.GridHelper(200, 40, 0x3b82f6, 0x334155);
+    grid.material.opacity = 0.5;
+    grid.material.transparent = true;
+    scene.add(grid);
+
+    // Ground plane for raycasting
+    const groundPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(200, 200),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+    groundPlane.rotation.x = -Math.PI / 2;
+    groundPlane.position.y = 0;
+    scene.add(groundPlane);
+
+    // State
+    const state = {
+        devices: new Map(),
+        connections: [],
+        deviceCounter: 1,
+        mode: 'select',
+        selectedType: 'lan9692',
+        selected: null,
+        connectingFrom: null
+    };
+
+    const templates = {
+        lan9692: { label: 'LAN9692', color: 0x10b981, size: [4, 2, 4], ports: 12 },
+        hpc: { label: 'HPC', color: 0xe11d48, size: [5, 2.5, 5], ports: 4 },
+        camera: { label: 'Camera', color: 0xf59e0b, size: [1, 1, 1], ports: 1 },
+        lidar: { label: 'LiDAR', color: 0x10b981, size: [1.5, 1.5, 1.5], ports: 1 },
+        radar: { label: 'Radar', color: 0x8b5cf6, size: [1.5, 1.5, 1.5], ports: 1 }
+    };
+
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function addDevice(type, position, label = null) {
+        const t = templates[type];
+        const id = `dev-${state.deviceCounter++}`;
+        const device = {
+            id, type,
+            label: label || `${t.label}-${state.deviceCounter - 1}`,
+            position: position.clone(),
+            ports: t.ports
+        };
+
+        const geo = new THREE.BoxGeometry(...t.size);
+        const mat = new THREE.MeshPhongMaterial({ color: t.color, emissive: t.color, emissiveIntensity: 0.4 });
+        const group = new THREE.Group();
+        group.add(new THREE.Mesh(geo, mat));
+        group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.6, transparent: true })));
+        group.position.copy(position);
+        group.userData = { device, isDevice: true };
+        device.mesh = group;
+
+        scene.add(group);
+        state.devices.set(id, device);
+        updateStats();
+        return device;
+    }
+
+    function createConnection(from, to) {
+        const exists = state.connections.some(c =>
+            (c.from.id === from.id && c.to.id === to.id) ||
+            (c.from.id === to.id && c.to.id === from.id)
+        );
+        if (exists) return null;
+
+        let bw, color, radius;
+        if (from.type === 'lan9692' && to.type === 'lan9692') { bw = '10G'; color = 0x3b82f6; radius = 0.15; }
+        else if (from.type === 'hpc' || to.type === 'hpc') { bw = '10G'; color = 0xfbbf24; radius = 0.12; }
+        else { bw = '1G'; color = 0x10b981; radius = 0.06; }
+
+        const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
+        const tube = new THREE.Mesh(
+            new THREE.TubeGeometry(curve, 16, radius, 8, false),
+            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 })
+        );
+        scene.add(tube);
+
+        const particles = [];
+        const count = bw === '10G' ? 3 : 2;
+        for (let i = 0; i < count; i++) {
+            const p = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            p.userData = { t: i / count, curve };
+            scene.add(p);
+            particles.push(p);
+        }
+
+        const conn = { from, to, tube, particles, bandwidth: bw, color };
+        state.connections.push(conn);
+        updateStats();
+        return conn;
+    }
+
+    function deleteDevice(device) {
+        scene.remove(device.mesh);
+        state.devices.delete(device.id);
+        // Remove connections
+        state.connections = state.connections.filter(c => {
+            if (c.from.id === device.id || c.to.id === device.id) {
+                scene.remove(c.tube);
+                c.particles.forEach(p => scene.remove(p));
+                return false;
+            }
+            return true;
+        });
+        updateStats();
+    }
+
+    function selectDevice(device) {
+        // Deselect previous
+        if (state.selected && state.selected.mesh) {
+            state.selected.mesh.children[0].material.emissiveIntensity = 0.4;
+        }
+        state.selected = device;
+        if (device) {
+            device.mesh.children[0].material.emissiveIntensity = 0.8;
+            showProperties(device);
+        } else {
+            document.getElementById('properties').classList.remove('visible');
+        }
+    }
+
+    function showProperties(device) {
+        const t = templates[device.type];
+        const conns = state.connections.filter(c => c.from.id === device.id || c.to.id === device.id);
+        document.getElementById('propertiesContent').innerHTML = `
+            <div class="form-group">
+                <label class="form-label">Name</label>
+                <input type="text" class="form-input" id="deviceName" value="${device.label}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Type</label>
+                <input type="text" class="form-input" value="${t.label}" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Position</label>
+                <input type="text" class="form-input" value="X:${device.position.x.toFixed(1)} Y:${device.position.y.toFixed(1)} Z:${device.position.z.toFixed(1)}" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Connections</label>
+                <input type="text" class="form-input" value="${conns.length} / ${device.ports} ports" readonly>
+            </div>
+            <button class="action-btn danger" style="width:100%;margin-top:12px;" onclick="deleteSelected()">
+                <i class="fas fa-trash"></i> Delete Device
+            </button>
+        `;
+        document.getElementById('properties').classList.add('visible');
+
+        document.getElementById('deviceName').addEventListener('change', (e) => {
+            device.label = e.target.value;
+        });
+    }
+
+    function deleteSelected() {
+        if (state.selected) {
+            deleteDevice(state.selected);
+            state.selected = null;
+            document.getElementById('properties').classList.remove('visible');
+            showToast('Device deleted');
+        }
+    }
+
+    function updateStats() {
+        document.getElementById('deviceCount').textContent = state.devices.size;
+        document.getElementById('linkCount').textContent = state.connections.length;
+        let bw = 0;
+        state.connections.forEach(c => bw += c.bandwidth === '10G' ? 10 : 1);
+        document.getElementById('bandwidth').textContent = bw;
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('visible');
+        setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
+    function loadTemplate() {
+        // Clear
+        state.devices.forEach(d => scene.remove(d.mesh));
+        state.connections.forEach(c => { scene.remove(c.tube); c.particles.forEach(p => scene.remove(p)); });
+        state.devices.clear();
+        state.connections = [];
+        state.deviceCounter = 1;
+
+        const acuIT = addDevice('hpc', new THREE.Vector3(0, 2.5, 0), 'ACU_IT');
+        const frontL = addDevice('lan9692', new THREE.Vector3(-10, 2, 15), 'Front-L-9692');
+        const frontR = addDevice('lan9692', new THREE.Vector3(10, 2, 15), 'Front-R-9692');
+        const rear = addDevice('lan9692', new THREE.Vector3(0, 2, -15), 'Rear-9692');
+
+        createConnection(frontL, acuIT);
+        createConnection(frontR, acuIT);
+        createConnection(rear, acuIT);
+        createConnection(frontL, frontR);
+
+        // Sensors
+        const lidarFL = addDevice('lidar', new THREE.Vector3(-15, 3, 25), 'LiDAR-FL');
+        const lidarFR = addDevice('lidar', new THREE.Vector3(15, 3, 25), 'LiDAR-FR');
+        createConnection(frontL, lidarFL);
+        createConnection(frontR, lidarFR);
+
+        showToast('Template loaded');
+        camera.position.set(50, 40, 60);
+    }
+
+    function exportConfig() {
+        const config = {
+            devices: Array.from(state.devices.values()).map(d => ({
+                type: d.type, label: d.label,
+                position: { x: d.position.x, y: d.position.y, z: d.position.z }
+            })),
+            connections: state.connections.map(c => ({ from: c.from.label, to: c.to.label }))
+        };
+        const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `roii2-topology-${Date.now()}.json`;
+        a.click();
+        showToast('Exported');
+    }
+
+    function importConfig(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const config = JSON.parse(e.target.result);
+                // Clear
+                state.devices.forEach(d => scene.remove(d.mesh));
+                state.connections.forEach(c => { scene.remove(c.tube); c.particles.forEach(p => scene.remove(p)); });
+                state.devices.clear();
+                state.connections = [];
+                state.deviceCounter = 1;
+
+                // Load devices
+                config.devices.forEach(d => {
+                    addDevice(d.type, new THREE.Vector3(d.position.x, d.position.y, d.position.z), d.label);
+                });
+
+                // Load connections
+                config.connections.forEach(c => {
+                    let from, to;
+                    state.devices.forEach(d => {
+                        if (d.label === c.from) from = d;
+                        if (d.label === c.to) to = d;
+                    });
+                    if (from && to) createConnection(from, to);
+                });
+
+                showToast('Imported successfully');
+            } catch (err) {
+                showToast('Import failed');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // Event listeners
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.mode = btn.dataset.mode;
+            state.connectingFrom = null;
+        });
+    });
+
+    document.querySelectorAll('.device-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            state.selectedType = btn.dataset.type;
+            // Auto switch to add mode
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-mode="add"]').classList.add('active');
+            state.mode = 'add';
+        });
+    });
+
+    document.getElementById('loadTemplateBtn').addEventListener('click', loadTemplate);
+    document.getElementById('exportBtn').addEventListener('click', exportConfig);
+    document.getElementById('importBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        if (e.target.files[0]) importConfig(e.target.files[0]);
+    });
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        if (confirm('Clear all devices?')) {
+            state.devices.forEach(d => scene.remove(d.mesh));
+            state.connections.forEach(c => { scene.remove(c.tube); c.particles.forEach(p => scene.remove(p)); });
+            state.devices.clear();
+            state.connections = [];
+            state.deviceCounter = 1;
+            updateStats();
+            showToast('Cleared');
+        }
+    });
+    document.getElementById('closeBtn').addEventListener('click', () => {
+        document.getElementById('properties').classList.remove('visible');
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Delete' && state.selected) deleteSelected();
+    });
+
+    // Click handler
+    renderer.domElement.addEventListener('click', (e) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+
+        if (state.mode === 'add') {
+            const hits = raycaster.intersectObject(groundPlane);
+            if (hits.length > 0) {
+                const pos = hits[0].point;
+                pos.y = templates[state.selectedType].size[1] / 2;
+                addDevice(state.selectedType, pos);
+                showToast(`Added ${templates[state.selectedType].label}`);
+            }
+        } else {
+            // Check device intersection
+            const deviceMeshes = [];
+            state.devices.forEach(d => deviceMeshes.push(d.mesh));
+            const hits = raycaster.intersectObjects(deviceMeshes, true);
+
+            let device = null;
+            for (let hit of hits) {
+                let obj = hit.object;
+                while (obj) {
+                    if (obj.userData && obj.userData.isDevice) {
+                        device = obj.userData.device;
+                        break;
+                    }
+                    obj = obj.parent;
+                }
+                if (device) break;
+            }
+
+            if (state.mode === 'select') {
+                selectDevice(device);
+            } else if (state.mode === 'connect' && device) {
+                if (!state.connectingFrom) {
+                    state.connectingFrom = device;
+                    device.mesh.children[0].material.emissiveIntensity = 0.8;
+                    showToast(`Connecting from ${device.label}...`);
+                } else {
+                    if (state.connectingFrom !== device) {
+                        createConnection(state.connectingFrom, device);
+                        showToast('Connected');
+                    }
+                    state.connectingFrom.mesh.children[0].material.emissiveIntensity = 0.4;
+                    state.connectingFrom = null;
+                }
+            } else if (state.mode === 'delete' && device) {
+                deleteDevice(device);
+                showToast('Deleted');
+            }
+        }
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        state.connections.forEach(c => {
+            c.particles.forEach(p => {
+                p.userData.t += 0.01;
+                if (p.userData.t > 1) p.userData.t = 0;
+                p.position.copy(p.userData.curve.getPoint(p.userData.t));
+            });
+        });
+        renderer.render(scene, camera);
+    }
+
+    animate();
+    </script>
+</body>
+</html>
