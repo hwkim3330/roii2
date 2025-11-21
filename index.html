@@ -8,94 +8,317 @@
     <script src="libs/three.min.js"></script>
     <script src="libs/OrbitControls.js"></script>
     <script src="libs/GLTFLoader.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <link rel="stylesheet" href="styles.css">
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f4f8;
+            overflow: hidden;
+        }
+        .app { display: flex; flex-direction: column; height: 100vh; }
+
+        /* Header */
+        .header {
+            height: 64px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .logo { height: 40px; }
+        .title-group h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .title-group p { font-size: 11px; color: #64748b; }
+
+        .stats { display: flex; gap: 24px; }
+        .stat { text-align: center; }
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        .stat-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            background: #3b82f6;
+            color: white;
+            transition: all 0.2s;
+            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover { background: #2563eb; }
+        .btn-success { background: #10b981; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: #f59e0b; }
+        .btn-warning:hover { background: #d97706; }
+
+        /* Main */
+        .main { flex: 1; position: relative; }
+        #canvas3d { width: 100%; height: 100%; }
+
+        /* Version Links */
+        .version-links {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        .version-link {
+            padding: 8px 14px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #475569;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .version-link:hover { border-color: #3b82f6; color: #3b82f6; }
+        .version-link.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+        /* Controls */
+        .floating-controls {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .control-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #475569;
+            font-size: 16px;
+        }
+        .control-btn:hover { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .control-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+        /* Opacity Control */
+        .opacity-control {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            min-width: 180px;
+        }
+        .opacity-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .opacity-slider {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .opacity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+
+        /* Help Text */
+        .help-text {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background: white;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #475569;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Fault Panel */
         .fault-panel {
             position: absolute;
-            left: 20px;
-            bottom: 20px;
-            background: rgba(30, 41, 59, 0.95);
-            padding: 15px;
+            left: 16px;
+            bottom: 90px;
+            background: white;
+            padding: 16px;
             border-radius: 12px;
             width: 280px;
             display: none;
-            pointer-events: auto;
+            border: 1px solid #fecaca;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
         }
         .fault-panel.visible { display: block; }
         .fault-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            color: #EF4444;
-            margin-bottom: 10px;
+            color: #dc2626;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
         .fault-item {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: #fef2f2;
+            border: 1px solid #fecaca;
             border-radius: 8px;
-            padding: 10px;
+            padding: 10px 12px;
             margin-bottom: 8px;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .fault-item:hover {
-            background: rgba(239, 68, 68, 0.2);
-        }
-        .fault-item.active {
-            background: rgba(239, 68, 68, 0.3);
-            border-color: #EF4444;
-        }
-        .fault-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: #f87171;
-        }
-        .fault-desc {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-top: 4px;
-        }
+        .fault-item:hover { background: #fee2e2; }
+        .fault-item.active { background: #fecaca; border-color: #f87171; }
+        .fault-name { font-size: 12px; font-weight: 600; color: #b91c1c; }
+        .fault-desc { font-size: 11px; color: #64748b; margin-top: 3px; }
         .recovery-status {
             margin-top: 10px;
             padding: 10px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
             border-radius: 8px;
             display: none;
+            color: #059669;
+            font-size: 12px;
         }
         .recovery-status.visible { display: block; }
-        .recovery-status.success {
-            color: #34d399;
-        }
-        .version-links {
+
+        /* Properties Panel */
+        .properties {
+            width: 360px;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            transform: translateX(100%);
+            transition: transform 0.3s;
             position: absolute;
-            top: 24px;
-            left: 24px;
+            right: 0;
+            top: 0;
+            height: 100%;
+            z-index: 50;
             display: flex;
-            gap: 8px;
+            flex-direction: column;
         }
-        .version-link {
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.95);
-            border: 1px solid rgba(59, 130, 246, 0.2);
+        .properties.visible { transform: translateX(0); }
+        .properties-header {
+            height: 56px;
+            padding: 0 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .properties-title { font-size: 14px; font-weight: 600; color: #1e293b; }
+        .close-btn {
+            width: 32px;
+            height: 32px;
             border-radius: 8px;
-            font-size: 12px;
-            color: #3B82F6;
-            text-decoration: none;
+            background: #f1f5f9;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .properties-content { padding: 20px; overflow-y: auto; flex: 1; }
+        .prop-section { margin-bottom: 20px; }
+        .prop-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #3b82f6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #1e293b;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
             font-weight: 600;
-            transition: all 0.2s;
+            margin-right: 4px;
         }
-        .version-link:hover {
-            background: #3B82F6;
+        .badge-success { background: #dcfce7; color: #16a34a; }
+        .badge-info { background: #dbeafe; color: #2563eb; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            padding: 12px 24px;
+            background: #1e293b;
             color: white;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
         }
-        .version-link.active {
-            background: #3B82F6;
-            color: white;
-        }
+        .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -105,7 +328,7 @@
                 <img src="keti.png" alt="KETI" class="logo" onerror="this.style.display='none'">
                 <div class="title-group">
                     <h1>ROii2 - Automotive TSN Network Designer</h1>
-                    <p>2x Front + 1x Rear LAN9692 | ACU_IT HPC | Network Topology</p>
+                    <p>2x Front + 1x Rear LAN9692 | ACU_IT HPC</p>
                 </div>
             </div>
             <div class="stats">
@@ -123,136 +346,70 @@
                 </div>
             </div>
             <div>
-                <button class="btn btn-success" id="vehicleBtn">Load Scenario</button>
-                <button class="btn" id="faultBtn">Fault Simulation</button>
-                <button class="btn" id="exportBtn">Export</button>
+                <button class="btn btn-success" id="vehicleBtn"><i class="fas fa-car"></i> Load</button>
+                <button class="btn btn-warning" id="faultBtn"><i class="fas fa-bolt"></i> Fault</button>
+                <button class="btn" id="exportBtn"><i class="fas fa-download"></i> Export</button>
             </div>
         </div>
 
         <div class="main">
-            <div class="sidebar">
-                <div class="sidebar-section">
-                    <div class="section-title">Central HPC</div>
-                    <div class="device-card" data-type="hpc">
-                        <div class="device-header">
-                            <div class="device-icon">🔴</div>
-                            <div class="device-info">
-                                <h3>HPC</h3>
-                                <p>High Performance Computer</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div id="canvas3d"></div>
 
-                <div class="sidebar-section">
-                    <div class="section-title">Zone Controllers</div>
-                    <div class="device-card" data-type="lan9692">
-                        <div class="device-header">
-                            <div class="device-icon">🟢</div>
-                            <div class="device-info">
-                                <h3>LAN9692</h3>
-                                <p>12-Port TSN Switch</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="section-title">Sensors</div>
-                    <div class="device-card" data-type="camera">
-                        <div class="device-header">
-                            <div class="device-icon">📷</div>
-                            <div class="device-info"><h3>Camera</h3></div>
-                        </div>
-                    </div>
-                    <div class="device-card" data-type="lidar">
-                        <div class="device-header">
-                            <div class="device-icon">📡</div>
-                            <div class="device-info"><h3>LiDAR</h3></div>
-                        </div>
-                    </div>
-                    <div class="device-card" data-type="radar">
-                        <div class="device-header">
-                            <div class="device-icon">📶</div>
-                            <div class="device-info"><h3>Radar</h3></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="section-title">Tools</div>
-                    <div class="device-card" id="connectBtn">
-                        <div class="device-header">
-                            <div class="device-icon">🔗</div>
-                            <div class="device-info"><h3>Connect Mode</h3></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="version-links">
+                <a href="index.html" class="version-link active"><i class="fas fa-project-diagram"></i> Network</a>
+                <a href="drive.html" class="version-link"><i class="fas fa-gamepad"></i> Drive</a>
+                <a href="mobile.html" class="version-link"><i class="fas fa-mobile-alt"></i> Mobile</a>
             </div>
 
-            <div class="canvas">
-                <div id="canvas3d"></div>
+            <div class="help-text">
+                <i class="fas fa-mouse"></i> Right-Click: Rotate | Scroll: Zoom | Click: Select
+            </div>
 
-                <div class="version-links">
-                    <a href="index.html" class="version-link active">Network</a>
-                    <a href="drive.html" class="version-link">Drive Game</a>
-                    <a href="mobile.html" class="version-link">Mobile</a>
+            <div class="opacity-control">
+                <div class="opacity-label">
+                    <span><i class="fas fa-car-side"></i> Vehicle Opacity</span>
+                    <span id="opacityValue">50%</span>
                 </div>
+                <input type="range" class="opacity-slider" id="opacitySlider" min="0" max="100" value="50" step="5">
+            </div>
 
-                <div class="help-text" style="left: auto; right: 240px; transform: none;">
-                    <strong>ROii2:</strong> 2x Front + 1x Rear LAN9692 | ACU_IT |
-                    <strong>Right-Click:</strong> Rotate |
-                    <strong>Scroll:</strong> Zoom
+            <div class="floating-controls">
+                <div class="control-btn" id="rotateBtn" title="Auto Rotate"><i class="fas fa-sync-alt"></i></div>
+                <div class="control-btn" id="resetBtn" title="Reset View"><i class="fas fa-crosshairs"></i></div>
+            </div>
+
+            <div class="fault-panel" id="faultPanel">
+                <div class="fault-title"><i class="fas fa-exclamation-triangle"></i> Fault Injection</div>
+                <div class="fault-item" data-fault="front-backbone">
+                    <div class="fault-name">Front-L <i class="fas fa-arrows-alt-h"></i> Front-R 10G Link</div>
+                    <div class="fault-desc">Front zone controller 10G backbone failure</div>
                 </div>
-
-                <div class="opacity-control">
-                    <div class="opacity-label">
-                        <span>Vehicle Opacity</span>
-                        <span class="opacity-value" id="opacityValue">30%</span>
-                    </div>
-                    <input type="range" class="opacity-slider" id="opacitySlider" min="0" max="100" value="30" step="5">
+                <div class="fault-item" data-fault="front-l-link">
+                    <div class="fault-name">Front-L-9692 <i class="fas fa-arrow-right"></i> ACU_IT Link</div>
+                    <div class="fault-desc">Front-L zone controller to HPC link failure</div>
                 </div>
-
-                <div class="floating-controls">
-                    <div class="control-btn" id="selectBtn" title="Select Mode">👆</div>
-                    <div class="control-btn" id="rotateBtn" title="Auto Rotate">🔄</div>
-                    <div class="control-btn" id="resetBtn" title="Reset View">🎯</div>
-                    <div class="control-btn" id="deleteBtn" title="Delete">🗑️</div>
+                <div class="fault-item" data-fault="rear-link">
+                    <div class="fault-name">Rear-9692 <i class="fas fa-arrow-right"></i> ACU_IT Link</div>
+                    <div class="fault-desc">Rear zone controller to HPC link failure</div>
                 </div>
-
-                <!-- Fault Simulation Panel -->
-                <div class="fault-panel" id="faultPanel">
-                    <div class="fault-title">⚠️ Fault Injection</div>
-                    <div class="fault-item" data-fault="front-backbone">
-                        <div class="fault-name">Front-L ↔ Front-R 10G Link Error</div>
-                        <div class="fault-desc">전방 존 컨트롤러 간 10G 백본 장애</div>
-                    </div>
-                    <div class="fault-item" data-fault="front-l-link">
-                        <div class="fault-name">Front-L-9692 ↔ ACU_IT Link Error</div>
-                        <div class="fault-desc">전방 좌측 ZC → HPC 연결 장애</div>
-                    </div>
-                    <div class="fault-item" data-fault="rear-link">
-                        <div class="fault-name">Rear-9692 ↔ ACU_IT Link Error</div>
-                        <div class="fault-desc">후방 ZC → HPC 연결 장애</div>
-                    </div>
-                    <div class="fault-item" data-fault="sensor">
-                        <div class="fault-name">LiDAR-FL Sensor Error</div>
-                        <div class="fault-desc">전방 좌측 LiDAR 센서 오류</div>
-                    </div>
-                    <div class="recovery-status" id="recoveryStatus">
-                        ✅ Recovery: Front-R 10G Backbone 경로로 우회
-                    </div>
+                <div class="fault-item" data-fault="sensor">
+                    <div class="fault-name"><i class="fas fa-satellite-dish"></i> LiDAR-FL Sensor</div>
+                    <div class="fault-desc">Front-left LiDAR sensor malfunction</div>
+                </div>
+                <div class="recovery-status" id="recoveryStatus">
+                    <i class="fas fa-check-circle"></i> Recovery: Rerouting via Front-R backbone
                 </div>
             </div>
 
             <div class="properties" id="properties">
                 <div class="properties-header">
                     <div class="properties-title">Device Properties</div>
-                    <button class="close-btn" id="closeBtn">✕</button>
+                    <button class="close-btn" id="closeBtn"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="properties-content" id="propertiesContent">
-                    <p style="color: #94A3B8; text-align: center; padding: 60px 24px;">
-                        Select a device to view properties
+                    <p style="color: #94a3b8; text-align: center; padding: 40px 20px;">
+                        <i class="fas fa-mouse-pointer" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
+                        Click a device to view properties
                     </p>
                 </div>
             </div>

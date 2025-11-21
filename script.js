@@ -4,8 +4,8 @@
 
 // === THREE.JS SETUP ===
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a2e);
-scene.fog = new THREE.Fog(0x1a1a2e, 100, 400);
+scene.background = new THREE.Color(0xf0f4f8);
+scene.fog = new THREE.Fog(0xf0f4f8, 150, 500);
 
 const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
 camera.position.set(50, 35, 70);
@@ -100,8 +100,8 @@ function createRoad() {
 }
 
 // Grid Helper
-const gridHelper = new THREE.GridHelper(400, 100, 0x3B82F6, 0x222244);
-gridHelper.material.opacity = 0.2;
+const gridHelper = new THREE.GridHelper(400, 100, 0x3B82F6, 0xc4d4e8);
+gridHelper.material.opacity = 0.4;
 gridHelper.material.transparent = true;
 gridHelper.position.y = -0.2;
 scene.add(gridHelper);
@@ -109,8 +109,8 @@ scene.add(gridHelper);
 // Ground plane for shadows
 const groundGeo = new THREE.PlaneGeometry(1000, 1000);
 const groundMat = new THREE.MeshStandardMaterial({
-    color: 0x1e293b,
-    roughness: 1
+    color: 0xe2e8f0,
+    roughness: 0.8
 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
@@ -139,7 +139,7 @@ scene.add(state.vehicleGroup);
 // === VEHICLE MODEL ===
 let vehicleModel = null;
 let vehicleMeshes = [];
-let vehicleOpacity = 0.3;
+let vehicleOpacity = 0.5;
 
 function createVehicleModel() {
     const group = new THREE.Group();
@@ -663,19 +663,6 @@ document.querySelectorAll('.fault-item').forEach(item => {
     });
 });
 
-document.getElementById('selectBtn').addEventListener('click', function() {
-    state.mode = 'select';
-    this.classList.add('active');
-    document.getElementById('connectBtn').classList.remove('active');
-});
-
-document.getElementById('connectBtn').addEventListener('click', function() {
-    state.mode = 'connect';
-    this.classList.add('active');
-    document.getElementById('selectBtn').classList.remove('active');
-    showToast('Connect Mode: Click two devices');
-});
-
 document.getElementById('rotateBtn').addEventListener('click', function() {
     state.autoRotate = !state.autoRotate;
     controls.autoRotate = state.autoRotate;
@@ -688,25 +675,6 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     camera.position.set(50, 35, 70);
     controls.target.set(0, 0, 0);
     controls.update();
-});
-
-document.getElementById('deleteBtn').addEventListener('click', () => {
-    if (state.selected) {
-        state.vehicleGroup.remove(state.selected.mesh);
-        state.connections = state.connections.filter(c => {
-            if (c.from.id === state.selected.id || c.to.id === state.selected.id) {
-                state.vehicleGroup.remove(c.tube);
-                c.particles.forEach(p => state.vehicleGroup.remove(p));
-                return false;
-            }
-            return true;
-        });
-        state.devices.delete(state.selected.id);
-        state.selected = null;
-        document.getElementById('properties').classList.remove('visible');
-        updateStats();
-        showToast('Device deleted');
-    }
 });
 
 document.getElementById('closeBtn').addEventListener('click', () => {
@@ -761,5 +729,4 @@ function animate() {
 // === INITIALIZATION ===
 createVehicleModel();
 loadVehicleScenario();
-document.getElementById('selectBtn').classList.add('active');
 animate();
