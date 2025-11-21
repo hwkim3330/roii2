@@ -210,6 +210,74 @@
         .fault-name { font-size: 11px; font-weight: 600; color: #b91c1c; }
         .fault-desc { font-size: 10px; color: #64748b; margin-top: 2px; }
 
+        /* Properties Panel */
+        .properties {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+            z-index: 100;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .properties.visible { transform: translateX(0); }
+        .properties-header {
+            height: 50px;
+            padding: 0 16px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .properties-title { font-size: 13px; font-weight: 600; color: #1e293b; }
+        .close-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: #f1f5f9;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 12px;
+        }
+        .properties-content { padding: 16px; overflow-y: auto; flex: 1; }
+        .prop-section { margin-bottom: 16px; }
+        .prop-title {
+            font-size: 9px;
+            font-weight: 700;
+            color: #3b82f6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .form-group { margin-bottom: 10px; }
+        .form-label { display: block; font-size: 10px; font-weight: 600; color: #475569; margin-bottom: 4px; }
+        .form-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #1e293b;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+        .badge-success { background: #dcfce7; color: #16a34a; }
+        .badge-info { background: #dbeafe; color: #2563eb; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
+
         /* Toast */
         .toast {
             position: fixed;
@@ -260,6 +328,10 @@
                     <div class="stat-value" id="linkCount">0</div>
                     <div class="stat-label">Links</div>
                 </div>
+                <div class="stat">
+                    <div class="stat-value" id="bandwidth">0</div>
+                    <div class="stat-label">Gbps</div>
+                </div>
             </div>
         </div>
 
@@ -297,6 +369,19 @@
             <div class="fault-item" data-fault="sensor">
                 <div class="fault-name"><i class="fas fa-satellite-dish"></i> LiDAR-FL Sensor</div>
                 <div class="fault-desc">Front-left LiDAR malfunction</div>
+            </div>
+        </div>
+
+        <div class="properties" id="properties">
+            <div class="properties-header">
+                <div class="properties-title">Device Properties</div>
+                <button class="close-btn" id="closeBtn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="properties-content" id="propertiesContent">
+                <p style="color: #94a3b8; text-align: center; padding: 20px;">
+                    <i class="fas fa-mouse-pointer" style="font-size: 20px; display: block; margin-bottom: 8px;"></i>
+                    Tap device to view
+                </p>
             </div>
         </div>
     </div>
@@ -400,11 +485,11 @@
 
     // === TEMPLATES ===
     const templates = {
-        lan9692: { color: 0x10b981, size: [4, 2, 4] },
-        hpc: { color: 0xe11d48, size: [5, 2.5, 5] },
-        camera: { color: 0xf59e0b, size: [0.8, 0.8, 0.8] },
-        lidar: { color: 0x10b981, size: [1.2, 1.2, 1.2] },
-        radar: { color: 0x8b5cf6, size: [1.2, 1.2, 1.2] }
+        lan9692: { label: 'LAN9692', color: 0x10b981, size: [4, 2, 4], ports: 12 },
+        hpc: { label: 'HPC', color: 0xe11d48, size: [5, 2.5, 5], ports: 4 },
+        camera: { label: 'Camera', color: 0xf59e0b, size: [0.8, 0.8, 0.8], ports: 1 },
+        lidar: { label: 'LiDAR', color: 0x10b981, size: [1.2, 1.2, 1.2], ports: 1 },
+        radar: { label: 'Radar', color: 0x8b5cf6, size: [1.2, 1.2, 1.2], ports: 1 }
     };
 
     // === VEHICLE ===
@@ -424,7 +509,7 @@
                 model.traverse((child) => {
                     if (child.isMesh) {
                         child.material.transparent = true;
-                        child.material.opacity = 0.5;
+                        child.material.opacity = 0.75;
                         child.castShadow = true;
                         vehicleMeshes.push(child);
                     }
@@ -435,7 +520,7 @@
             () => {
                 const chassis = new THREE.Mesh(
                     new THREE.BoxGeometry(14, 8, 32),
-                    new THREE.MeshPhysicalMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.5, metalness: 0.1, roughness: 0.3 })
+                    new THREE.MeshPhysicalMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.75, metalness: 0.1, roughness: 0.3 })
                 );
                 chassis.position.y = 5;
                 chassis.castShadow = true;
@@ -477,28 +562,43 @@
     }
 
     function createConnection(from, to) {
-        const color = from.type === 'hpc' || to.type === 'hpc' ? 0xfbbf24 :
-                     from.type === 'lan9692' && to.type === 'lan9692' ? 0x3b82f6 : 0x10b981;
+        // Determine bandwidth and color based on connection type
+        let bw, color, tubeRadius;
+        if (from.type === 'lan9692' && to.type === 'lan9692') {
+            bw = '10G';
+            color = 0x3b82f6; // Blue for 10G backbone
+            tubeRadius = 0.15;
+        } else if (from.type === 'hpc' || to.type === 'hpc') {
+            bw = '10G';
+            color = 0xfbbf24; // Gold for HPC links
+            tubeRadius = 0.12;
+        } else {
+            bw = '1G';
+            color = 0x10b981; // Green for sensor links
+            tubeRadius = 0.06;
+        }
 
         const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
         const tube = new THREE.Mesh(
-            new THREE.TubeGeometry(curve, 12, 0.08, 6, false),
+            new THREE.TubeGeometry(curve, 12, tubeRadius, 6, false),
             new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 })
         );
         state.vehicleGroup.add(tube);
 
         const particles = [];
-        for (let i = 0; i < 2; i++) {
+        const particleCount = bw === '10G' ? 4 : 2;
+        const particleSize = bw === '10G' ? 0.18 : 0.1;
+        for (let i = 0; i < particleCount; i++) {
             const p = new THREE.Mesh(
-                new THREE.SphereGeometry(0.12, 6, 6),
+                new THREE.SphereGeometry(particleSize, 6, 6),
                 new THREE.MeshBasicMaterial({ color: 0xffffff })
             );
-            p.userData = { t: i / 2, curve };
+            p.userData = { t: i / particleCount, curve };
             state.vehicleGroup.add(p);
             particles.push(p);
         }
 
-        const conn = { from, to, tube, curve, particles, status: 'normal', originalColor: color };
+        const conn = { from, to, tube, curve, particles, status: 'normal', originalColor: color, bandwidth: bw };
         state.connections.push(conn);
         return conn;
     }
@@ -585,6 +685,12 @@
     function updateStats() {
         document.getElementById('deviceCount').textContent = state.devices.size;
         document.getElementById('linkCount').textContent = state.connections.length;
+        // Calculate total bandwidth
+        let totalBW = 0;
+        state.connections.forEach(c => {
+            totalBW += c.bandwidth === '10G' ? 10 : 1;
+        });
+        document.getElementById('bandwidth').textContent = totalBW;
     }
 
     // === FAULT SIMULATION ===
@@ -791,6 +897,100 @@
 
     document.querySelectorAll('.fault-item').forEach(item => {
         item.addEventListener('click', () => injectFault(item.dataset.fault));
+    });
+
+    // === DEVICE SELECTION ===
+    const raycaster = new THREE.Raycaster();
+    const tapPos = new THREE.Vector2();
+
+    function handleDeviceTap(clientX, clientY) {
+        tapPos.x = (clientX / window.innerWidth) * 2 - 1;
+        tapPos.y = -(clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(tapPos, camera);
+        const intersects = raycaster.intersectObjects(state.vehicleGroup.children, true);
+
+        let device = null;
+        for (let hit of intersects) {
+            let obj = hit.object;
+            while (obj) {
+                if (obj.userData && obj.userData.device) {
+                    device = obj.userData.device;
+                    break;
+                }
+                obj = obj.parent;
+            }
+            if (device) break;
+        }
+
+        if (device) {
+            showProperties(device);
+            showToast(`${device.label}`);
+        }
+    }
+
+    function showProperties(device) {
+        const content = document.getElementById('propertiesContent');
+        const deviceConns = state.connections.filter(c =>
+            c.from.id === device.id || c.to.id === device.id
+        );
+        const usedPorts = deviceConns.length;
+        const totalPorts = templates[device.type].ports || 1;
+
+        let connList = deviceConns.map(c => {
+            const other = c.from.id === device.id ? c.to : c.from;
+            return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #e2e8f0;">
+                <span style="color:#475569;font-size:11px;">${other.label}</span>
+                <span class="badge ${c.bandwidth === '10G' ? 'badge-info' : 'badge-success'}">${c.bandwidth}</span>
+            </div>`;
+        }).join('');
+
+        content.innerHTML = `
+            <div class="prop-section">
+                <div class="prop-title">Device Info</div>
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" value="${device.label}" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <input type="text" class="form-input" value="${templates[device.type].label}" readonly>
+                </div>
+                <div style="margin-top:10px;">
+                    <span class="badge ${device.status === 'fault' ? 'badge-danger' : 'badge-success'}">
+                        ${device.status === 'fault' ? 'FAULT' : 'Active'}
+                    </span>
+                </div>
+            </div>
+            <div class="prop-section">
+                <div class="prop-title">Port Usage</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <div style="flex:1;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden;">
+                        <div style="width:${(usedPorts/totalPorts)*100}%;height:100%;background:#3b82f6;"></div>
+                    </div>
+                    <span style="font-size:11px;font-weight:600;color:#1e293b;">${usedPorts}/${totalPorts}</span>
+                </div>
+            </div>
+            <div class="prop-section">
+                <div class="prop-title">Connections (${deviceConns.length})</div>
+                <div style="font-size:11px;">
+                    ${connList || '<span style="color:#94a3b8;">No connections</span>'}
+                </div>
+            </div>
+        `;
+        document.getElementById('properties').classList.add('visible');
+    }
+
+    // Tap detection on canvas
+    renderer.domElement.addEventListener('click', (e) => {
+        // Only handle if not interacting with controls
+        if (!input.joystickActive && !input.gas && !input.brake) {
+            handleDeviceTap(e.clientX, e.clientY);
+        }
+    });
+
+    document.getElementById('closeBtn').addEventListener('click', () => {
+        document.getElementById('properties').classList.remove('visible');
     });
 
     // === UI ===

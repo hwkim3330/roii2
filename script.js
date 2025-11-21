@@ -139,7 +139,7 @@ scene.add(state.vehicleGroup);
 // === VEHICLE MODEL ===
 let vehicleModel = null;
 let vehicleMeshes = [];
-let vehicleOpacity = 0.5;
+let vehicleOpacity = 0.75;
 
 function createVehicleModel() {
     const group = new THREE.Group();
@@ -328,41 +328,57 @@ function addDevice(type, position, customLabel = null, customSize = null, tilt =
 }
 
 // === CONNECTIONS ===
-function createConnection(from, to) {
+function createConnection(from, to, bandwidth = null) {
     const exists = state.connections.some(conn =>
         (conn.from.id === from.id && conn.to.id === to.id) ||
         (conn.from.id === to.id && conn.to.id === from.id)
     );
     if (exists) return;
 
-    const color = from.type === 'hpc' || to.type === 'hpc' ? 0xFFD700 :
-                 from.type === 'lan9692' || to.type === 'lan9692' ? 0x10B981 : 0x3B82F6;
+    // Determine bandwidth and color based on connection type
+    let bw, color, tubeRadius;
+    if (from.type === 'lan9692' && to.type === 'lan9692') {
+        bw = '10G';
+        color = 0x3B82F6; // Blue for 10G backbone
+        tubeRadius = 0.15;
+    } else if (from.type === 'hpc' || to.type === 'hpc') {
+        bw = '10G';
+        color = 0xFFD700; // Gold for HPC links
+        tubeRadius = 0.12;
+    } else {
+        bw = '1G';
+        color = 0x10B981; // Green for sensor links
+        tubeRadius = 0.06;
+    }
+    if (bandwidth) bw = bandwidth;
 
     const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
 
-    const tubeGeo = new THREE.TubeGeometry(curve, 16, 0.08, 8, false);
+    const tubeGeo = new THREE.TubeGeometry(curve, 16, tubeRadius, 8, false);
     const tubeMat = new THREE.MeshBasicMaterial({
         color: color,
         transparent: true,
-        opacity: 0.7
+        opacity: 0.8
     });
     const tube = new THREE.Mesh(tubeGeo, tubeMat);
     state.vehicleGroup.add(tube);
 
-    // Flow particles
+    // Flow particles (bigger for higher bandwidth)
     const particles = [];
-    for (let i = 0; i < 3; i++) {
-        const pGeo = new THREE.SphereGeometry(0.15, 8, 8);
+    const particleCount = bw === '10G' ? 4 : 2;
+    const particleSize = bw === '10G' ? 0.2 : 0.12;
+    for (let i = 0; i < particleCount; i++) {
+        const pGeo = new THREE.SphereGeometry(particleSize, 8, 8);
         const pMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
         const p = new THREE.Mesh(pGeo, pMat);
-        p.userData = { t: i / 3, curve };
+        p.userData = { t: i / particleCount, curve };
         state.vehicleGroup.add(p);
         particles.push(p);
     }
 
     const conn = {
-        from, to, tube, curve, particles, color,
-        status: 'normal', // normal, fault
+        from, to, tube, curve, particles, color, bandwidth: bw,
+        status: 'normal',
         originalColor: color
     };
     state.connections.push(conn);
@@ -606,7 +622,12 @@ renderer.domElement.addEventListener('click', (e) => {
 function updateStats() {
     document.getElementById('deviceCount').textContent = state.devices.size;
     document.getElementById('linkCount').textContent = state.connections.length;
-    document.getElementById('bandwidth').textContent = (state.connections.length * 2.5).toFixed(1);
+    // Calculate total bandwidth (10G links + 1G links)
+    let totalBW = 0;
+    state.connections.forEach(c => {
+        totalBW += c.bandwidth === '10G' ? 10 : 1;
+    });
+    document.getElementById('bandwidth').textContent = totalBW;
 }
 
 function showToast(msg) {
@@ -620,6 +641,22 @@ function showProperties(device) {
     const template = templates[device.type];
     const content = document.getElementById('propertiesContent');
 
+    // Get connections for this device
+    const deviceConns = state.connections.filter(c =>
+        c.from.id === device.id || c.to.id === device.id
+    );
+    const usedPorts = deviceConns.length;
+    const totalPorts = device.ports;
+
+    // Build connections list
+    let connList = deviceConns.map(c => {
+        const other = c.from.id === device.id ? c.to : c.from;
+        return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+            <span style="color:#475569;">${other.label}</span>
+            <span class="badge ${c.bandwidth === '10G' ? 'badge-info' : 'badge-success'}">${c.bandwidth}</span>
+        </div>`;
+    }).join('');
+
     content.innerHTML = `
         <div class="prop-section">
             <div class="prop-title">Device Info</div>
@@ -631,19 +668,28 @@ function showProperties(device) {
                 <label class="form-label">Type</label>
                 <input type="text" class="form-input" value="${template.label}" readonly>
             </div>
-            <div>
+            <div style="margin-top:12px;">
                 <span class="badge ${device.status === 'fault' ? 'badge-danger' : 'badge-success'}">
                     ${device.status === 'fault' ? 'FAULT' : 'Active'}
                 </span>
-                <span class="badge badge-info">${device.ports} Ports</span>
             </div>
         </div>
         <div class="prop-section">
-            <div class="prop-title">Position</div>
-            <div style="font-size: 12px; color: #94a3b8;">
-                X: ${device.position.x.toFixed(2)}<br>
-                Y: ${device.position.y.toFixed(2)}<br>
-                Z: ${device.position.z.toFixed(2)}
+            <div class="prop-title">Port Usage</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <div style="flex:1;background:#e2e8f0;border-radius:4px;height:8px;overflow:hidden;">
+                    <div style="width:${(usedPorts/totalPorts)*100}%;height:100%;background:#3b82f6;"></div>
+                </div>
+                <span style="font-size:13px;font-weight:600;color:#1e293b;">${usedPorts}/${totalPorts}</span>
+            </div>
+            <div style="font-size:11px;color:#64748b;">
+                ${totalPorts - usedPorts} ports available
+            </div>
+        </div>
+        <div class="prop-section">
+            <div class="prop-title">Connections (${deviceConns.length})</div>
+            <div style="font-size:12px;">
+                ${connList || '<span style="color:#94a3b8;">No connections</span>'}
             </div>
         </div>
     `;

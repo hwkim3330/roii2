@@ -306,8 +306,25 @@
 
     // === THREE.JS SETUP ===
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a0f);
-    scene.fog = new THREE.Fog(0x0a0a0f, 80, 350);
+
+    // Sky gradient background
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+    gradient.addColorStop(0, '#0a1628');      // Dark blue top
+    gradient.addColorStop(0.3, '#1e3a5f');    // Mid blue
+    gradient.addColorStop(0.6, '#2d5a7b');    // Lighter blue
+    gradient.addColorStop(0.85, '#4a7c9b');   // Light horizon
+    gradient.addColorStop(1, '#1a1a2e');      // Ground fade
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 2, 512);
+    const skyTexture = new THREE.CanvasTexture(canvas);
+    skyTexture.magFilter = THREE.LinearFilter;
+    scene.background = skyTexture;
+
+    scene.fog = new THREE.Fog(0x1e3a5f, 80, 400);
 
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 
@@ -342,9 +359,9 @@
     scene.add(new THREE.DirectionalLight(0x8080FF, 0.3).position.set(-30, 30, -30));
 
     // === ENVIRONMENT ===
-    // Ground
+    // Ground with gradient
     const groundGeo = new THREE.PlaneGeometry(2000, 2000);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x101018, roughness: 1 });
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x1a2030, roughness: 0.9 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.5;
@@ -389,8 +406,8 @@
     scene.add(createRoad());
 
     // Grid
-    const grid = new THREE.GridHelper(500, 100, 0x10B981, 0x151520);
-    grid.material.opacity = 0.15;
+    const grid = new THREE.GridHelper(500, 100, 0x4a7c9b, 0x1a2a40);
+    grid.material.opacity = 0.25;
     grid.material.transparent = true;
     grid.position.y = -0.3;
     scene.add(grid);
@@ -443,7 +460,7 @@
                 model.traverse((child) => {
                     if (child.isMesh) {
                         child.material.transparent = true;
-                        child.material.opacity = 0.4;
+                        child.material.opacity = 0.75;
                         child.material.side = THREE.DoubleSide;
                         child.castShadow = true;
                         vehicleMeshes.push(child);
@@ -459,7 +476,7 @@
 
     function createProceduralVehicle() {
         const chassisMat = new THREE.MeshPhysicalMaterial({
-            color: 0xf0f4f8, transparent: true, opacity: 0.35,
+            color: 0xf0f4f8, transparent: true, opacity: 0.75,
             metalness: 0.1, roughness: 0.2, clearcoat: 0.5
         });
 
