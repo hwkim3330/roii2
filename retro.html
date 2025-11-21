@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ROii2 - Retro Pixel Drive</title>
+    <script src="libs/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background: #000;
+            overflow: hidden;
+            color: #0f0;
+            image-rendering: pixelated;
+        }
+        #game { position: relative; width: 100vw; height: 100vh; }
+        canvas { display: block; image-rendering: pixelated; }
+
+        /* Scanlines overlay */
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* CRT curve effect */
+        .crt {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 101;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+            border-radius: 20px;
+        }
+
+        /* HUD */
+        .hud {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .title {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .title h1 {
+            font-size: 20px;
+            color: #0f0;
+            text-shadow: 3px 3px #030;
+            animation: flicker 0.1s infinite alternate;
+        }
+        .title p { font-size: 8px; color: #080; margin-top: 5px; }
+
+        @keyframes flicker {
+            0% { opacity: 1; }
+            100% { opacity: 0.95; }
+        }
+
+        /* Stats panel */
+        .stats {
+            position: absolute;
+            top: 80px;
+            left: 15px;
+            background: rgba(0,32,0,0.9);
+            border: 3px solid #0f0;
+            padding: 15px;
+            min-width: 180px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 10px;
+        }
+        .stat-label { color: #080; }
+        .stat-value { color: #0f0; }
+
+        /* Minimap */
+        .minimap {
+            position: absolute;
+            top: 80px;
+            right: 15px;
+            width: 150px;
+            height: 150px;
+            background: rgba(0,32,0,0.9);
+            border: 3px solid #0f0;
+        }
+        .minimap canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Controls */
+        .controls {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            font-size: 8px;
+            color: #080;
+            background: rgba(0,32,0,0.8);
+            border: 2px solid #0f0;
+            padding: 10px;
+        }
+        .key {
+            display: inline-block;
+            background: #0f0;
+            color: #000;
+            padding: 2px 6px;
+            margin: 0 2px;
+        }
+
+        /* Sensor panel */
+        .sensors {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0,32,0,0.9);
+            border: 3px solid #0f0;
+            padding: 15px;
+        }
+        .sensor-row {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 8px;
+        }
+        .sensor-dot {
+            width: 10px;
+            height: 10px;
+            margin-right: 8px;
+            animation: blink 0.5s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .sensor-bar {
+            width: 80px;
+            height: 8px;
+            background: #030;
+            border: 1px solid #0f0;
+            margin-left: auto;
+        }
+        .sensor-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        /* Speed display */
+        .speed-display {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .speed-value {
+            font-size: 48px;
+            color: #0f0;
+            text-shadow: 4px 4px #030;
+        }
+        .speed-unit {
+            font-size: 12px;
+            color: #080;
+        }
+
+        /* Pixel art style messages */
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #0f0;
+            text-shadow: 4px 4px #030;
+            animation: pulse 0.5s infinite alternate;
+            display: none;
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div class="scanlines"></div>
+        <div class="crt"></div>
+        <div class="hud">
+            <div class="title">
+                <h1>RETRO DRIVE</h1>
+                <p>TSN NETWORK VISUALIZER</p>
+            </div>
+
+            <div class="stats">
+                <div class="stat-row">
+                    <span class="stat-label">SCORE</span>
+                    <span class="stat-value" id="score">00000000</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">SPEED</span>
+                    <span class="stat-value" id="speedStat">000 KPH</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">DISTANCE</span>
+                    <span class="stat-value" id="distance">0000 M</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">PACKETS</span>
+                    <span class="stat-value" id="packets">0000</span>
+                </div>
+            </div>
+
+            <div class="minimap">
+                <canvas id="minimapCanvas"></canvas>
+            </div>
+
+            <div class="sensors">
+                <div class="sensor-row">
+                    <div class="sensor-dot" style="background:#0f0"></div>
+                    <span>LIDAR</span>
+                    <div class="sensor-bar"><div class="sensor-fill" id="lidarBar" style="width:75%;background:#0f0"></div></div>
+                </div>
+                <div class="sensor-row">
+                    <div class="sensor-dot" style="background:#ff0"></div>
+                    <span>CAMERA</span>
+                    <div class="sensor-bar"><div class="sensor-fill" id="cameraBar" style="width:90%;background:#ff0"></div></div>
+                </div>
+                <div class="sensor-row">
+                    <div class="sensor-dot" style="background:#f0f"></div>
+                    <span>RADAR</span>
+                    <div class="sensor-bar"><div class="sensor-fill" id="radarBar" style="width:60%;background:#f0f"></div></div>
+                </div>
+            </div>
+
+            <div class="speed-display">
+                <div class="speed-value" id="speedBig">000</div>
+                <div class="speed-unit">KPH</div>
+            </div>
+
+            <div class="controls">
+                <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> MOVE
+                <span class="key">SPACE</span> BOOST
+            </div>
+
+            <div class="message" id="message">READY!</div>
+        </div>
+    </div>
+
+    <script>
+    // Retro color palette (limited colors like old games)
+    const COLORS = {
+        bg: 0x001100,
+        road: 0x003300,
+        roadLine: 0x00ff00,
+        grass: 0x002200,
+        vehicle: 0x00ff00,
+        obstacle: 0xff0000,
+        packet: 0xffff00,
+        lidar: 0x00ff00,
+        camera: 0xffff00,
+        radar: 0xff00ff
+    };
+
+    // Scene setup - low resolution for retro feel
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(COLORS.bg);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+    camera.position.set(0, 8, 15);
+    camera.lookAt(0, 0, -10);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(0.5); // Low res for retro look
+    document.getElementById('game').insertBefore(renderer.domElement, document.querySelector('.scanlines'));
+
+    // Simple lighting
+    scene.add(new THREE.AmbientLight(0x00ff00, 0.5));
+    const dirLight = new THREE.DirectionalLight(0x00ff00, 1);
+    dirLight.position.set(5, 10, 5);
+    scene.add(dirLight);
+
+    // Create pixelated road
+    const roadSegments = [];
+    const ROAD_WIDTH = 12;
+    const SEGMENT_LENGTH = 20;
+    const VISIBLE_SEGMENTS = 20;
+
+    function createRoadSegment(z) {
+        const group = new THREE.Group();
+        group.position.z = z;
+
+        // Road surface - simple plane
+        const roadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, SEGMENT_LENGTH);
+        const roadMat = new THREE.MeshBasicMaterial({ color: COLORS.road });
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        road.position.y = 0.01;
+        group.add(road);
+
+        // Center line (dashed)
+        const lineGeo = new THREE.PlaneGeometry(0.5, SEGMENT_LENGTH * 0.4);
+        const lineMat = new THREE.MeshBasicMaterial({ color: COLORS.roadLine });
+        const line = new THREE.Mesh(lineGeo, lineMat);
+        line.rotation.x = -Math.PI / 2;
+        line.position.y = 0.02;
+        group.add(line);
+
+        // Edge lines
+        [-ROAD_WIDTH/2 + 0.5, ROAD_WIDTH/2 - 0.5].forEach(x => {
+            const edgeGeo = new THREE.PlaneGeometry(0.3, SEGMENT_LENGTH);
+            const edge = new THREE.Mesh(edgeGeo, lineMat);
+            edge.rotation.x = -Math.PI / 2;
+            edge.position.set(x, 0.02, 0);
+            group.add(edge);
+        });
+
+        // Grass sides
+        [-ROAD_WIDTH/2 - 10, ROAD_WIDTH/2 + 10].forEach(x => {
+            const grassGeo = new THREE.PlaneGeometry(20, SEGMENT_LENGTH);
+            const grassMat = new THREE.MeshBasicMaterial({ color: COLORS.grass });
+            const grass = new THREE.Mesh(grassGeo, grassMat);
+            grass.rotation.x = -Math.PI / 2;
+            grass.position.set(x, 0, 0);
+            group.add(grass);
+        });
+
+        // Random pixel trees
+        if (Math.random() > 0.5) {
+            const side = Math.random() > 0.5 ? 1 : -1;
+            const treeX = side * (ROAD_WIDTH/2 + 5 + Math.random() * 10);
+            const tree = createPixelTree();
+            tree.position.set(treeX, 0, (Math.random() - 0.5) * SEGMENT_LENGTH);
+            group.add(tree);
+        }
+
+        scene.add(group);
+        return group;
+    }
+
+    function createPixelTree() {
+        const group = new THREE.Group();
+
+        // Trunk - simple box
+        const trunkGeo = new THREE.BoxGeometry(1, 4, 1);
+        const trunkMat = new THREE.MeshBasicMaterial({ color: 0x442200 });
+        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+        trunk.position.y = 2;
+        group.add(trunk);
+
+        // Foliage - stacked boxes for pixel look
+        const foliageMat = new THREE.MeshBasicMaterial({ color: 0x004400 });
+        [
+            { size: [5, 2, 5], y: 5 },
+            { size: [4, 2, 4], y: 7 },
+            { size: [2, 2, 2], y: 9 }
+        ].forEach(f => {
+            const geo = new THREE.BoxGeometry(...f.size);
+            const mesh = new THREE.Mesh(geo, foliageMat);
+            mesh.position.y = f.y;
+            group.add(mesh);
+        });
+
+        return group;
+    }
+
+    // Initialize road
+    for (let i = 0; i < VISIBLE_SEGMENTS; i++) {
+        roadSegments.push(createRoadSegment(-i * SEGMENT_LENGTH));
+    }
+
+    // Create pixel vehicle
+    const vehicleGroup = new THREE.Group();
+
+    function createPixelVehicle() {
+        // Main body - blocky car shape
+        const bodyMat = new THREE.MeshBasicMaterial({ color: COLORS.vehicle });
+        const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff });
+
+        // Base
+        const baseGeo = new THREE.BoxGeometry(3, 1, 5);
+        const base = new THREE.Mesh(baseGeo, bodyMat);
+        base.add(new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), edgeMat));
+        base.position.y = 0.5;
+        vehicleGroup.add(base);
+
+        // Cabin
+        const cabinGeo = new THREE.BoxGeometry(2.5, 1, 2.5);
+        const cabin = new THREE.Mesh(cabinGeo, bodyMat);
+        cabin.add(new THREE.LineSegments(new THREE.EdgesGeometry(cabinGeo), edgeMat));
+        cabin.position.set(0, 1.5, -0.5);
+        vehicleGroup.add(cabin);
+
+        // Wheels - simple boxes
+        const wheelMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+        const wheelGeo = new THREE.BoxGeometry(0.5, 1, 1);
+        [[-1.5, -2], [-1.5, 1.5], [1.5, -2], [1.5, 1.5]].forEach(([x, z]) => {
+            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+            wheel.add(new THREE.LineSegments(new THREE.EdgesGeometry(wheelGeo), edgeMat));
+            wheel.position.set(x, 0.5, z);
+            vehicleGroup.add(wheel);
+        });
+
+        // Pixel sensors on roof
+        const sensorPositions = [
+            { pos: [0, 2.2, -0.5], color: COLORS.lidar, type: 'lidar' },
+            { pos: [-0.8, 2.2, 0.5], color: COLORS.camera, type: 'camera' },
+            { pos: [0.8, 2.2, 0.5], color: COLORS.camera, type: 'camera' },
+            { pos: [0, 1.2, 2.5], color: COLORS.radar, type: 'radar' }
+        ];
+
+        sensorPositions.forEach(s => {
+            const sGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+            const sMat = new THREE.MeshBasicMaterial({ color: s.color });
+            const sensor = new THREE.Mesh(sGeo, sMat);
+            sensor.add(new THREE.LineSegments(new THREE.EdgesGeometry(sGeo), edgeMat));
+            sensor.position.set(...s.pos);
+            sensor.userData.type = s.type;
+            vehicleGroup.add(sensor);
+        });
+
+        // Headlights
+        const lightGeo = new THREE.BoxGeometry(0.5, 0.3, 0.1);
+        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        [-1, 1].forEach(x => {
+            const light = new THREE.Mesh(lightGeo, lightMat);
+            light.position.set(x, 0.5, 2.6);
+            vehicleGroup.add(light);
+        });
+    }
+    createPixelVehicle();
+    vehicleGroup.position.y = 0;
+    scene.add(vehicleGroup);
+
+    // Collectible packets
+    const packets = [];
+    function spawnPacket() {
+        const types = ['lidar', 'camera', 'radar'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const colors = { lidar: COLORS.lidar, camera: COLORS.camera, radar: COLORS.radar };
+
+        const geo = new THREE.BoxGeometry(1, 1, 1);
+        const mat = new THREE.MeshBasicMaterial({ color: colors[type] });
+        const packet = new THREE.Mesh(geo, mat);
+        packet.add(new THREE.LineSegments(
+            new THREE.EdgesGeometry(geo),
+            new THREE.LineBasicMaterial({ color: 0xffffff })
+        ));
+
+        packet.position.set(
+            (Math.random() - 0.5) * (ROAD_WIDTH - 4),
+            1,
+            -VISIBLE_SEGMENTS * SEGMENT_LENGTH + Math.random() * 100
+        );
+        packet.userData = { type, collected: false };
+
+        scene.add(packet);
+        packets.push(packet);
+    }
+
+    // Obstacles
+    const obstacles = [];
+    function spawnObstacle() {
+        const geo = new THREE.BoxGeometry(2, 2, 2);
+        const mat = new THREE.MeshBasicMaterial({ color: COLORS.obstacle });
+        const obstacle = new THREE.Mesh(geo, mat);
+        obstacle.add(new THREE.LineSegments(
+            new THREE.EdgesGeometry(geo),
+            new THREE.LineBasicMaterial({ color: 0xffffff })
+        ));
+
+        obstacle.position.set(
+            (Math.random() - 0.5) * (ROAD_WIDTH - 4),
+            1,
+            -VISIBLE_SEGMENTS * SEGMENT_LENGTH + Math.random() * 50
+        );
+
+        scene.add(obstacle);
+        obstacles.push(obstacle);
+    }
+
+    // Game state
+    const state = {
+        speed: 0,
+        maxSpeed: 100,
+        targetSpeed: 50,
+        posX: 0,
+        distance: 0,
+        score: 0,
+        packets: 0,
+        boosting: false,
+        keys: { w: false, a: false, s: false, d: false, space: false }
+    };
+
+    // Input
+    window.addEventListener('keydown', e => {
+        const k = e.key.toLowerCase();
+        if (k === 'w') state.keys.w = true;
+        if (k === 'a') state.keys.a = true;
+        if (k === 's') state.keys.s = true;
+        if (k === 'd') state.keys.d = true;
+        if (k === ' ') { state.keys.space = true; e.preventDefault(); }
+    });
+
+    window.addEventListener('keyup', e => {
+        const k = e.key.toLowerCase();
+        if (k === 'w') state.keys.w = false;
+        if (k === 'a') state.keys.a = false;
+        if (k === 's') state.keys.s = false;
+        if (k === 'd') state.keys.d = false;
+        if (k === ' ') state.keys.space = false;
+    });
+
+    // Minimap
+    const minimapCanvas = document.getElementById('minimapCanvas');
+    const minimapCtx = minimapCanvas.getContext('2d');
+    minimapCanvas.width = 150;
+    minimapCanvas.height = 150;
+
+    function updateMinimap() {
+        minimapCtx.fillStyle = '#001100';
+        minimapCtx.fillRect(0, 0, 150, 150);
+
+        // Road
+        minimapCtx.fillStyle = '#003300';
+        minimapCtx.fillRect(50, 0, 50, 150);
+
+        // Center line
+        minimapCtx.strokeStyle = '#00ff00';
+        minimapCtx.setLineDash([5, 5]);
+        minimapCtx.beginPath();
+        minimapCtx.moveTo(75, 0);
+        minimapCtx.lineTo(75, 150);
+        minimapCtx.stroke();
+
+        // Vehicle
+        const vx = 75 + state.posX * 3;
+        minimapCtx.fillStyle = '#00ff00';
+        minimapCtx.fillRect(vx - 4, 120, 8, 12);
+
+        // Packets
+        packets.forEach(p => {
+            if (!p.userData.collected) {
+                const px = 75 + p.position.x * 3;
+                const pz = 120 + (p.position.z - vehicleGroup.position.z) * 0.5;
+                if (pz > 0 && pz < 150) {
+                    minimapCtx.fillStyle = p.userData.type === 'lidar' ? '#00ff00' :
+                                          p.userData.type === 'camera' ? '#ffff00' : '#ff00ff';
+                    minimapCtx.fillRect(px - 2, pz - 2, 4, 4);
+                }
+            }
+        });
+
+        // Obstacles
+        obstacles.forEach(o => {
+            const ox = 75 + o.position.x * 3;
+            const oz = 120 + (o.position.z - vehicleGroup.position.z) * 0.5;
+            if (oz > 0 && oz < 150) {
+                minimapCtx.fillStyle = '#ff0000';
+                minimapCtx.fillRect(ox - 3, oz - 3, 6, 6);
+            }
+        });
+    }
+
+    // Sensor bar animation
+    function updateSensorBars() {
+        const bars = {
+            lidarBar: 50 + Math.sin(Date.now() * 0.003) * 30,
+            cameraBar: 70 + Math.sin(Date.now() * 0.004 + 1) * 20,
+            radarBar: 40 + Math.sin(Date.now() * 0.005 + 2) * 35
+        };
+        Object.entries(bars).forEach(([id, val]) => {
+            document.getElementById(id).style.width = val + '%';
+        });
+    }
+
+    // Update UI
+    function updateUI() {
+        const displaySpeed = Math.floor(state.speed * 3);
+        document.getElementById('score').textContent = state.score.toString().padStart(8, '0');
+        document.getElementById('speedStat').textContent = displaySpeed.toString().padStart(3, '0') + ' KPH';
+        document.getElementById('speedBig').textContent = displaySpeed.toString().padStart(3, '0');
+        document.getElementById('distance').textContent = Math.floor(state.distance).toString().padStart(4, '0') + ' M';
+        document.getElementById('packets').textContent = state.packets.toString().padStart(4, '0');
+    }
+
+    // Show message
+    function showMessage(text) {
+        const msg = document.getElementById('message');
+        msg.textContent = text;
+        msg.style.display = 'block';
+        setTimeout(() => msg.style.display = 'none', 1000);
+    }
+
+    // Game loop
+    let lastTime = 0;
+    let spawnTimer = 0;
+
+    function animate(time) {
+        requestAnimationFrame(animate);
+        const delta = Math.min((time - lastTime) / 1000, 0.1);
+        lastTime = time;
+
+        // Input handling
+        if (state.keys.w) state.targetSpeed = state.keys.space ? 150 : 100;
+        else if (state.keys.s) state.targetSpeed = 30;
+        else state.targetSpeed = 60;
+
+        // Speed
+        state.speed += (state.targetSpeed - state.speed) * delta * 3;
+
+        // Steering
+        const steerSpeed = 15;
+        if (state.keys.a) state.posX = Math.max(-ROAD_WIDTH/2 + 2, state.posX - steerSpeed * delta);
+        if (state.keys.d) state.posX = Math.min(ROAD_WIDTH/2 - 2, state.posX + steerSpeed * delta);
+
+        // Update position
+        vehicleGroup.position.x = state.posX;
+        state.distance += state.speed * delta;
+        state.score += Math.floor(state.speed * delta);
+
+        // Move road segments
+        const moveSpeed = state.speed * delta;
+        roadSegments.forEach(seg => {
+            seg.position.z += moveSpeed;
+            if (seg.position.z > SEGMENT_LENGTH) {
+                seg.position.z -= VISIBLE_SEGMENTS * SEGMENT_LENGTH;
+            }
+        });
+
+        // Move and check packets
+        packets.forEach((p, i) => {
+            p.position.z += moveSpeed;
+            p.rotation.y += delta * 3;
+            p.rotation.x += delta * 2;
+
+            // Collision check
+            if (!p.userData.collected) {
+                const dx = Math.abs(p.position.x - state.posX);
+                const dz = Math.abs(p.position.z);
+                if (dx < 2 && dz < 3) {
+                    p.userData.collected = true;
+                    scene.remove(p);
+                    state.packets++;
+                    state.score += 100;
+                    showMessage('+100');
+
+                    // Update sensor bar
+                    const barId = p.userData.type + 'Bar';
+                    document.getElementById(barId).style.width = '100%';
+                }
+            }
+
+            // Remove if behind
+            if (p.position.z > 20) {
+                scene.remove(p);
+                packets.splice(i, 1);
+            }
+        });
+
+        // Move and check obstacles
+        obstacles.forEach((o, i) => {
+            o.position.z += moveSpeed;
+
+            // Collision
+            const dx = Math.abs(o.position.x - state.posX);
+            const dz = Math.abs(o.position.z);
+            if (dx < 2.5 && dz < 3) {
+                state.speed *= 0.5;
+                showMessage('CRASH!');
+            }
+
+            if (o.position.z > 20) {
+                scene.remove(o);
+                obstacles.splice(i, 1);
+            }
+        });
+
+        // Spawn new objects
+        spawnTimer += delta;
+        if (spawnTimer > 0.5) {
+            spawnTimer = 0;
+            if (Math.random() > 0.4) spawnPacket();
+            if (Math.random() > 0.7) spawnObstacle();
+        }
+
+        // Camera follow
+        camera.position.x = state.posX * 0.3;
+        camera.lookAt(state.posX * 0.5, 0, -10);
+
+        // Boost effect - tilt camera
+        if (state.keys.space && state.speed > 80) {
+            camera.fov = 65 + (state.speed - 80) * 0.2;
+        } else {
+            camera.fov = 60;
+        }
+        camera.updateProjectionMatrix();
+
+        // Vehicle tilt when steering
+        vehicleGroup.rotation.z = (state.keys.a ? 0.1 : 0) - (state.keys.d ? 0.1 : 0);
+
+        updateUI();
+        updateMinimap();
+        updateSensorBars();
+        renderer.render(scene, camera);
+    }
+
+    // Resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Start
+    showMessage('READY!');
+    animate(0);
+    </script>
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ROii2 - Minimal Drive</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafafa;
+            overflow: hidden;
+            color: #333;
+        }
+        #game { position: relative; width: 100vw; height: 100vh; }
+        canvas { display: block; }
+
+        /* Clean minimal HUD */
+        .hud {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+        }
+
+        /* Header */
+        .header {
+            position: absolute;
+            top: 24px;
+            left: 32px;
+            right: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: #333;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            letter-spacing: -0.5px;
+        }
+        .logo-text p {
+            font-size: 11px;
+            color: #999;
+            font-weight: 400;
+        }
+
+        /* Stats cards */
+        .stats-row {
+            display: flex;
+            gap: 12px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            min-width: 100px;
+        }
+        .stat-card .label {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .stat-card .value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        .stat-card .unit {
+            font-size: 11px;
+            color: #999;
+            font-weight: 400;
+            margin-left: 2px;
+        }
+
+        /* Side panel */
+        .side-panel {
+            position: absolute;
+            top: 100px;
+            right: 32px;
+            width: 220px;
+        }
+
+        .panel-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+        .panel-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 14px;
+            background: #333;
+            border-radius: 2px;
+        }
+
+        /* Sensor status */
+        .sensor-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .sensor-item:last-child { margin-bottom: 0; }
+        .sensor-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .sensor-name {
+            font-size: 12px;
+            color: #666;
+            flex: 1;
+        }
+        .sensor-status {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .sensor-status.active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* Network stats */
+        .network-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .network-stat:last-child { border-bottom: none; }
+        .network-stat .label {
+            font-size: 12px;
+            color: #999;
+        }
+        .network-stat .value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* Speed display - center bottom */
+        .speed-display {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            background: white;
+            border-radius: 20px;
+            padding: 16px 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .speed-value {
+            font-size: 48px;
+            font-weight: 300;
+            color: #333;
+            letter-spacing: -2px;
+        }
+        .speed-label {
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Controls hint */
+        .controls-hint {
+            position: absolute;
+            bottom: 32px;
+            left: 32px;
+            display: flex;
+            gap: 8px;
+        }
+        .key-hint {
+            background: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 11px;
+            color: #666;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .key {
+            background: #f0f0f0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 10px;
+            color: #333;
+        }
+
+        /* Minimap */
+        .minimap-container {
+            width: 180px;
+            height: 180px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .minimap-container canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div class="hud">
+            <div class="header">
+                <div class="logo">
+                    <div class="logo-icon">R2</div>
+                    <div class="logo-text">
+                        <h1>ROii2 Minimal</h1>
+                        <p>TSN Network Visualization</p>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="label">Distance</div>
+                        <div class="value" id="distance">0<span class="unit">m</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Packets</div>
+                        <div class="value" id="packets">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Latency</div>
+                        <div class="value" id="latency">2.4<span class="unit">ms</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="panel-card">
+                    <div class="panel-title">Sensors</div>
+                    <div class="sensor-item">
+                        <div class="sensor-dot" style="background:#10b981"></div>
+                        <span class="sensor-name">LiDAR Array</span>
+                        <span class="sensor-status active">Active</span>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-dot" style="background:#f59e0b"></div>
+                        <span class="sensor-name">Camera System</span>
+                        <span class="sensor-status active">Active</span>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-dot" style="background:#8b5cf6"></div>
+                        <span class="sensor-name">Radar Module</span>
+                        <span class="sensor-status active">Active</span>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-title">Network</div>
+                    <div class="network-stat">
+                        <span class="label">Throughput</span>
+                        <span class="value" id="throughput">8.2 Gbps</span>
+                    </div>
+                    <div class="network-stat">
+                        <span class="label">Bandwidth</span>
+                        <span class="value">10 Gbps</span>
+                    </div>
+                    <div class="network-stat">
+                        <span class="label">Jitter</span>
+                        <span class="value" id="jitter">0.12 ms</span>
+                    </div>
+                </div>
+
+                <div class="minimap-container">
+                    <canvas id="minimap"></canvas>
+                </div>
+            </div>
+
+            <div class="speed-display">
+                <div class="speed-value" id="speed">0</div>
+                <div class="speed-label">km/h</div>
+            </div>
+
+            <div class="controls-hint">
+                <div class="key-hint"><span class="key">W A S D</span> Drive</div>
+                <div class="key-hint"><span class="key">V</span> Camera</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Minimal clean aesthetic
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xfafafa);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+    camera.position.set(0, 12, 25);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.getElementById('game').insertBefore(renderer.domElement, document.querySelector('.hud'));
+
+    // Soft lighting for clean look
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    mainLight.position.set(20, 30, 10);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    mainLight.shadow.camera.near = 1;
+    mainLight.shadow.camera.far = 100;
+    mainLight.shadow.camera.left = -50;
+    mainLight.shadow.camera.right = 50;
+    mainLight.shadow.camera.top = 50;
+    mainLight.shadow.camera.bottom = -50;
+    scene.add(mainLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    fillLight.position.set(-10, 10, -10);
+    scene.add(fillLight);
+
+    // Ground plane - subtle grid
+    const groundSize = 200;
+    const gridGeo = new THREE.PlaneGeometry(groundSize, groundSize, 40, 40);
+    const gridMat = new THREE.MeshStandardMaterial({
+        color: 0xf5f5f5,
+        metalness: 0,
+        roughness: 0.9
+    });
+    const ground = new THREE.Mesh(gridGeo, gridMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Subtle grid lines
+    const gridHelper = new THREE.GridHelper(groundSize, 80, 0xe0e0e0, 0xeeeeee);
+    gridHelper.position.y = 0.01;
+    scene.add(gridHelper);
+
+    // Road - clean white with subtle shadow
+    const roadWidth = 14;
+    const roadLength = 300;
+    const roadGeo = new THREE.PlaneGeometry(roadWidth, roadLength);
+    const roadMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        metalness: 0,
+        roughness: 0.8
+    });
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.rotation.x = -Math.PI / 2;
+    road.position.set(0, 0.02, -roadLength/2 + 50);
+    road.receiveShadow = true;
+    scene.add(road);
+
+    // Road edge lines - thin gray
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xe0e0e0 });
+    [-roadWidth/2, roadWidth/2].forEach(x => {
+        const lineGeo = new THREE.PlaneGeometry(0.2, roadLength);
+        const line = new THREE.Mesh(lineGeo, lineMat);
+        line.rotation.x = -Math.PI / 2;
+        line.position.set(x, 0.03, -roadLength/2 + 50);
+        scene.add(line);
+    });
+
+    // Center dashed line
+    for (let z = -roadLength + 50; z < 50; z += 8) {
+        const dashGeo = new THREE.PlaneGeometry(0.15, 4);
+        const dash = new THREE.Mesh(dashGeo, lineMat);
+        dash.rotation.x = -Math.PI / 2;
+        dash.position.set(0, 0.03, z);
+        scene.add(dash);
+    }
+
+    // Vehicle
+    const vehicleGroup = new THREE.Group();
+    scene.add(vehicleGroup);
+
+    let vehicleModel = null;
+    const loader = new THREE.GLTFLoader();
+    loader.load('roii.glb', (gltf) => {
+        vehicleModel = gltf.scene;
+
+        const box = new THREE.Box3().setFromObject(vehicleModel);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        const scale = 5 / Math.max(size.x, size.y, size.z);
+        vehicleModel.scale.set(scale, scale, scale);
+        vehicleModel.position.set(-center.x * scale, size.y * scale * 0.5, -center.z * scale);
+        vehicleModel.rotation.y = Math.PI;
+
+        // Clean white/gray materials
+        vehicleModel.traverse((child) => {
+            if (child.isMesh && child.material) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                child.material.metalness = 0.2;
+                child.material.roughness = 0.6;
+                // Desaturate colors for minimal look
+                if (child.material.color) {
+                    const c = child.material.color;
+                    const gray = (c.r + c.g + c.b) / 3;
+                    c.setRGB(
+                        c.r * 0.3 + gray * 0.7,
+                        c.g * 0.3 + gray * 0.7,
+                        c.b * 0.3 + gray * 0.7
+                    );
+                }
+            }
+        });
+
+        vehicleGroup.add(vehicleModel);
+        addSensorVisuals();
+    }, undefined, () => {
+        // Fallback - clean minimal car shape
+        const bodyGeo = new THREE.BoxGeometry(2.5, 0.8, 5);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.2, roughness: 0.6 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.8;
+        body.castShadow = true;
+        vehicleGroup.add(body);
+
+        const cabinGeo = new THREE.BoxGeometry(2.2, 0.7, 2.5);
+        const cabin = new THREE.Mesh(cabinGeo, bodyMat);
+        cabin.position.set(0, 1.5, -0.3);
+        cabin.castShadow = true;
+        vehicleGroup.add(cabin);
+
+        addSensorVisuals();
+    });
+
+    function addSensorVisuals() {
+        // Clean minimal sensor indicators
+        const sensors = [
+            { pos: [0, 2.2, 0], color: 0x10b981, type: 'lidar' },
+            { pos: [-0.8, 2.2, 1], color: 0xf59e0b, type: 'camera' },
+            { pos: [0.8, 2.2, 1], color: 0xf59e0b, type: 'camera' },
+            { pos: [0, 1.2, 2.5], color: 0x8b5cf6, type: 'radar' }
+        ];
+
+        sensors.forEach(s => {
+            const geo = new THREE.SphereGeometry(0.15, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({ color: s.color });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(...s.pos);
+            vehicleGroup.add(mesh);
+
+            // Subtle ring around sensor
+            const ringGeo = new THREE.RingGeometry(0.2, 0.25, 32);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: s.color,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.position.set(...s.pos);
+            ring.rotation.x = -Math.PI / 2;
+            ring.userData.baseY = s.pos[1];
+            vehicleGroup.add(ring);
+        });
+    }
+
+    // Packets - clean circles
+    const packets = [];
+    function spawnPacket() {
+        const colors = [0x10b981, 0xf59e0b, 0x8b5cf6];
+        const geo = new THREE.CircleGeometry(0.5, 32);
+        const mat = new THREE.MeshBasicMaterial({
+            color: colors[Math.floor(Math.random() * colors.length)],
+            side: THREE.DoubleSide
+        });
+        const packet = new THREE.Mesh(geo, mat);
+        packet.position.set(
+            (Math.random() - 0.5) * (roadWidth - 4),
+            0.5,
+            -150 - Math.random() * 50
+        );
+        packet.rotation.x = -Math.PI / 2;
+        scene.add(packet);
+        packets.push(packet);
+    }
+
+    // State
+    const state = {
+        speed: 0,
+        maxSpeed: 60,
+        posX: 0,
+        distance: 0,
+        packets: 0,
+        cameraMode: 0,
+        keys: { w: false, a: false, s: false, d: false }
+    };
+
+    // Input
+    window.addEventListener('keydown', e => {
+        const k = e.key.toLowerCase();
+        if (k === 'w') state.keys.w = true;
+        if (k === 'a') state.keys.a = true;
+        if (k === 's') state.keys.s = true;
+        if (k === 'd') state.keys.d = true;
+        if (k === 'v') state.cameraMode = (state.cameraMode + 1) % 3;
+    });
+
+    window.addEventListener('keyup', e => {
+        const k = e.key.toLowerCase();
+        if (k === 'w') state.keys.w = false;
+        if (k === 'a') state.keys.a = false;
+        if (k === 's') state.keys.s = false;
+        if (k === 'd') state.keys.d = false;
+    });
+
+    // Minimap
+    const minimapCanvas = document.getElementById('minimap');
+    const minimapCtx = minimapCanvas.getContext('2d');
+    minimapCanvas.width = 180;
+    minimapCanvas.height = 180;
+
+    function updateMinimap() {
+        minimapCtx.fillStyle = '#fafafa';
+        minimapCtx.fillRect(0, 0, 180, 180);
+
+        // Road
+        minimapCtx.fillStyle = '#ffffff';
+        minimapCtx.fillRect(60, 0, 60, 180);
+
+        // Road edges
+        minimapCtx.strokeStyle = '#e0e0e0';
+        minimapCtx.lineWidth = 1;
+        minimapCtx.strokeRect(60, 0, 60, 180);
+
+        // Center line
+        minimapCtx.strokeStyle = '#e0e0e0';
+        minimapCtx.setLineDash([4, 4]);
+        minimapCtx.beginPath();
+        minimapCtx.moveTo(90, 0);
+        minimapCtx.lineTo(90, 180);
+        minimapCtx.stroke();
+        minimapCtx.setLineDash([]);
+
+        // Vehicle
+        const vx = 90 + state.posX * 3;
+        minimapCtx.fillStyle = '#333333';
+        minimapCtx.beginPath();
+        minimapCtx.arc(vx, 140, 6, 0, Math.PI * 2);
+        minimapCtx.fill();
+
+        // Packets
+        packets.forEach(p => {
+            const px = 90 + p.position.x * 3;
+            const pz = 140 + p.position.z * 0.3;
+            if (pz > 0 && pz < 180) {
+                minimapCtx.fillStyle = '#' + p.material.color.getHexString();
+                minimapCtx.beginPath();
+                minimapCtx.arc(px, pz, 3, 0, Math.PI * 2);
+                minimapCtx.fill();
+            }
+        });
+    }
+
+    // Update UI
+    function updateUI() {
+        document.getElementById('speed').textContent = Math.floor(state.speed * 3);
+        document.getElementById('distance').innerHTML = Math.floor(state.distance) + '<span class="unit">m</span>';
+        document.getElementById('packets').textContent = state.packets;
+        document.getElementById('throughput').textContent = (7 + state.speed * 0.05).toFixed(1) + ' Gbps';
+        document.getElementById('latency').innerHTML = (2 + Math.random() * 0.5).toFixed(1) + '<span class="unit">ms</span>';
+        document.getElementById('jitter').textContent = (0.1 + Math.random() * 0.05).toFixed(2) + ' ms';
+    }
+
+    // Animation
+    let lastTime = 0;
+    let spawnTimer = 0;
+
+    function animate(time) {
+        requestAnimationFrame(animate);
+        const delta = Math.min((time - lastTime) / 1000, 0.1);
+        lastTime = time;
+
+        // Movement
+        const targetSpeed = state.keys.w ? state.maxSpeed : (state.keys.s ? 20 : 40);
+        state.speed += (targetSpeed - state.speed) * delta * 2;
+
+        const steerSpeed = 12;
+        if (state.keys.a) state.posX = Math.max(-roadWidth/2 + 2, state.posX - steerSpeed * delta);
+        if (state.keys.d) state.posX = Math.min(roadWidth/2 - 2, state.posX + steerSpeed * delta);
+
+        vehicleGroup.position.x = state.posX;
+        state.distance += state.speed * delta;
+
+        // Vehicle rotation
+        vehicleGroup.rotation.y = (state.keys.a ? 0.05 : 0) - (state.keys.d ? 0.05 : 0);
+
+        // Move packets
+        const moveSpeed = state.speed * delta;
+        packets.forEach((p, i) => {
+            p.position.z += moveSpeed;
+
+            // Collect
+            const dx = Math.abs(p.position.x - state.posX);
+            const dz = Math.abs(p.position.z);
+            if (dx < 1.5 && dz < 2) {
+                scene.remove(p);
+                packets.splice(i, 1);
+                state.packets++;
+            } else if (p.position.z > 30) {
+                scene.remove(p);
+                packets.splice(i, 1);
+            }
+        });
+
+        // Spawn
+        spawnTimer += delta;
+        if (spawnTimer > 0.8) {
+            spawnTimer = 0;
+            if (Math.random() > 0.3) spawnPacket();
+        }
+
+        // Camera modes
+        const cameraPositions = [
+            { pos: [0, 12, 25], look: [0, 0, 0] },
+            { pos: [0, 40, 10], look: [0, 0, -10] },
+            { pos: [20, 8, 5], look: [0, 2, 0] }
+        ];
+        const cam = cameraPositions[state.cameraMode];
+        camera.position.lerp(new THREE.Vector3(cam.pos[0] + state.posX * 0.3, cam.pos[1], cam.pos[2]), 0.05);
+        camera.lookAt(cam.look[0] + state.posX * 0.5, cam.look[1], cam.look[2]);
+
+        // Animate sensor rings
+        vehicleGroup.children.forEach(child => {
+            if (child.geometry && child.geometry.type === 'RingGeometry') {
+                child.scale.setScalar(1 + Math.sin(time * 0.003) * 0.2);
+                child.material.opacity = 0.2 + Math.sin(time * 0.003) * 0.1;
+            }
+        });
+
+        updateUI();
+        updateMinimap();
+        renderer.render(scene, camera);
+    }
+
+    // Resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate(0);
+    </script>
+</body>
+</html>
