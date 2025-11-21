@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROii2 - Driving Scenarios</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Exo 2', sans-serif; background: #0a0a15; overflow: hidden; color: white; }
+        #container { width: 100vw; height: 100vh; position: relative; }
+        canvas { display: block; }
+
+        .hud { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .header h1 { font-size: 22px; color: #00d4ff; text-shadow: 0 0 20px #00d4ff; letter-spacing: 4px; }
+
+        .scenario-panel {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0,20,40,0.95);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            padding: 20px;
+            width: 300px;
+        }
+        .scenario-title { font-size: 18px; font-weight: 700; color: #00d4ff; margin-bottom: 10px; }
+        .scenario-desc { font-size: 13px; color: #88a; line-height: 1.5; margin-bottom: 15px; }
+        .scenario-status { font-size: 12px; padding: 5px 10px; border-radius: 4px; display: inline-block; }
+        .status-active { background: #00d4ff30; color: #00d4ff; border: 1px solid #00d4ff; }
+        .status-warning { background: #ff880030; color: #ff8800; border: 1px solid #ff8800; }
+        .status-danger { background: #ff000030; color: #ff4444; border: 1px solid #ff4444; }
+
+        .sensor-activity {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(0,20,40,0.95);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            padding: 20px;
+            width: 280px;
+        }
+        .activity-title { font-size: 14px; color: #00d4ff; margin-bottom: 15px; border-bottom: 1px solid #00d4ff30; padding-bottom: 8px; }
+        .sensor-row {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+        }
+        .sensor-icon { width: 30px; height: 30px; border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        .sensor-info { flex: 1; }
+        .sensor-name { font-size: 12px; color: #fff; }
+        .sensor-data { font-size: 10px; color: #668; }
+        .sensor-status { width: 8px; height: 8px; border-radius: 50%; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .timeline {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+        }
+        .timeline-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            position: relative;
+        }
+        .timeline-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+        .timeline-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 10px;
+            color: #668;
+        }
+        .timeline-marker.active { color: #00d4ff; }
+
+        .event-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,20,40,0.98);
+            border: 2px solid #ff8800;
+            border-radius: 15px;
+            padding: 30px 50px;
+            text-align: center;
+            display: none;
+            animation: popIn 0.3s ease-out;
+        }
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .event-icon { font-size: 48px; margin-bottom: 15px; }
+        .event-title { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+        .event-desc { font-size: 14px; color: #88a; }
+
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+        .control-btn {
+            background: rgba(0,212,255,0.2);
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .control-btn:hover { background: rgba(0,212,255,0.4); }
+        .control-btn.active { background: #00d4ff; color: #000; }
+
+        .speed-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            text-align: center;
+        }
+        .speed-value { font-size: 48px; font-weight: 700; color: #00d4ff; }
+        .speed-unit { font-size: 14px; color: #668; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="hud">
+            <div class="header">
+                <h1>AUTONOMOUS DRIVING SCENARIOS</h1>
+            </div>
+
+            <div class="scenario-panel">
+                <div class="scenario-title" id="scenarioTitle">Highway Cruise</div>
+                <div class="scenario-desc" id="scenarioDesc">Normal highway driving with TSN sensor fusion monitoring surrounding traffic</div>
+                <div class="scenario-status status-active" id="scenarioStatus">AUTONOMOUS MODE</div>
+            </div>
+
+            <div class="sensor-activity">
+                <div class="activity-title">SENSOR ACTIVITY</div>
+                <div class="sensor-row" id="lidarActivity">
+                    <div class="sensor-icon" style="background:#10B981">L</div>
+                    <div class="sensor-info">
+                        <div class="sensor-name">LiDAR Array</div>
+                        <div class="sensor-data">Point cloud: 128K pts/s</div>
+                    </div>
+                    <div class="sensor-status" style="background:#10B981"></div>
+                </div>
+                <div class="sensor-row" id="cameraActivity">
+                    <div class="sensor-icon" style="background:#d66b00">C</div>
+                    <div class="sensor-info">
+                        <div class="sensor-name">Camera System</div>
+                        <div class="sensor-data">60 FPS, Object detection active</div>
+                    </div>
+                    <div class="sensor-status" style="background:#d66b00"></div>
+                </div>
+                <div class="sensor-row" id="radarActivity">
+                    <div class="sensor-icon" style="background:#952aff">R</div>
+                    <div class="sensor-info">
+                        <div class="sensor-name">Radar Modules</div>
+                        <div class="sensor-data">Range: 200m, 5 targets tracked</div>
+                    </div>
+                    <div class="sensor-status" style="background:#952aff"></div>
+                </div>
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-bar">
+                    <div class="timeline-progress" id="timelineProgress"></div>
+                </div>
+                <div class="timeline-markers">
+                    <span class="timeline-marker active">Cruise</span>
+                    <span class="timeline-marker">Detection</span>
+                    <span class="timeline-marker">Analysis</span>
+                    <span class="timeline-marker">Response</span>
+                    <span class="timeline-marker">Complete</span>
+                </div>
+            </div>
+
+            <div class="event-popup" id="eventPopup">
+                <div class="event-icon" id="eventIcon">⚠️</div>
+                <div class="event-title" id="eventTitle">Object Detected</div>
+                <div class="event-desc" id="eventDesc">Obstacle detected 50m ahead</div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" onclick="startScenario('emergency')">🚨 Emergency Stop</button>
+                <button class="control-btn" onclick="startScenario('lanechange')">↔️ Lane Change</button>
+                <button class="control-btn" onclick="startScenario('intersection')">🚦 Intersection</button>
+                <button class="control-btn active" onclick="startScenario('cruise')">🚗 Highway Cruise</button>
+            </div>
+
+            <div class="speed-indicator">
+                <div class="speed-value" id="speed">80</div>
+                <div class="speed-unit">KM/H</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Scenarios definition
+    const SCENARIOS = {
+        cruise: {
+            title: "Highway Cruise",
+            desc: "Normal highway driving with TSN sensor fusion monitoring surrounding traffic",
+            duration: 10000,
+            events: [
+                { time: 0, type: 'status', data: { status: 'AUTONOMOUS MODE', class: 'status-active' } },
+                { time: 2000, type: 'sensor', data: { sensor: 'radar', msg: 'Vehicle detected: 100m ahead' } }
+            ],
+            speed: { start: 80, end: 80 }
+        },
+        emergency: {
+            title: "Emergency Braking",
+            desc: "Sudden obstacle detection triggers emergency braking protocol with full sensor coordination",
+            duration: 8000,
+            events: [
+                { time: 0, type: 'status', data: { status: 'AUTONOMOUS MODE', class: 'status-active' } },
+                { time: 1500, type: 'popup', data: { icon: '⚠️', title: 'OBSTACLE DETECTED', desc: 'Object detected 50m ahead - analyzing' } },
+                { time: 2000, type: 'status', data: { status: 'EMERGENCY BRAKE', class: 'status-danger' } },
+                { time: 2500, type: 'sensor', data: { sensor: 'lidar', msg: '3D scan: pedestrian confirmed', highlight: true } },
+                { time: 3000, type: 'sensor', data: { sensor: 'camera', msg: 'Visual confirmation: pedestrian crossing', highlight: true } },
+                { time: 4000, type: 'popup', data: { icon: '🛑', title: 'FULL STOP', desc: 'Vehicle stopped safely - 5m clearance' } },
+                { time: 6000, type: 'status', data: { status: 'OBSTACLE CLEARED', class: 'status-active' } }
+            ],
+            speed: { start: 80, end: 0, brakeAt: 2000 }
+        },
+        lanechange: {
+            title: "Autonomous Lane Change",
+            desc: "Safe lane change maneuver with blind spot monitoring and path planning",
+            duration: 10000,
+            events: [
+                { time: 0, type: 'status', data: { status: 'LANE CHANGE INITIATED', class: 'status-warning' } },
+                { time: 1000, type: 'sensor', data: { sensor: 'radar', msg: 'Scanning adjacent lanes...', highlight: true } },
+                { time: 2000, type: 'sensor', data: { sensor: 'camera', msg: 'Blind spot clear - left side', highlight: true } },
+                { time: 3000, type: 'popup', data: { icon: '✅', title: 'LANE CLEAR', desc: 'Safe to change lanes' } },
+                { time: 4000, type: 'status', data: { status: 'EXECUTING MANEUVER', class: 'status-warning' } },
+                { time: 7000, type: 'popup', data: { icon: '✨', title: 'LANE CHANGE COMPLETE', desc: 'Successfully changed to left lane' } },
+                { time: 8000, type: 'status', data: { status: 'AUTONOMOUS MODE', class: 'status-active' } }
+            ],
+            speed: { start: 100, end: 100 }
+        },
+        intersection: {
+            title: "Intersection Navigation",
+            desc: "Complex intersection crossing with traffic light detection and pedestrian awareness",
+            duration: 12000,
+            events: [
+                { time: 0, type: 'status', data: { status: 'APPROACHING INTERSECTION', class: 'status-warning' } },
+                { time: 1500, type: 'sensor', data: { sensor: 'camera', msg: 'Traffic light detected: RED', highlight: true } },
+                { time: 2000, type: 'popup', data: { icon: '🔴', title: 'RED LIGHT', desc: 'Stopping at intersection' } },
+                { time: 4000, type: 'sensor', data: { sensor: 'lidar', msg: 'Pedestrians detected on crosswalk' } },
+                { time: 6000, type: 'sensor', data: { sensor: 'camera', msg: 'Traffic light: GREEN', highlight: true } },
+                { time: 6500, type: 'popup', data: { icon: '🟢', title: 'GREEN LIGHT', desc: 'Checking for pedestrians...' } },
+                { time: 8000, type: 'status', data: { status: 'CROSSING INTERSECTION', class: 'status-active' } },
+                { time: 10000, type: 'popup', data: { icon: '✅', title: 'INTERSECTION CLEARED', desc: 'Safely navigated intersection' } }
+            ],
+            speed: { start: 60, end: 50, stopAt: 2000, resumeAt: 7000 }
+        }
+    };
+
+    let currentScenario = 'cruise';
+    let scenarioTime = 0;
+    let isPlaying = true;
+
+    // Three.js setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a15);
+    scene.fog = new THREE.FogExp2(0x0a0a15, 0.01);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+    camera.position.set(30, 20, 30);
+    camera.lookAt(0, 3, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.getElementById('container').insertBefore(renderer.domElement, document.querySelector('.hud'));
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x334466, 0.6));
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+    mainLight.position.set(30, 50, 30);
+    scene.add(mainLight);
+
+    // Road
+    const roadGeo = new THREE.PlaneGeometry(20, 200);
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e });
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.rotation.x = -Math.PI / 2;
+    road.position.z = -50;
+    scene.add(road);
+
+    // Lane markings
+    for (let z = -150; z < 50; z += 8) {
+        const markGeo = new THREE.PlaneGeometry(0.3, 4);
+        const markMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const mark = new THREE.Mesh(markGeo, markMat);
+        mark.rotation.x = -Math.PI / 2;
+        mark.position.set(0, 0.01, z);
+        scene.add(mark);
+    }
+
+    // Vehicle
+    const vehicleGroup = new THREE.Group();
+    scene.add(vehicleGroup);
+
+    const loader = new THREE.GLTFLoader();
+    loader.load('roii.glb', (gltf) => {
+        const model = gltf.scene;
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        const scale = 5 / Math.max(size.x, size.y, size.z);
+        model.scale.set(scale, scale, scale);
+        model.position.set(-center.x * scale, size.y * scale * 0.5, -center.z * scale);
+        model.traverse(child => {
+            if (child.isMesh && child.material) {
+                if (child.material.color) child.material.color.multiplyScalar(2);
+                child.material.emissive = new THREE.Color(0x444444);
+                child.material.emissiveIntensity = 0.3;
+            }
+        });
+        vehicleGroup.add(model);
+    }, undefined, () => {
+        // Fallback
+        const bodyGeo = new THREE.BoxGeometry(2, 1, 4);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00d4ff, metalness: 0.7 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.8;
+        vehicleGroup.add(body);
+    });
+
+    // Sensor visualization
+    const sensorBeams = [];
+    const SENSOR_COLORS = { lidar: 0x10B981, camera: 0xd66b00, radar: 0x952aff };
+
+    function createSensorBeam(type, angle, range) {
+        const color = SENSOR_COLORS[type];
+        const geo = new THREE.ConeGeometry(range * 0.3, range, 32, 1, true);
+        const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
+        const cone = new THREE.Mesh(geo, mat);
+        cone.rotation.x = Math.PI / 2;
+        cone.rotation.z = angle;
+        cone.position.y = 1.5;
+        vehicleGroup.add(cone);
+        sensorBeams.push({ mesh: cone, type, baseOpacity: 0.1 });
+        return cone;
+    }
+
+    createSensorBeam('lidar', 0, 30);
+    createSensorBeam('camera', 0, 25);
+    createSensorBeam('radar', 0, 40);
+    createSensorBeam('lidar', Math.PI, 20);
+
+    // Obstacle
+    const obstacleGeo = new THREE.CylinderGeometry(0.5, 0.5, 1.8, 16);
+    const obstacleMat = new THREE.MeshStandardMaterial({ color: 0xff4444 });
+    const obstacle = new THREE.Mesh(obstacleGeo, obstacleMat);
+    obstacle.position.set(0, 0.9, -30);
+    obstacle.visible = false;
+    scene.add(obstacle);
+
+    // Start scenario
+    function startScenario(name) {
+        currentScenario = name;
+        scenarioTime = 0;
+
+        const scenario = SCENARIOS[name];
+        document.getElementById('scenarioTitle').textContent = scenario.title;
+        document.getElementById('scenarioDesc').textContent = scenario.desc;
+
+        // Update buttons
+        document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Reset UI
+        document.getElementById('eventPopup').style.display = 'none';
+        document.querySelectorAll('.sensor-row').forEach(row => row.style.background = 'rgba(0,0,0,0.3)');
+
+        // Show/hide obstacle
+        obstacle.visible = name === 'emergency';
+
+        // Reset timeline markers
+        document.querySelectorAll('.timeline-marker').forEach((m, i) => m.classList.toggle('active', i === 0));
+    }
+
+    // Process events
+    let processedEvents = new Set();
+
+    function processEvents() {
+        const scenario = SCENARIOS[currentScenario];
+        scenario.events.forEach((evt, i) => {
+            const eventId = `${currentScenario}-${i}`;
+            if (scenarioTime >= evt.time && !processedEvents.has(eventId)) {
+                processedEvents.add(eventId);
+
+                switch (evt.type) {
+                    case 'status':
+                        document.getElementById('scenarioStatus').textContent = evt.data.status;
+                        document.getElementById('scenarioStatus').className = 'scenario-status ' + evt.data.class;
+                        break;
+                    case 'popup':
+                        document.getElementById('eventIcon').textContent = evt.data.icon;
+                        document.getElementById('eventTitle').textContent = evt.data.title;
+                        document.getElementById('eventDesc').textContent = evt.data.desc;
+                        document.getElementById('eventPopup').style.display = 'block';
+                        setTimeout(() => document.getElementById('eventPopup').style.display = 'none', 2000);
+                        break;
+                    case 'sensor':
+                        const sensorEl = document.getElementById(evt.data.sensor + 'Activity');
+                        sensorEl.querySelector('.sensor-data').textContent = evt.data.msg;
+                        if (evt.data.highlight) {
+                            sensorEl.style.background = 'rgba(0,212,255,0.2)';
+                            setTimeout(() => sensorEl.style.background = 'rgba(0,0,0,0.3)', 1500);
+                        }
+                        break;
+                }
+            }
+        });
+
+        // Update timeline
+        const progress = (scenarioTime / scenario.duration) * 100;
+        document.getElementById('timelineProgress').style.width = progress + '%';
+
+        const markerIndex = Math.min(4, Math.floor(progress / 20));
+        document.querySelectorAll('.timeline-marker').forEach((m, i) => m.classList.toggle('active', i <= markerIndex));
+    }
+
+    // Calculate speed
+    function calculateSpeed() {
+        const scenario = SCENARIOS[currentScenario];
+        const sp = scenario.speed;
+
+        if (sp.brakeAt && scenarioTime >= sp.brakeAt) {
+            return Math.max(sp.end, sp.start - (scenarioTime - sp.brakeAt) / 50);
+        }
+        if (sp.stopAt && scenarioTime >= sp.stopAt && (!sp.resumeAt || scenarioTime < sp.resumeAt)) {
+            return 0;
+        }
+        if (sp.resumeAt && scenarioTime >= sp.resumeAt) {
+            return Math.min(sp.end, (scenarioTime - sp.resumeAt) / 100 + 10);
+        }
+        return sp.start;
+    }
+
+    // Animation
+    let lastTime = 0;
+    let cameraAngle = Math.PI / 4;
+
+    function animate(time) {
+        requestAnimationFrame(animate);
+        const delta = (time - lastTime);
+        lastTime = time;
+
+        if (isPlaying) {
+            scenarioTime += delta;
+            const scenario = SCENARIOS[currentScenario];
+            if (scenarioTime >= scenario.duration) {
+                scenarioTime = 0;
+                processedEvents.clear();
+            }
+        }
+
+        processEvents();
+
+        // Update speed
+        const speed = calculateSpeed();
+        document.getElementById('speed').textContent = Math.floor(speed);
+
+        // Animate sensor beams
+        sensorBeams.forEach((beam, i) => {
+            beam.mesh.material.opacity = beam.baseOpacity + Math.sin(time * 0.003 + i) * 0.05;
+        });
+
+        // Camera orbit
+        cameraAngle += 0.0005;
+        camera.position.x = Math.cos(cameraAngle) * 35;
+        camera.position.z = Math.sin(cameraAngle) * 35;
+        camera.lookAt(0, 3, 0);
+
+        // Obstacle pulse when visible
+        if (obstacle.visible) {
+            obstacle.material.emissive = new THREE.Color(0xff0000);
+            obstacle.material.emissiveIntensity = 0.3 + Math.sin(time * 0.01) * 0.3;
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate(0);
+    </script>
+</body>
+</html>

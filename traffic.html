@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROii2 - Network Traffic Visualization</title>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Share Tech Mono', monospace; background: #000; overflow: hidden; color: #0f0; }
+        #container { width: 100vw; height: 100vh; position: relative; }
+        canvas { display: block; }
+
+        .hud { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .header h1 { font-size: 24px; color: #0f0; text-shadow: 0 0 20px #0f0; letter-spacing: 5px; }
+        .header p { font-size: 11px; color: #080; }
+
+        .traffic-panel {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0,20,0,0.9);
+            border: 1px solid #0f0;
+            padding: 15px;
+            width: 280px;
+        }
+        .panel-title { font-size: 14px; color: #0f0; margin-bottom: 15px; border-bottom: 1px solid #0f040; padding-bottom: 8px; }
+
+        .traffic-bar {
+            margin: 12px 0;
+        }
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .bar-label { color: #080; }
+        .bar-value { color: #0f0; }
+        .bar-track {
+            height: 8px;
+            background: #030;
+            border: 1px solid #0f040;
+        }
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .bar-fill.lidar { background: linear-gradient(90deg, #0a5, #0f0); }
+        .bar-fill.camera { background: linear-gradient(90deg, #a50, #fa0); }
+        .bar-fill.radar { background: linear-gradient(90deg, #50a, #a0f); }
+
+        .packet-log {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(0,20,0,0.9);
+            border: 1px solid #0f0;
+            padding: 15px;
+            width: 350px;
+            max-height: 400px;
+            overflow: hidden;
+        }
+        .log-entry {
+            font-size: 10px;
+            padding: 3px 0;
+            border-bottom: 1px solid #0f020;
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+        .log-entry.fade { opacity: 0.3; }
+        .log-time { color: #080; }
+        .log-src { color: #0f0; }
+        .log-dst { color: #0af; }
+        .log-size { color: #fa0; }
+
+        .stats-row {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+        }
+        .stat-box {
+            background: rgba(0,20,0,0.9);
+            border: 1px solid #0f0;
+            padding: 15px 25px;
+            text-align: center;
+        }
+        .stat-value { font-size: 28px; color: #0f0; text-shadow: 0 0 10px #0f0; }
+        .stat-label { font-size: 10px; color: #080; margin-top: 5px; }
+
+        .throughput-graph {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 50px;
+            background: rgba(0,20,0,0.8);
+            border: 1px solid #0f040;
+        }
+        .throughput-graph canvas { width: 100%; height: 100%; }
+
+        .legend {
+            position: absolute;
+            bottom: 150px;
+            left: 20px;
+            display: flex;
+            gap: 20px;
+            font-size: 11px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="hud">
+            <div class="header">
+                <h1>NETWORK TRAFFIC</h1>
+                <p>REAL-TIME TSN DATA FLOW VISUALIZATION</p>
+            </div>
+
+            <div class="traffic-panel">
+                <div class="panel-title">▸ SENSOR BANDWIDTH</div>
+                <div class="traffic-bar">
+                    <div class="bar-header"><span class="bar-label">LiDAR (4 units)</span><span class="bar-value" id="lidarBw">2.4 Gbps</span></div>
+                    <div class="bar-track"><div class="bar-fill lidar" id="lidarBar" style="width:60%"></div></div>
+                </div>
+                <div class="traffic-bar">
+                    <div class="bar-header"><span class="bar-label">Camera (8 units)</span><span class="bar-value" id="cameraBw">4.8 Gbps</span></div>
+                    <div class="bar-track"><div class="bar-fill camera" id="cameraBar" style="width:75%"></div></div>
+                </div>
+                <div class="traffic-bar">
+                    <div class="bar-header"><span class="bar-label">Radar (5 units)</span><span class="bar-value" id="radarBw">0.8 Gbps</span></div>
+                    <div class="bar-track"><div class="bar-fill radar" id="radarBar" style="width:20%"></div></div>
+                </div>
+            </div>
+
+            <div class="packet-log">
+                <div class="panel-title">▸ PACKET STREAM</div>
+                <div id="logContainer"></div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-value" id="totalBw">8.0</div>
+                    <div class="stat-label">TOTAL GBPS</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="pps">125K</div>
+                    <div class="stat-label">PACKETS/SEC</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="latency">2.1</div>
+                    <div class="stat-label">LATENCY MS</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="utilization">80</div>
+                    <div class="stat-label">UTIL %</div>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#0f0"></div>LiDAR</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#fa0"></div>Camera</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#a0f"></div>Radar</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#0af"></div>Control</div>
+            </div>
+
+            <div class="throughput-graph">
+                <canvas id="graphCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Packet types and colors
+    const PACKET_TYPES = {
+        lidar: { color: 0x00ff00, rate: 30, size: '64KB' },
+        camera: { color: 0xffaa00, rate: 60, size: '256KB' },
+        radar: { color: 0xaa00ff, rate: 20, size: '8KB' },
+        control: { color: 0x00aaff, rate: 10, size: '128B' }
+    };
+
+    // Three.js setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000800);
+    scene.fog = new THREE.FogExp2(0x000800, 0.008);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+    camera.position.set(50, 40, 50);
+    camera.lookAt(0, 5, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.getElementById('container').insertBefore(renderer.domElement, document.querySelector('.hud'));
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x003300, 0.5));
+    const mainLight = new THREE.DirectionalLight(0x00ff00, 0.5);
+    mainLight.position.set(30, 50, 30);
+    scene.add(mainLight);
+
+    // Grid
+    const grid = new THREE.GridHelper(100, 50, 0x00ff00, 0x003300);
+    grid.material.opacity = 0.3;
+    grid.material.transparent = true;
+    scene.add(grid);
+
+    // Nodes (sensors, controllers, gateway)
+    const nodes = [];
+    const connections = [];
+    const flowingPackets = [];
+
+    const NODE_CONFIG = [
+        // LiDAR
+        { type: 'lidar', pos: [-8.5, 10, 16.2], label: 'LiDAR-FL' },
+        { type: 'lidar', pos: [8.5, 10, 16.2], label: 'LiDAR-FR' },
+        { type: 'lidar', pos: [0, 5.5, 18.5], label: 'LiDAR-FC' },
+        { type: 'lidar', pos: [0, 5.5, -18.5], label: 'LiDAR-RC' },
+        // Camera
+        { type: 'camera', pos: [0, 10.5, 18.5], label: 'Cam-FC' },
+        { type: 'camera', pos: [0.6, 10.5, 18.5], label: 'Cam-FL' },
+        { type: 'camera', pos: [-0.6, 10.5, 18.5], label: 'Cam-FR' },
+        { type: 'camera', pos: [-8.5, 11, 16.5], label: 'Cam-SL1' },
+        { type: 'camera', pos: [8.5, 11, 16.5], label: 'Cam-SR1' },
+        { type: 'camera', pos: [-8.5, 11, 15.9], label: 'Cam-SL2' },
+        { type: 'camera', pos: [8.5, 11, 15.9], label: 'Cam-SR2' },
+        { type: 'camera', pos: [0, 9, -18.5], label: 'Cam-RC' },
+        // Radar
+        { type: 'radar', pos: [0, 7, 18.5], label: 'Radar-FC' },
+        { type: 'radar', pos: [-7, 6.5, 17.5], label: 'Radar-FL' },
+        { type: 'radar', pos: [7, 6.5, 17.5], label: 'Radar-FR' },
+        { type: 'radar', pos: [-7, 6.5, -18], label: 'Radar-RL' },
+        { type: 'radar', pos: [7, 6.5, -18], label: 'Radar-RR' },
+        // Controllers
+        { type: 'control', pos: [-3.5, 4, 10], label: 'Zone-FL' },
+        { type: 'control', pos: [3.5, 4, 10], label: 'Zone-FR' },
+        { type: 'control', pos: [0, 4, -10], label: 'Zone-R' },
+        { type: 'control', pos: [0, 4, 0], label: 'Gateway' }
+    ];
+
+    function createNode(config) {
+        const typeConfig = PACKET_TYPES[config.type] || PACKET_TYPES.control;
+        const geo = config.type === 'control' ? new THREE.BoxGeometry(2, 1.5, 2) :
+                   config.type === 'lidar' ? new THREE.CylinderGeometry(0.6, 0.6, 0.8, 16) :
+                   new THREE.BoxGeometry(0.6, 0.6, 0.6);
+        const mat = new THREE.MeshPhongMaterial({
+            color: typeConfig.color,
+            emissive: typeConfig.color,
+            emissiveIntensity: 0.3,
+            transparent: true,
+            opacity: 0.8
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(...config.pos);
+        scene.add(mesh);
+
+        // Pulse ring
+        const ringGeo = new THREE.RingGeometry(0.8, 1, 32);
+        const ringMat = new THREE.MeshBasicMaterial({ color: typeConfig.color, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(config.pos[0], 0.05, config.pos[2]);
+        scene.add(ring);
+
+        nodes.push({ ...config, mesh, ring, typeConfig });
+        return { ...config, mesh };
+    }
+
+    NODE_CONFIG.forEach(createNode);
+
+    // Create connections
+    function createConnection(from, to) {
+        const fromNode = nodes.find(n => n.label === from);
+        const toNode = nodes.find(n => n.label === to);
+        if (!fromNode || !toNode) return;
+
+        const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(...fromNode.pos),
+            new THREE.Vector3(...toNode.pos)
+        ]);
+
+        const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.03, 8, false);
+        const tubeMat = new THREE.MeshBasicMaterial({ color: 0x003300, transparent: true, opacity: 0.5 });
+        const tube = new THREE.Mesh(tubeGeo, tubeMat);
+        scene.add(tube);
+
+        connections.push({ from: fromNode, to: toNode, curve, tube });
+    }
+
+    // Connect sensors to zones
+    ['LiDAR-FL', 'Cam-SL1', 'Cam-SL2'].forEach(s => createConnection(s, 'Zone-FL'));
+    ['LiDAR-FR', 'Cam-SR1', 'Cam-SR2'].forEach(s => createConnection(s, 'Zone-FR'));
+    ['LiDAR-FC', 'Cam-FC', 'Cam-FL', 'Cam-FR', 'Radar-FC', 'Radar-FL', 'Radar-FR'].forEach(s => createConnection(s, 'Zone-FR'));
+    ['LiDAR-RC', 'Cam-RC', 'Radar-RL', 'Radar-RR'].forEach(s => createConnection(s, 'Zone-R'));
+    ['Zone-FL', 'Zone-FR', 'Zone-R'].forEach(z => createConnection(z, 'Gateway'));
+
+    // Spawn flowing packet
+    function spawnPacket(conn) {
+        const type = conn.from.type;
+        const typeConfig = PACKET_TYPES[type] || PACKET_TYPES.control;
+
+        const geo = new THREE.SphereGeometry(0.2, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: typeConfig.color, transparent: true, opacity: 1 });
+        const mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);
+
+        flowingPackets.push({
+            mesh,
+            curve: conn.curve,
+            progress: 0,
+            speed: 0.8 + Math.random() * 0.4,
+            type,
+            from: conn.from.label,
+            to: conn.to.label,
+            size: typeConfig.size
+        });
+    }
+
+    // Packet log
+    const logContainer = document.getElementById('logContainer');
+    let logEntries = [];
+
+    function addLogEntry(packet) {
+        const time = new Date().toTimeString().split(' ')[0];
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<span class="log-time">${time}</span> <span class="log-src">${packet.from}</span> → <span class="log-dst">${packet.to}</span> <span class="log-size">[${packet.size}]</span>`;
+        logContainer.insertBefore(entry, logContainer.firstChild);
+
+        logEntries.push(entry);
+        if (logEntries.length > 15) {
+            const old = logEntries.shift();
+            old.remove();
+        }
+
+        // Fade older entries
+        logEntries.forEach((e, i) => {
+            e.classList.toggle('fade', i < logEntries.length - 5);
+        });
+    }
+
+    // Throughput graph
+    const graphCanvas = document.getElementById('graphCanvas');
+    const graphCtx = graphCanvas.getContext('2d');
+    graphCanvas.width = window.innerWidth - 40;
+    graphCanvas.height = 50;
+    const graphData = new Array(graphCanvas.width).fill(0);
+
+    function updateGraph() {
+        graphCtx.fillStyle = '#001000';
+        graphCtx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+        graphData.shift();
+        graphData.push(70 + Math.random() * 25);
+
+        graphCtx.strokeStyle = '#0f0';
+        graphCtx.lineWidth = 1;
+        graphCtx.beginPath();
+        graphData.forEach((v, i) => {
+            const y = graphCanvas.height - (v / 100 * graphCanvas.height);
+            if (i === 0) graphCtx.moveTo(i, y);
+            else graphCtx.lineTo(i, y);
+        });
+        graphCtx.stroke();
+    }
+
+    // Update bandwidth bars
+    function updateBandwidth() {
+        const lidarBw = 2 + Math.random() * 0.8;
+        const cameraBw = 4.5 + Math.random() * 1;
+        const radarBw = 0.6 + Math.random() * 0.4;
+        const total = lidarBw + cameraBw + radarBw;
+
+        document.getElementById('lidarBw').textContent = lidarBw.toFixed(1) + ' Gbps';
+        document.getElementById('cameraBw').textContent = cameraBw.toFixed(1) + ' Gbps';
+        document.getElementById('radarBw').textContent = radarBw.toFixed(1) + ' Gbps';
+        document.getElementById('lidarBar').style.width = (lidarBw / 4 * 100) + '%';
+        document.getElementById('cameraBar').style.width = (cameraBw / 6 * 100) + '%';
+        document.getElementById('radarBar').style.width = (radarBw / 2 * 100) + '%';
+
+        document.getElementById('totalBw').textContent = total.toFixed(1);
+        document.getElementById('pps').textContent = Math.floor(100 + Math.random() * 50) + 'K';
+        document.getElementById('latency').textContent = (1.8 + Math.random() * 0.6).toFixed(1);
+        document.getElementById('utilization').textContent = Math.floor(75 + Math.random() * 20);
+    }
+
+    // Animation
+    let lastTime = 0;
+    let spawnTimer = 0;
+    let cameraAngle = 0;
+
+    function animate(time) {
+        requestAnimationFrame(animate);
+        const delta = (time - lastTime) / 1000;
+        lastTime = time;
+
+        // Rotate camera
+        cameraAngle += delta * 0.1;
+        camera.position.x = Math.cos(cameraAngle) * 60;
+        camera.position.z = Math.sin(cameraAngle) * 60;
+        camera.lookAt(0, 5, 0);
+
+        // Spawn packets
+        spawnTimer += delta;
+        if (spawnTimer > 0.05) {
+            spawnTimer = 0;
+            const conn = connections[Math.floor(Math.random() * connections.length)];
+            if (conn && Math.random() > 0.3) {
+                spawnPacket(conn);
+            }
+        }
+
+        // Update packets
+        flowingPackets.forEach((p, i) => {
+            p.progress += p.speed * delta;
+            if (p.progress >= 1) {
+                scene.remove(p.mesh);
+                flowingPackets.splice(i, 1);
+                addLogEntry(p);
+            } else {
+                const point = p.curve.getPoint(p.progress);
+                p.mesh.position.copy(point);
+                p.mesh.material.opacity = Math.sin(p.progress * Math.PI);
+                p.mesh.scale.setScalar(1 + Math.sin(p.progress * Math.PI) * 0.5);
+            }
+        });
+
+        // Pulse nodes
+        nodes.forEach(n => {
+            n.mesh.material.emissiveIntensity = 0.3 + Math.sin(time * 0.003 + n.pos[0]) * 0.2;
+            n.ring.scale.setScalar(1 + Math.sin(time * 0.002 + n.pos[2]) * 0.2);
+        });
+
+        // Update UI
+        if (Math.floor(time / 500) !== Math.floor((time - delta * 1000) / 500)) {
+            updateBandwidth();
+            updateGraph();
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        graphCanvas.width = window.innerWidth - 40;
+    });
+
+    animate(0);
+    </script>
+</body>
+</html>
