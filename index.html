@@ -264,24 +264,24 @@
                 <!-- Fault Simulation Panel -->
                 <div class="fault-panel" id="faultPanel">
                     <div class="fault-title">⚠️ Fault Injection</div>
-                    <div class="fault-item" data-fault="hpc-link">
-                        <div class="fault-name">ACU_IT ↔ ACU_NO Link Error</div>
-                        <div class="fault-desc">HPC 간 백본 연결 장애</div>
+                    <div class="fault-item" data-fault="front-backbone">
+                        <div class="fault-name">Front-L ↔ Front-R 10G Link Error</div>
+                        <div class="fault-desc">전방 존 컨트롤러 간 10G 백본 장애</div>
                     </div>
                     <div class="fault-item" data-fault="front-l-link">
                         <div class="fault-name">Front-L-9692 ↔ ACU_IT Link Error</div>
-                        <div class="fault-desc">전방 좌측 존 컨트롤러 연결 장애</div>
+                        <div class="fault-desc">전방 좌측 ZC → HPC 연결 장애</div>
                     </div>
                     <div class="fault-item" data-fault="rear-link">
-                        <div class="fault-name">Rear-9692 ↔ ACU_NO Link Error</div>
-                        <div class="fault-desc">후방 존 컨트롤러 연결 장애</div>
+                        <div class="fault-name">Rear-9692 ↔ ACU_IT Link Error</div>
+                        <div class="fault-desc">후방 ZC → HPC 연결 장애</div>
                     </div>
                     <div class="fault-item" data-fault="sensor">
                         <div class="fault-name">LiDAR-FL Sensor Error</div>
                         <div class="fault-desc">전방 좌측 LiDAR 센서 오류</div>
                     </div>
                     <div class="recovery-status" id="recoveryStatus">
-                        ✅ Recovery Path Active: Alternative route established
+                        ✅ Recovery: Front-R 10G Backbone 경로로 우회
                     </div>
                 </div>
             </div>

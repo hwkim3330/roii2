@@ -408,14 +408,13 @@ function loadVehicleScenario() {
 
     if (!vehicleModel) createVehicleModel();
 
-    // === CENTRAL HPC ===
-    const acuIT = addDevice('hpc', new THREE.Vector3(-4, 4, 0), 'ACU_IT');
-    const acuNO = addDevice('hpc', new THREE.Vector3(4, 4, 0), 'ACU_NO');
+    // === CENTRAL HPC (ACU_IT only) ===
+    const acuIT = addDevice('hpc', new THREE.Vector3(0, 4, 0), 'ACU_IT');
 
-    // === ZONE CONTROLLERS ===
-    const frontL = addDevice('lan9692', new THREE.Vector3(-6, 4, 12), 'Front-L-9692');
-    const frontR = addDevice('lan9692', new THREE.Vector3(6, 4, 12), 'Front-R-9692');
-    const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -12), 'Rear-9692');
+    // === ZONE CONTROLLERS (3x LAN9692) ===
+    const frontL = addDevice('lan9692', new THREE.Vector3(-3.5, 4, 10), 'Front-L-9692');
+    const frontR = addDevice('lan9692', new THREE.Vector3(3.5, 4, 10), 'Front-R-9692');
+    const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -10), 'Rear-9692');
 
     // === SENSORS ===
     // LiDAR (4)
@@ -442,19 +441,22 @@ function loadVehicleScenario() {
     const radarRR = addDevice('radar', new THREE.Vector3(6.5, 5, -17), 'Radar-Rear-R');
 
     // === CONNECTIONS ===
-    // HPC interconnect
-    createConnection(acuIT, acuNO);
-
-    // Front-L Zone → ACU_IT
+    // All Zone Controllers → ACU_IT
     createConnection(frontL, acuIT);
+    createConnection(frontR, acuIT);
+    createConnection(rear, acuIT);
+
+    // Front-L ↔ Front-R (10G Backbone)
+    createConnection(frontL, frontR);
+
+    // Front-L Zone → Sensors
     createConnection(frontL, lidarFL);
     createConnection(frontL, lidarFC);
     createConnection(frontL, camFL);
     createConnection(frontL, camSL1);
     createConnection(frontL, radarFL);
 
-    // Front-R Zone → ACU_IT
-    createConnection(frontR, acuIT);
+    // Front-R Zone → Sensors
     createConnection(frontR, lidarFR);
     createConnection(frontR, camFC);
     createConnection(frontR, camFR);
@@ -462,8 +464,7 @@ function loadVehicleScenario() {
     createConnection(frontR, radarFC);
     createConnection(frontR, radarFR);
 
-    // Rear Zone → ACU_NO
-    createConnection(rear, acuNO);
+    // Rear Zone → Sensors
     createConnection(rear, lidarRC);
     createConnection(rear, camRC);
     createConnection(rear, camSL2);
@@ -480,7 +481,7 @@ function loadVehicleScenario() {
     controls.update();
 
     updateStats();
-    showToast('ROii2 Scenario: 3x LAN9692 + ACU_IT/NO + 17 Sensors');
+    showToast('ROii2: ACU_IT + 3x LAN9692 + 17 Sensors');
 }
 
 // === FAULT SIMULATION ===
@@ -495,15 +496,15 @@ function injectFault(faultType) {
     state.activeFaults.add(faultType);
 
     switch(faultType) {
-        case 'hpc-link':
-            // ACU_IT ↔ ACU_NO link failure
+        case 'front-backbone':
+            // Front-L ↔ Front-R 10G backbone failure
             state.connections.forEach(conn => {
-                if ((conn.from.label === 'ACU_IT' && conn.to.label === 'ACU_NO') ||
-                    (conn.from.label === 'ACU_NO' && conn.to.label === 'ACU_IT')) {
+                if ((conn.from.label === 'Front-L-9692' && conn.to.label === 'Front-R-9692') ||
+                    (conn.from.label === 'Front-R-9692' && conn.to.label === 'Front-L-9692')) {
                     updateConnectionVisual(conn, 'fault');
                 }
             });
-            showToast('⚠️ FAULT: ACU_IT ↔ ACU_NO Link Down');
+            showToast('⚠️ FAULT: Front 10G Backbone Link Down');
             break;
 
         case 'front-l-link':
@@ -514,7 +515,7 @@ function injectFault(faultType) {
                 }
             });
             showToast('⚠️ FAULT: Front-L-9692 ↔ ACU_IT Link Down');
-            // Show recovery path via Front-R
+            // Show recovery path via Front-R backbone
             setTimeout(() => {
                 document.getElementById('recoveryStatus').classList.add('visible');
             }, 1000);
@@ -522,12 +523,12 @@ function injectFault(faultType) {
 
         case 'rear-link':
             state.connections.forEach(conn => {
-                if ((conn.from.label === 'Rear-9692' && conn.to.label === 'ACU_NO') ||
-                    (conn.from.label === 'ACU_NO' && conn.to.label === 'Rear-9692')) {
+                if ((conn.from.label === 'Rear-9692' && conn.to.label === 'ACU_IT') ||
+                    (conn.from.label === 'ACU_IT' && conn.to.label === 'Rear-9692')) {
                     updateConnectionVisual(conn, 'fault');
                 }
             });
-            showToast('⚠️ FAULT: Rear-9692 ↔ ACU_NO Link Down');
+            showToast('⚠️ FAULT: Rear-9692 ↔ ACU_IT Link Down');
             break;
 
         case 'sensor':
@@ -543,12 +544,13 @@ function injectFault(faultType) {
     }
 
     // Update UI
-    document.querySelector(`[data-fault="${faultType}"]`).classList.add('active');
+    const faultEl = document.querySelector(`[data-fault="${faultType}"]`);
+    if (faultEl) faultEl.classList.add('active');
 }
 
 function clearFault(faultType) {
     switch(faultType) {
-        case 'hpc-link':
+        case 'front-backbone':
         case 'front-l-link':
         case 'rear-link':
             state.connections.forEach(conn => {
@@ -569,7 +571,8 @@ function clearFault(faultType) {
             break;
     }
 
-    document.querySelector(`[data-fault="${faultType}"]`).classList.remove('active');
+    const faultEl = document.querySelector(`[data-fault="${faultType}"]`);
+    if (faultEl) faultEl.classList.remove('active');
     showToast('✅ Fault Cleared');
 }
 
