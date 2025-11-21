@@ -673,15 +673,27 @@
     const loader = new THREE.GLTFLoader();
     loader.load('roii.glb', (gltf) => {
         vehicleModel = gltf.scene;
-        vehicleModel.scale.set(1.5, 1.5, 1.5);
+
+        // Scale like drive.html
+        const box = new THREE.Box3().setFromObject(vehicleModel);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        const scale = 8 / Math.max(size.x, size.y, size.z);
+        vehicleModel.scale.set(scale, scale, scale);
+        vehicleModel.position.set(-center.x * scale, 0, -center.z * scale);
         vehicleModel.rotation.y = Math.PI;
 
         vehicleModel.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
                 if (child.material) {
-                    child.material.color.multiplyScalar(2.2);
-                    child.material.emissive = new THREE.Color(0xff6600);
+                    child.material.transparent = true;
+                    child.material.opacity = 0.9;
+                    child.material.side = THREE.DoubleSide;
+                    if (child.material.color) {
+                        child.material.color.multiplyScalar(1.5);
+                    }
+                    child.material.emissive = new THREE.Color(0x333333);
                     child.material.emissiveIntensity = 0.2;
                 }
             }

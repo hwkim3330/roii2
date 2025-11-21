@@ -582,7 +582,7 @@
     const loader = new THREE.GLTFLoader();
     loader.load('roii.glb', (gltf) => {
         vehicleModel = gltf.scene;
-        vehicleModel.scale.set(1.8, 1.8, 1.8);
+        vehicleModel.scale.set(3.5, 3.5, 3.5);
         vehicleModel.rotation.y = Math.PI;
 
         vehicleModel.traverse((child) => {
