@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROii2 - 3x LAN9692 Zone Controller TSN Designer</title>
+    <title>ROii2 - Automotive TSN Network Designer (LAN9692 + HPC)</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -18,8 +18,8 @@
             <div class="header-left">
                 <img src="keti.png" alt="KETI" class="logo" onerror="this.style.display='none'">
                 <div class="title-group">
-                    <h1>ROii2 - 3x LAN9692 TSN Network Designer</h1>
-                    <p>Zone-based Time-Sensitive Networking · 3D Visualization</p>
+                    <h1>ROii2 - Automotive TSN Network Designer</h1>
+                    <p>2x Front + 1x Rear LAN9692 · ACU_IT + ACU_NO HPC</p>
                 </div>
             </div>
             <div class="stats">
@@ -46,7 +46,27 @@
         <div class="main">
             <div class="sidebar">
                 <div class="sidebar-section">
-                    <div class="section-title">Zone Controllers (LAN9692 x3)</div>
+                    <div class="section-title">Central HPC</div>
+
+                    <div class="device-card" data-type="hpc">
+                        <div class="device-header">
+                            <div class="device-icon">🔴</div>
+                            <div class="device-info">
+                                <h3>HPC</h3>
+                                <p>High Performance Computer</p>
+                            </div>
+                        </div>
+                        <div class="device-specs">
+                            <strong>ACU_IT / ACU_NO</strong><br>
+                            • Central Computing Unit<br>
+                            • Multi-domain Processing<br>
+                            • 4× Network Ports
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-title">Zone Controllers (LAN9692)</div>
 
                     <div class="device-card" data-type="lan9692">
                         <div class="device-header">
@@ -63,7 +83,6 @@
                             • 1× RJ45 (Management)<br>
                             <br>
                             <strong>Total: 12 Ports</strong><br>
-                            Industrial Ethernet with 10G uplinks<br>
                             IEEE 802.1Qbv/Qav/Qbu · PTP
                         </div>
                     </div>
@@ -135,7 +154,7 @@
                 <div id="canvas3d"></div>
 
                 <div class="help-text">
-                    <strong>🚗 ROii2:</strong> 3x LAN9692 Zone Controllers · 4 LiDAR · 5 Radar · 8 Camera ·
+                    <strong>🚗 ROii2:</strong> 2x Front + 1x Rear LAN9692 · ACU_IT + ACU_NO HPC ·
                     <strong>👆 Select:</strong> Click to highlight ·
                     <strong>🔗 Connect:</strong> Link devices
                 </div>

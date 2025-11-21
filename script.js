@@ -237,6 +237,13 @@ const templates = {
         mgmtRj45: 1,
         size: [4, 2, 4]
     },
+    // HPC (High Performance Computer)
+    hpc: {
+        label: 'HPC',
+        color: 0xE11D48,  // 빨간색 계열
+        ports: 4,
+        size: [5, 2.5, 5]
+    },
     // 센서
     camera: {
         label: 'Camera',
@@ -314,6 +321,7 @@ function createDeviceGeometry(type, label, size) {
         case 'camera':
         case 'radar':
         case 'lan9692':
+        case 'hpc':
         case 'ecu':
         default:
             return new THREE.BoxGeometry(...size);
@@ -564,7 +572,7 @@ function updateConnections() {
     });
 }
 
-// 차량 시나리오 로드 - ROii2: LAN9692 x 3 Zone Controllers Configuration
+// 차량 시나리오 로드 - ROii2: Front 2x LAN9692 + Rear 1x LAN9692 + Central HPC
 function loadVehicleScenario() {
     // 기존 장치 및 연결 모두 제거
     state.connections.forEach(conn => {
@@ -586,21 +594,20 @@ function loadVehicleScenario() {
         createVehicleModel();
     }
 
-    // === 3x LAN9692 ZONE CONTROLLERS ===
-    // Central Gateway (LAN9692) - 중앙
-    const centralGW = addDevice('lan9692', new THREE.Vector3(0, 2, 0), 'Central-GW-9692');
+    // === CENTRAL HPC (ACU_IT, ACU_NO) ===
+    const acuIT = addDevice('hpc', new THREE.Vector3(-4, 2, 0), 'ACU_IT');
+    const acuNO = addDevice('hpc', new THREE.Vector3(4, 2, 0), 'ACU_NO');
 
-    // Front Zone Controller (LAN9692) - 전방
-    const frontZC = addDevice('lan9692', new THREE.Vector3(0, 2, 10), 'Front-ZC-9692');
+    // === FRONT ZONE CONTROLLERS (2x LAN9692) ===
+    const frontL_ZC = addDevice('lan9692', new THREE.Vector3(-6, 2, 10), 'Front-L-9692');
+    const frontR_ZC = addDevice('lan9692', new THREE.Vector3(6, 2, 10), 'Front-R-9692');
 
-    // Rear Zone Controller (LAN9692) - 후방
-    const rearZC = addDevice('lan9692', new THREE.Vector3(0, 2, -10), 'Rear-ZC-9692');
+    // === REAR ZONE CONTROLLER (1x LAN9692) ===
+    const rearZC = addDevice('lan9692', new THREE.Vector3(0, 2, -10), 'Rear-9692');
 
     // === LiDAR 4개 (앞쪽 사이드 원통형 2개 + 앞뒤 박스형 2개) ===
-    // 원통형 2개: 앞쪽 좌우 사이드
     const lidarFL = addDevice('lidar', new THREE.Vector3(-8.5, 10, 16.2), 'LiDAR-Front-Left');
     const lidarFR = addDevice('lidar', new THREE.Vector3(8.5, 10, 16.2), 'LiDAR-Front-Right');
-    // 박스형 2개: 앞뒤 중앙 (작고 낮게)
     const lidarFrontCenter = addDevice('lidar', new THREE.Vector3(0, 5.5, 18.5), 'LiDAR-Front-Center');
     const lidarRearCenter = addDevice('lidar', new THREE.Vector3(0, 5.5, -18.5), 'LiDAR-Rear-Center');
 
@@ -610,40 +617,37 @@ function loadVehicleScenario() {
     const camFrontL = addDevice('camera', new THREE.Vector3(0.6, 10.5, 18.5), 'Cam-Front-L');
     const camFrontR = addDevice('camera', new THREE.Vector3(-0.6, 10.5, 18.5), 'Cam-Front-R');
 
-    // Side Cameras (2)
-    const camSideL1 = addDevice('camera', new THREE.Vector3(-8.5, 11, 16.5), 'Cam-Side-L1', null);
-    const camSideR1 = addDevice('camera', new THREE.Vector3(8.5, 11, 16.5), 'Cam-Side-R1', null);
-    const camSideL2 = addDevice('camera', new THREE.Vector3(-8.5, 11, 15.9), 'Cam-Side-L2');
-    const camSideR2 = addDevice('camera', new THREE.Vector3(8.5, 11, 15.9), 'Cam-Side-R2');
+    // Side Cameras - L1, R1은 전방 스위치에 연결
+    const camSideL1 = addDevice('camera', new THREE.Vector3(-8.5, 11, 16.5), 'Cam-Side-L1');
+    const camSideR1 = addDevice('camera', new THREE.Vector3(8.5, 11, 16.5), 'Cam-Side-R1');
+    // Side Cameras - L2, R2는 후방 스위치에 연결
+    const camSideL2 = addDevice('camera', new THREE.Vector3(-8.5, 11, -16.5), 'Cam-Side-L2');
+    const camSideR2 = addDevice('camera', new THREE.Vector3(8.5, 11, -16.5), 'Cam-Side-R2');
 
     // Rear Camera (1)
     const camRearCenter = addDevice('camera', new THREE.Vector3(0, 9, -18.5), 'Cam-Rear-Center');
 
     // === RADAR 5개 (전방 3 + 후방 2) ===
-    // Front Radars (3)
     const radarFrontCenter = addDevice('radar', new THREE.Vector3(0, 7, 18.5), 'Radar-Front-Center');
     const radarFrontL = addDevice('radar', new THREE.Vector3(-7, 6.5, 17.5), 'Radar-Front-L', null, { x: 0, y: -Math.PI / 6, z: 0 });
     const radarFrontR = addDevice('radar', new THREE.Vector3(7, 6.5, 17.5), 'Radar-Front-R', null, { x: 0, y: Math.PI / 6, z: 0 });
+    const radarRearL = addDevice('radar', new THREE.Vector3(-7, 6.5, -18), 'Radar-Rear-L', null, { x: 0, y: Math.PI / 6, z: 0 });
+    const radarRearR = addDevice('radar', new THREE.Vector3(7, 6.5, -18), 'Radar-Rear-R', null, { x: 0, y: -Math.PI / 6, z: 0 });
 
-    // Rear Radars (2)
-    const radarRearL = addDevice('radar', new THREE.Vector3(-7, 6.5, -18), 'Radar-Rear-L',null, { x: 0, y: Math.PI / 6, z: 0 });
-    const radarRearR = addDevice('radar', new THREE.Vector3(7, 6.5, -18), 'Radar-Rear-R',null, { x: 0, y: -Math.PI / 6, z: 0 });
+    // === CONNECTIONS: Front-L Zone (9692) → Left Side Sensors ===
+    createConnection(frontL_ZC, lidarFL);
+    createConnection(frontL_ZC, camSideL1);
+    createConnection(frontL_ZC, radarFrontL);
+    createConnection(frontL_ZC, camFrontL);
+    createConnection(frontL_ZC, lidarFrontCenter);
 
-    // === ADAS ECU ===
-    const adasECU = addDevice('ecu', new THREE.Vector3(-3, 2, 3), 'ADAS-ECU');
-
-    // === CONNECTIONS: Front Zone (9692) → Front Sensors ===
-    createConnection(frontZC, lidarFL);
-    createConnection(frontZC, lidarFR);
-    createConnection(frontZC, lidarFrontCenter);
-    createConnection(frontZC, camFrontCenter);
-    createConnection(frontZC, camSideL1);
-    createConnection(frontZC, camSideR1);
-    createConnection(frontZC, camFrontL);
-    createConnection(frontZC, camFrontR);
-    createConnection(frontZC, radarFrontCenter);
-    createConnection(frontZC, radarFrontL);
-    createConnection(frontZC, radarFrontR);
+    // === CONNECTIONS: Front-R Zone (9692) → Right Side Sensors ===
+    createConnection(frontR_ZC, lidarFR);
+    createConnection(frontR_ZC, camSideR1);
+    createConnection(frontR_ZC, radarFrontR);
+    createConnection(frontR_ZC, camFrontR);
+    createConnection(frontR_ZC, camFrontCenter);
+    createConnection(frontR_ZC, radarFrontCenter);
 
     // === CONNECTIONS: Rear Zone (9692) → Rear Sensors ===
     createConnection(rearZC, lidarRearCenter);
@@ -653,12 +657,13 @@ function loadVehicleScenario() {
     createConnection(rearZC, radarRearL);
     createConnection(rearZC, radarRearR);
 
-    // === CONNECTIONS: Zone Controllers → Central Gateway ===
-    createConnection(frontZC, centralGW);
-    createConnection(rearZC, centralGW);
+    // === CONNECTIONS: Zone Controllers → HPC ===
+    createConnection(frontL_ZC, acuIT);
+    createConnection(frontR_ZC, acuIT);
+    createConnection(rearZC, acuNO);
 
-    // === CONNECTIONS: ADAS ECU → Central Gateway ===
-    createConnection(adasECU, centralGW);
+    // === CONNECTIONS: HPC 간 연결 ===
+    createConnection(acuIT, acuNO);
 
     // 카메라 위치 조정
     camera.position.set(50, 35, 70);
@@ -666,7 +671,7 @@ function loadVehicleScenario() {
     controls.update();
 
     updateStats();
-    showToast('🚗 ROii2: 3x LAN9692 Zone Controllers · 4 LiDAR · 5 Radar · 8 Camera');
+    showToast('🚗 ROii2: 2x Front + 1x Rear LAN9692 · ACU_IT + ACU_NO HPC');
 }
 
 // 마우스 & 터치 이벤트
