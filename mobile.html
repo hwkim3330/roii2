@@ -476,14 +476,19 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // === LIGHTING ===
-    scene.add(new THREE.AmbientLight(0xFFFFFF, 0.5));
-    const mainLight = new THREE.DirectionalLight(0xFFFFFF, 0.8);
+    // === LIGHTING - Maximum brightness ===
+    scene.add(new THREE.AmbientLight(0xFFFFFF, 1.2));
+    const mainLight = new THREE.DirectionalLight(0xFFFFFF, 1.5);
     mainLight.position.set(30, 60, 30);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
     mainLight.shadow.mapSize.height = 2048;
     scene.add(mainLight);
+
+    // Fill light from above
+    const fillLight = new THREE.DirectionalLight(0xFFFFFF, 1.0);
+    fillLight.position.set(0, 50, 0);
+    scene.add(fillLight);
 
     // === ENVIRONMENT - Infinite Space ===
     // Subtle infinite grid
@@ -560,15 +565,15 @@
                 model.traverse((child) => {
                     if (child.isMesh) {
                         child.material.transparent = true;
-                        child.material.opacity = 0.9;
+                        child.material.opacity = 0.85;
                         child.material.side = THREE.DoubleSide;
                         child.castShadow = true;
-                        // Make brighter
+                        // Maximum brightness
                         if (child.material.color) {
-                            child.material.color.multiplyScalar(1.5);
+                            child.material.color.multiplyScalar(2.5);
                         }
-                        child.material.emissive = new THREE.Color(0x333333);
-                        child.material.emissiveIntensity = 0.3;
+                        child.material.emissive = new THREE.Color(0xffffff);
+                        child.material.emissiveIntensity = 0.6;
                         vehicleMeshes.push(child);
                     }
                 });
