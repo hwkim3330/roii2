@@ -482,20 +482,20 @@ function loadVehicleScenario() {
 
     // Camera (8) - Front cluster + side mirrors + rear
     const camFC = addDevice('camera', new THREE.Vector3(0, 10.5, 18.5), 'Cam-Front-Center');
-    const camFL = addDevice('camera', new THREE.Vector3(-2.5, 10.5, 18.5), 'Cam-Front-L');
-    const camFR = addDevice('camera', new THREE.Vector3(2.5, 10.5, 18.5), 'Cam-Front-R');
-    const camSL1 = addDevice('camera', new THREE.Vector3(-9.5, 8, 8), 'Cam-Side-L1');
-    const camSR1 = addDevice('camera', new THREE.Vector3(9.5, 8, 8), 'Cam-Side-R1');
-    const camSL2 = addDevice('camera', new THREE.Vector3(-9.5, 8, -8), 'Cam-Side-L2');
-    const camSR2 = addDevice('camera', new THREE.Vector3(9.5, 8, -8), 'Cam-Side-R2');
-    const camRC = addDevice('camera', new THREE.Vector3(0, 10.5, -18.5), 'Cam-Rear-Center');
+    const camFL = addDevice('camera', new THREE.Vector3(0.6, 10.5, 18.5), 'Cam-Front-L');
+    const camFR = addDevice('camera', new THREE.Vector3(-0.6, 10.5, 18.5), 'Cam-Front-R');
+    const camSL1 = addDevice('camera', new THREE.Vector3(-8.5, 11, 16.5), 'Cam-Side-L1');
+    const camSR1 = addDevice('camera', new THREE.Vector3(8.5, 11, 16.5), 'Cam-Side-R1');
+    const camSL2 = addDevice('camera', new THREE.Vector3(-8.5, 11, 15.9), 'Cam-Side-L2');
+    const camSR2 = addDevice('camera', new THREE.Vector3(8.5, 11, 15.9), 'Cam-Side-R2');
+    const camRC = addDevice('camera', new THREE.Vector3(0, 9, -18.5), 'Cam-Rear-Center');
 
     // Radar (5) - Bumper integrated
-    const radarFC = addDevice('radar', new THREE.Vector3(0, 3, 18.5), 'Radar-Front-Center');
-    const radarFL = addDevice('radar', new THREE.Vector3(-7, 3, 17.5), 'Radar-Front-L');
-    const radarFR = addDevice('radar', new THREE.Vector3(7, 3, 17.5), 'Radar-Front-R');
-    const radarRL = addDevice('radar', new THREE.Vector3(-7, 3, -17.5), 'Radar-Rear-L');
-    const radarRR = addDevice('radar', new THREE.Vector3(7, 3, -17.5), 'Radar-Rear-R');
+    const radarFC = addDevice('radar', new THREE.Vector3(0, 7, 18.5), 'Radar-Front-Center');
+    const radarFL = addDevice('radar', new THREE.Vector3(-7, 6.5, 17.5), 'Radar-Front-L');
+    const radarFR = addDevice('radar', new THREE.Vector3(7, 6.5, 17.5), 'Radar-Front-R');
+    const radarRL = addDevice('radar', new THREE.Vector3(-7, 6.5, -18), 'Radar-Rear-L');
+    const radarRR = addDevice('radar', new THREE.Vector3(7, 6.5, -18), 'Radar-Rear-R');
 
     // === CONNECTIONS ===
     // All Zone Controllers → ACU_IT
