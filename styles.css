@@ -1,0 +1,510 @@
+/* ROii - Automotive TSN Network Designer 3D Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+    overflow: hidden;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* 헤더 */
+.header {
+    height: 72px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    z-index: 100;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.logo {
+    height: 48px;
+    width: auto;
+}
+
+.title-group h1 {
+    font-size: 20px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+}
+
+.title-group p {
+    font-size: 12px;
+    color: #64748B;
+}
+
+.stats {
+    display: flex;
+    gap: 32px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #64748B;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    transition: all 0.2s;
+    margin-left: 8px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.btn-success:hover {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* 메인 */
+.main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* 사이드바 */
+.sidebar {
+    width: 360px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(59, 130, 246, 0.15);
+    overflow-y: auto;
+}
+
+.sidebar-section {
+    padding: 24px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #3B82F6;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 20px;
+}
+
+.device-card {
+    background: rgba(248, 250, 252, 0.8);
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.device-card:hover {
+    border-color: #3B82F6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+.device-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.device-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
+    border-radius: 12px;
+    font-size: 32px;
+}
+
+.device-info h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.device-info p {
+    font-size: 12px;
+    color: #64748B;
+}
+
+.device-specs {
+    background: rgba(241, 245, 249, 0.8);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #475569;
+}
+
+/* 캔버스 */
+.canvas {
+    flex: 1;
+    position: relative;
+}
+
+#canvas3d {
+    width: 100%;
+    height: 100%;
+}
+
+/* 플로팅 컨트롤 */
+.floating-controls {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.control-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: rgba(248, 250, 252, 0.8);
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 20px;
+    touch-action: manipulation;
+}
+
+.control-btn:hover {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    border-color: #3B82F6;
+    transform: translateY(-2px);
+}
+
+.control-btn.active {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    border-color: #3B82F6;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+/* 프로퍼티 패널 */
+.properties {
+    width: 420px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(59, 130, 246, 0.2);
+    transform: translateX(100%);
+    transition: transform 0.3s;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+}
+
+.properties.visible {
+    transform: translateX(0);
+}
+
+.properties-header {
+    height: 72px;
+    padding: 0 24px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.properties-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #64748B;
+    touch-action: manipulation;
+}
+
+.properties-content {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.prop-section {
+    margin-bottom: 28px;
+}
+
+.prop-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #3B82F6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    background: rgba(248, 250, 252, 0.8);
+    color: #1e293b;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+}
+
+.port-detail-card {
+    padding: 14px;
+    background: rgba(241, 245, 249, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.port-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.port-detail-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.port-detail-info {
+    font-size: 11px;
+    color: #64748B;
+    line-height: 1.6;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.badge-success { 
+    background: rgba(16, 185, 129, 0.2); 
+    color: #10B981; 
+}
+
+.badge-info { 
+    background: rgba(59, 130, 246, 0.2); 
+    color: #3B82F6; 
+}
+
+.toast {
+    position: fixed;
+    bottom: 110px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    padding: 14px 28px;
+    background: rgba(59, 130, 246, 0.95);
+    color: white;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 1000;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.help-text {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #475569;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.opacity-control {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+}
+
+.opacity-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #3B82F6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.opacity-value {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.opacity-slider {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(59, 130, 246, 0.3);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.opacity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.opacity-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+/* 스크롤바 스타일링 */
+::-webkit-scrollbar { 
+    width: 8px; 
+}
+
+::-webkit-scrollbar-track { 
+    background: rgba(241, 245, 249, 0.8); 
+}
+
+::-webkit-scrollbar-thumb { 
+    background: #3B82F6; 
+    border-radius: 4px; 
+}
+
+/* 터치 최적화 */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+button, .control-btn, .device-card {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+}

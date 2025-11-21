@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROii2 - 3x LAN9692 Zone Controller TSN Designer</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="header-left">
+                <img src="keti.png" alt="KETI" class="logo" onerror="this.style.display='none'">
+                <div class="title-group">
+                    <h1>ROii2 - 3x LAN9692 TSN Network Designer</h1>
+                    <p>Zone-based Time-Sensitive Networking · 3D Visualization</p>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="deviceCount">0</div>
+                    <div class="stat-label">Devices</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="linkCount">0</div>
+                    <div class="stat-label">Links</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="bandwidth">0</div>
+                    <div class="stat-label">Gbps</div>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-success" id="vehicleBtn">🚗 Load Vehicle Scenario</button>
+                <button class="btn" id="layoutBtn">⚡ Auto Layout</button>
+                <button class="btn" id="exportBtn">📤 Export</button>
+            </div>
+        </div>
+
+        <div class="main">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <div class="section-title">Zone Controllers (LAN9692 x3)</div>
+
+                    <div class="device-card" data-type="lan9692">
+                        <div class="device-header">
+                            <div class="device-icon">🟢</div>
+                            <div class="device-info">
+                                <h3>LAN9692</h3>
+                                <p>12-Port Zone Controller</p>
+                            </div>
+                        </div>
+                        <div class="device-specs">
+                            <strong>Physical Ports:</strong><br>
+                            • 7× MateNET T1 (100/1000BASE-T1)<br>
+                            • 4× SFP+ (Fiber, 1G/10G) ⚡<br>
+                            • 1× RJ45 (Management)<br>
+                            <br>
+                            <strong>Total: 12 Ports</strong><br>
+                            Industrial Ethernet with 10G uplinks<br>
+                            IEEE 802.1Qbv/Qav/Qbu · PTP
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-title">Sensors & Actuators</div>
+
+                    <div class="device-card" data-type="camera">
+                        <div class="device-header">
+                            <div class="device-icon">📷</div>
+                            <div class="device-info">
+                                <h3>Camera</h3>
+                                <p>Video Sensor</p>
+                            </div>
+                        </div>
+                        <div class="device-specs">100 Mbps · Priority 6</div>
+                    </div>
+
+                    <div class="device-card" data-type="lidar">
+                        <div class="device-header">
+                            <div class="device-icon">📡</div>
+                            <div class="device-info">
+                                <h3>LiDAR</h3>
+                                <p>3D Range Sensor</p>
+                            </div>
+                        </div>
+                        <div class="device-specs">1000 Mbps · Priority 7</div>
+                    </div>
+
+                    <div class="device-card" data-type="radar">
+                        <div class="device-header">
+                            <div class="device-icon">📶</div>
+                            <div class="device-info">
+                                <h3>Radar</h3>
+                                <p>Object Detection</p>
+                            </div>
+                        </div>
+                        <div class="device-specs">100 Mbps · Priority 5</div>
+                    </div>
+
+                    <div class="device-card" data-type="ecu">
+                        <div class="device-header">
+                            <div class="device-icon">🖥️</div>
+                            <div class="device-info">
+                                <h3>ECU</h3>
+                                <p>Electronic Control Unit</p>
+                            </div>
+                        </div>
+                        <div class="device-specs">100 Mbps · Priority 4</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-title">Tools</div>
+                    <div class="device-card" id="connectBtn">
+                        <div class="device-header">
+                            <div class="device-icon">🔗</div>
+                            <div class="device-info">
+                                <h3>Connect Mode</h3>
+                                <p>Link devices</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas">
+                <div id="canvas3d"></div>
+
+                <div class="help-text">
+                    <strong>🚗 ROii2:</strong> 3x LAN9692 Zone Controllers · 4 LiDAR · 5 Radar · 8 Camera ·
+                    <strong>👆 Select:</strong> Click to highlight ·
+                    <strong>🔗 Connect:</strong> Link devices
+                </div>
+
+                <div class="opacity-control">
+                    <div class="opacity-label">
+                        <span>Vehicle Opacity</span>
+                        <span class="opacity-value" id="opacityValue">30%</span>
+                    </div>
+                    <input type="range" class="opacity-slider" id="opacitySlider"
+                           min="0" max="100" value="30" step="5">
+                </div>
+
+                <div class="floating-controls">
+                    <div class="control-btn" id="selectBtn" title="선택 모드">👆</div>
+                    <div class="control-btn" id="rotateBtn" title="자동 회전">🔄</div>
+                    <div class="control-btn" id="resetBtn" title="리셋">🎯</div>
+                    <div class="control-btn" id="deleteBtn" title="삭제">🗑️</div>
+                </div>
+            </div>
+
+            <div class="properties" id="properties">
+                <div class="properties-header">
+                    <div class="properties-title">Device Properties</div>
+                    <button class="close-btn" id="closeBtn">✕</button>
+                </div>
+                <div class="properties-content" id="propertiesContent">
+                    <p style="color: #94A3B8; text-align: center; padding: 60px 24px;">
+                        Select a device to view properties
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- External JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
