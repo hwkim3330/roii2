@@ -3,267 +3,371 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ROii2 - Initial D Mode</title>
-
+    <title>ROii2 - Initial D Touge Racing</title>
     <script src="libs/three.min.js"></script>
-    <script src="libs/OrbitControls.js"></script>
     <script src="libs/GLTFLoader.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
-
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Orbitron', -apple-system, sans-serif;
+            font-family: 'Orbitron', sans-serif;
             background: #000;
             overflow: hidden;
             color: white;
         }
         #canvas3d { width: 100vw; height: 100vh; }
 
-        .hud {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-        }
+        .hud { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
 
-        /* Top Bar */
-        .top-bar {
+        /* Title */
+        .title-bar {
             position: absolute;
-            top: 20px;
+            top: 15px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            align-items: center;
+            text-align: center;
         }
-
-        .version-links {
-            display: flex;
-            gap: 8px;
-            pointer-events: auto;
-        }
-        .version-link {
-            padding: 10px 16px;
-            background: rgba(0,0,0,0.7);
-            border: 2px solid #ff6b00;
-            border-radius: 4px;
-            font-size: 11px;
+        .title-bar h1 {
+            font-size: 24px;
             color: #ff6b00;
-            text-decoration: none;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.2s;
+            text-shadow: 0 0 20px #ff6b00;
+            letter-spacing: 5px;
         }
-        .version-link:hover { background: rgba(255, 107, 0, 0.3); }
-        .version-link.active { background: #ff6b00; color: black; }
+        .title-bar p { font-size: 10px; color: #666; letter-spacing: 3px; }
 
-        .title {
-            background: rgba(0,0,0,0.8);
-            padding: 12px 24px;
+        /* Stage Info */
+        .stage-info {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0,0,0,0.85);
+            padding: 15px 20px;
+            border-left: 4px solid #ff6b00;
+        }
+        .stage-name { font-size: 16px; color: #ff6b00; letter-spacing: 2px; }
+        .stage-detail { font-size: 10px; color: #555; margin-top: 3px; }
+
+        /* Lap Timer */
+        .lap-timer {
+            position: absolute;
+            top: 80px;
+            right: 180px;
+            background: rgba(0,0,0,0.85);
+            padding: 15px 25px;
             border: 2px solid #ff6b00;
             text-align: center;
         }
-        .title h1 {
-            font-size: 20px;
+        .lap-label { font-size: 10px; color: #666; letter-spacing: 2px; }
+        .lap-time {
+            font-size: 32px;
             color: #ff6b00;
-            text-shadow: 0 0 20px rgba(255, 107, 0, 0.8);
-            letter-spacing: 3px;
+            text-shadow: 0 0 15px #ff6b00;
+            font-family: 'Orbitron', monospace;
         }
-        .title p {
-            font-size: 10px;
-            color: #666;
-            letter-spacing: 2px;
-        }
+        .best-time { font-size: 12px; color: #00ff88; margin-top: 5px; }
 
-        /* Speedometer - Digital */
+        /* Mini Map */
+        .mini-map {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(0,0,0,0.85);
+            border: 2px solid #ff6b00;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .mini-map canvas { width: 100%; height: 100%; }
+
+        /* Speedometer */
         .speedometer {
             position: absolute;
-            bottom: 40px;
-            right: 40px;
+            bottom: 30px;
+            right: 30px;
             background: rgba(0,0,0,0.9);
-            padding: 30px 40px;
+            padding: 25px 35px;
             border: 3px solid #ff6b00;
             text-align: center;
             clip-path: polygon(0 10%, 10% 0, 90% 0, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0 90%);
         }
         .speed-value {
-            font-size: 90px;
-            font-weight: 700;
+            font-size: 72px;
+            font-weight: 900;
             color: #ff6b00;
+            text-shadow: 0 0 30px #ff6b00;
             line-height: 1;
-            text-shadow: 0 0 30px rgba(255, 107, 0, 0.8), 0 0 60px rgba(255, 107, 0, 0.4);
-            font-family: 'Orbitron', monospace;
         }
-        .speed-unit {
-            font-size: 18px;
-            color: #666;
-            margin-top: 5px;
-            letter-spacing: 4px;
-        }
+        .speed-unit { font-size: 14px; color: #666; letter-spacing: 3px; }
 
         /* Tachometer */
         .tachometer {
             position: absolute;
-            bottom: 40px;
-            right: 230px;
+            bottom: 30px;
+            right: 200px;
             background: rgba(0,0,0,0.9);
-            padding: 20px 30px;
+            padding: 15px 25px;
             border: 2px solid #00ff88;
             text-align: center;
         }
         .rpm-value {
-            font-size: 36px;
+            font-size: 28px;
             font-weight: 700;
             color: #00ff88;
-            text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+            text-shadow: 0 0 15px #00ff88;
         }
-        .rpm-label { font-size: 10px; color: #666; letter-spacing: 2px; }
+        .rpm-bar {
+            width: 100px;
+            height: 6px;
+            background: #222;
+            margin-top: 8px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .rpm-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #ffff00, #ff0000);
+            transition: width 0.1s;
+        }
+        .rpm-label { font-size: 9px; color: #555; margin-top: 5px; letter-spacing: 2px; }
+
+        /* Drift Score */
+        .drift-panel {
+            position: absolute;
+            bottom: 150px;
+            right: 30px;
+            background: rgba(0,0,0,0.85);
+            padding: 15px 25px;
+            border: 2px solid #ff0066;
+            text-align: center;
+        }
+        .drift-label { font-size: 10px; color: #ff0066; letter-spacing: 2px; }
+        .drift-score {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ff0066;
+            text-shadow: 0 0 20px #ff0066;
+        }
+        .drift-combo { font-size: 12px; color: #ffaa00; margin-top: 5px; }
 
         /* Drift Indicator */
         .drift-indicator {
             position: absolute;
-            top: 50%;
+            top: 45%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 48px;
-            font-weight: 700;
+            font-size: 64px;
+            font-weight: 900;
             color: #ff0066;
-            text-shadow: 0 0 30px #ff0066, 0 0 60px #ff0066;
+            text-shadow: 0 0 40px #ff0066, 0 0 80px #ff0066;
             opacity: 0;
+            letter-spacing: 15px;
             transition: opacity 0.2s;
-            letter-spacing: 10px;
         }
         .drift-indicator.visible { opacity: 1; }
 
-        /* Controls */
-        .controls-help {
+        /* Checkpoint Flash */
+        .checkpoint-flash {
             position: absolute;
-            bottom: 40px;
+            top: 30%;
             left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            padding: 15px 30px;
-            border: 1px solid rgba(255, 107, 0, 0.4);
-            display: flex;
-            gap: 20px;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+            opacity: 0;
+            letter-spacing: 5px;
         }
-        .key {
-            display: inline-block;
-            background: #1a1a1a;
-            padding: 6px 12px;
-            border: 1px solid #ff6b00;
-            font-weight: bold;
-            font-family: monospace;
-            min-width: 24px;
-            text-align: center;
-            margin-right: 5px;
-            color: #ff6b00;
+        .checkpoint-flash.show { animation: checkpointAnim 1s forwards; }
+        @keyframes checkpointAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
         }
-        .control-item { font-size: 12px; color: #888; letter-spacing: 1px; }
 
-        /* Speed Lines Overlay */
+        /* Lap Complete */
+        .lap-complete {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .lap-complete.show { animation: lapAnim 3s forwards; }
+        @keyframes lapAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            10% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            90% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .lap-complete h2 { font-size: 48px; color: #ff6b00; text-shadow: 0 0 30px #ff6b00; }
+        .lap-complete .time { font-size: 36px; color: #00ff88; margin-top: 10px; }
+        .lap-complete .new-record { font-size: 24px; color: #ffff00; margin-top: 10px; text-shadow: 0 0 20px #ffff00; }
+
+        /* Speed Lines */
         .speed-lines {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             pointer-events: none;
             opacity: 0;
-            background: radial-gradient(ellipse at center, transparent 40%, rgba(255, 107, 0, 0.1) 100%);
+            background: radial-gradient(ellipse at center, transparent 30%, rgba(255, 107, 0, 0.15) 100%);
             transition: opacity 0.3s;
         }
         .speed-lines.active { opacity: 1; }
 
-        /* Stage Info */
-        .stage-info {
+        /* Controls */
+        .controls-help {
             position: absolute;
-            top: 100px;
-            left: 30px;
-            background: rgba(0,0,0,0.8);
-            padding: 15px 25px;
-            border-left: 4px solid #ff6b00;
-        }
-        .stage-name {
-            font-size: 14px;
-            color: #ff6b00;
-            letter-spacing: 2px;
-        }
-        .stage-detail {
-            font-size: 11px;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        .toast {
-            position: fixed;
-            top: 50%;
+            bottom: 30px;
             left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            padding: 20px 40px;
-            background: #ff6b00;
-            color: black;
-            font-weight: 700;
-            font-size: 18px;
-            letter-spacing: 3px;
-            opacity: 0;
-            transition: all 0.3s;
-            z-index: 1000;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 12px 25px;
+            border: 1px solid rgba(255,107,0,0.4);
+            display: flex;
+            gap: 15px;
         }
-        .toast.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .key {
+            display: inline-block;
+            background: #1a1a1a;
+            padding: 5px 10px;
+            border: 1px solid #ff6b00;
+            font-weight: bold;
+            font-size: 11px;
+            min-width: 20px;
+            text-align: center;
+            margin-right: 4px;
+            color: #ff6b00;
+        }
+        .control-item { font-size: 11px; color: #666; }
 
+        /* Buttons */
         .btn-group {
             position: absolute;
-            top: 20px;
+            top: 15px;
             right: 20px;
             display: flex;
             gap: 10px;
             pointer-events: auto;
         }
         .btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: 2px solid #ff6b00;
             background: rgba(0,0,0,0.8);
             font-weight: 700;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             color: #ff6b00;
             letter-spacing: 1px;
             transition: all 0.2s;
+            font-family: 'Orbitron', sans-serif;
         }
-        .btn:hover { background: rgba(255, 107, 0, 0.2); }
+        .btn:hover { background: rgba(255,107,0,0.3); }
+
+        /* Version Links */
+        .version-links {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            display: flex;
+            gap: 8px;
+            pointer-events: auto;
+        }
+        .version-link {
+            padding: 8px 14px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #ff6b00;
+            font-size: 10px;
+            color: #ff6b00;
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .version-link:hover { background: rgba(255,107,0,0.2); }
+        .version-link.active { background: #ff6b00; color: #000; }
+
+        /* Position Indicator */
+        .position-info {
+            position: absolute;
+            bottom: 150px;
+            left: 20px;
+            background: rgba(0,0,0,0.85);
+            padding: 10px 20px;
+            border: 1px solid #ff6b00;
+        }
+        .position-label { font-size: 10px; color: #666; }
+        .position-value { font-size: 14px; color: #ff6b00; }
+
+        /* Countdown */
+        .countdown {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 120px;
+            font-weight: 900;
+            color: #ff6b00;
+            text-shadow: 0 0 50px #ff6b00;
+            opacity: 0;
+        }
+        .countdown.show { animation: countAnim 1s forwards; }
+        @keyframes countAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .wrong-way {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 36px;
+            color: #ff0000;
+            text-shadow: 0 0 20px #ff0000;
+            opacity: 0;
+            letter-spacing: 5px;
+        }
+        .wrong-way.show { opacity: 1; animation: blink 0.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
     <div id="canvas3d"></div>
 
     <div class="hud">
-        <div class="top-bar">
-            <div class="version-links">
-                <a href="index.html" class="version-link">Network</a>
-                <a href="drive.html" class="version-link">Drive</a>
-                <a href="mobile.html" class="version-link">Mobile</a>
-                <a href="initiald.html" class="version-link active">Initial D</a>
-            </div>
-            <div class="title">
-                <h1>INITIAL D</h1>
-                <p>TSN RACING STAGE</p>
-            </div>
+        <div class="version-links">
+            <a href="index.html" class="version-link">Network</a>
+            <a href="drive.html" class="version-link">Drive</a>
+            <a href="initiald.html" class="version-link active">Initial D</a>
+        </div>
+
+        <div class="title-bar">
+            <h1>INITIAL D</h1>
+            <p>AKINA TOUGE DOWNHILL</p>
         </div>
 
         <div class="btn-group">
-            <button class="btn" id="resetBtn"><i class="fas fa-redo"></i> RESET</button>
+            <button class="btn" id="resetBtn">RESTART</button>
+            <button class="btn" id="ghostBtn">GHOST: OFF</button>
         </div>
 
         <div class="stage-info">
-            <div class="stage-name">AKINA TOUGE</div>
-            <div class="stage-detail">DOWNHILL BATTLE</div>
+            <div class="stage-name">MT. AKINA</div>
+            <div class="stage-detail">DOWNHILL STAGE - 2.5km</div>
+        </div>
+
+        <div class="lap-timer">
+            <div class="lap-label">LAP TIME</div>
+            <div class="lap-time" id="lapTime">0:00.000</div>
+            <div class="best-time">BEST: <span id="bestTime">--:--.---</span></div>
+        </div>
+
+        <div class="mini-map">
+            <canvas id="miniMapCanvas"></canvas>
         </div>
 
         <div class="speedometer">
@@ -273,432 +377,815 @@
 
         <div class="tachometer">
             <div class="rpm-value" id="rpmValue">0</div>
+            <div class="rpm-bar"><div class="rpm-fill" id="rpmFill" style="width:0%"></div></div>
             <div class="rpm-label">RPM</div>
         </div>
 
-        <div class="drift-indicator" id="driftIndicator">DRIFT!</div>
+        <div class="drift-panel">
+            <div class="drift-label">DRIFT SCORE</div>
+            <div class="drift-score" id="driftScore">0</div>
+            <div class="drift-combo">x<span id="driftCombo">1</span></div>
+        </div>
 
-        <div class="controls-help">
-            <span class="control-item"><span class="key">W</span> ACCEL</span>
-            <span class="control-item"><span class="key">S</span> BRAKE</span>
-            <span class="control-item"><span class="key">A</span><span class="key">D</span> STEER</span>
-            <span class="control-item"><span class="key">SPACE</span> DRIFT</span>
+        <div class="position-info">
+            <div class="position-label">CHECKPOINT</div>
+            <div class="position-value"><span id="checkpoint">0</span> / <span id="totalCheckpoints">10</span></div>
+        </div>
+
+        <div class="drift-indicator" id="driftIndicator">DRIFT!</div>
+        <div class="checkpoint-flash" id="checkpointFlash">CHECKPOINT!</div>
+        <div class="countdown" id="countdown"></div>
+        <div class="wrong-way" id="wrongWay">WRONG WAY!</div>
+
+        <div class="lap-complete" id="lapComplete">
+            <h2>LAP COMPLETE!</h2>
+            <div class="time" id="lapCompleteTime">0:00.000</div>
+            <div class="new-record" id="newRecord" style="display:none;">NEW RECORD!</div>
         </div>
 
         <div class="speed-lines" id="speedLines"></div>
+
+        <div class="controls-help">
+            <span class="control-item"><span class="key">W</span>ACCEL</span>
+            <span class="control-item"><span class="key">S</span>BRAKE</span>
+            <span class="control-item"><span class="key">A</span><span class="key">D</span>STEER</span>
+            <span class="control-item"><span class="key">SPACE</span>DRIFT</span>
+            <span class="control-item"><span class="key">R</span>RESET</span>
+        </div>
     </div>
 
-    <div class="toast" id="toast"></div>
-
     <script>
-    // ROii2 - Initial D Mode
+    // === TRACK DEFINITION ===
+    // Mountain pass course - series of curves
+    const TRACK_POINTS = [];
+    const TRACK_LENGTH = 2500; // meters
+    const TRACK_WIDTH = 20;
 
+    // Generate winding mountain road
+    function generateTrack() {
+        let x = 0, z = 0, angle = 0;
+        const segments = 100;
+        const segmentLength = TRACK_LENGTH / segments;
+
+        for (let i = 0; i <= segments; i++) {
+            // Create varied curves like a real mountain pass
+            const t = i / segments;
+
+            // Different curve sections
+            let curveAmount = 0;
+            if (t < 0.1) curveAmount = 0; // Start straight
+            else if (t < 0.2) curveAmount = Math.sin(t * 20) * 0.03; // Light S-curve
+            else if (t < 0.35) curveAmount = -0.025; // Hairpin left
+            else if (t < 0.45) curveAmount = 0.02; // Curve right
+            else if (t < 0.55) curveAmount = -0.015; // S-curve
+            else if (t < 0.65) curveAmount = 0.03; // Hairpin right
+            else if (t < 0.75) curveAmount = -0.02;
+            else if (t < 0.85) curveAmount = 0.025; // Final hairpin
+            else curveAmount = 0; // Finish straight
+
+            angle += curveAmount;
+
+            TRACK_POINTS.push({
+                x: x,
+                z: z,
+                angle: angle,
+                width: TRACK_WIDTH,
+                isCheckpoint: i % 10 === 0 && i > 0 && i < segments
+            });
+
+            x += Math.sin(angle) * segmentLength;
+            z += Math.cos(angle) * segmentLength;
+        }
+    }
+    generateTrack();
+
+    // === THREE.JS SETUP ===
     const scene = new THREE.Scene();
 
-    // Night sky gradient
-    const canvas = document.createElement('canvas');
-    canvas.width = 2;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 1024);
-    gradient.addColorStop(0, '#000000');
-    gradient.addColorStop(0.3, '#0a0515');
-    gradient.addColorStop(0.5, '#150a20');
-    gradient.addColorStop(0.7, '#1a0f25');
-    gradient.addColorStop(1, '#0f0818');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 2, 1024);
-    const skyTexture = new THREE.CanvasTexture(canvas);
-    scene.background = skyTexture;
+    // Night mountain sky
+    const skyCanvas = document.createElement('canvas');
+    skyCanvas.width = 2;
+    skyCanvas.height = 512;
+    const skyCtx = skyCanvas.getContext('2d');
+    const skyGrad = skyCtx.createLinearGradient(0, 0, 0, 512);
+    skyGrad.addColorStop(0, '#000005');
+    skyGrad.addColorStop(0.4, '#0a0520');
+    skyGrad.addColorStop(0.7, '#150a30');
+    skyGrad.addColorStop(1, '#0a0515');
+    skyCtx.fillStyle = skyGrad;
+    skyCtx.fillRect(0, 0, 2, 512);
+    scene.background = new THREE.CanvasTexture(skyCanvas);
+    scene.fog = new THREE.FogExp2(0x0a0515, 0.003);
 
-    scene.fog = new THREE.FogExp2(0x0a0515, 0.004);
-
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     document.getElementById('canvas3d').appendChild(renderer.domElement);
 
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    // Lighting - Brighter for visible vehicle
-    scene.add(new THREE.AmbientLight(0xFFFFFF, 1.0));
-
-    const moonLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
-    moonLight.position.set(50, 100, 50);
-    moonLight.castShadow = true;
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x404060, 0.4));
+    const moonLight = new THREE.DirectionalLight(0x8888ff, 0.3);
+    moonLight.position.set(100, 200, 100);
     scene.add(moonLight);
 
-    // Fill light from above
-    const fillLight = new THREE.DirectionalLight(0xFFFFFF, 0.8);
-    fillLight.position.set(0, 50, 0);
-    scene.add(fillLight);
+    // Car headlights
+    const headlightL = new THREE.SpotLight(0xffffee, 2, 100, Math.PI / 6, 0.5);
+    const headlightR = new THREE.SpotLight(0xffffee, 2, 100, Math.PI / 6, 0.5);
+    scene.add(headlightL);
+    scene.add(headlightR);
 
-    // Orange street lights
-    for (let i = 0; i < 20; i++) {
-        const light = new THREE.PointLight(0xff6b00, 0.5, 50);
-        light.position.set((Math.random() - 0.5) * 200, 10, (Math.random() - 0.5) * 200);
-        scene.add(light);
+    // === BUILD TRACK ===
+    function buildTrack() {
+        // Road surface
+        const roadGroup = new THREE.Group();
+
+        for (let i = 0; i < TRACK_POINTS.length - 1; i++) {
+            const p1 = TRACK_POINTS[i];
+            const p2 = TRACK_POINTS[i + 1];
+
+            // Road segment
+            const roadGeo = new THREE.PlaneGeometry(p1.width, 30);
+            const roadMat = new THREE.MeshStandardMaterial({
+                color: 0x222222,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            const road = new THREE.Mesh(roadGeo, roadMat);
+            road.rotation.x = -Math.PI / 2;
+            road.rotation.z = -p1.angle;
+            road.position.set(
+                (p1.x + p2.x) / 2,
+                0,
+                (p1.z + p2.z) / 2
+            );
+            road.receiveShadow = true;
+            roadGroup.add(road);
+
+            // Center line
+            const lineGeo = new THREE.PlaneGeometry(0.3, 25);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            const line = new THREE.Mesh(lineGeo, lineMat);
+            line.rotation.x = -Math.PI / 2;
+            line.rotation.z = -p1.angle;
+            line.position.set((p1.x + p2.x) / 2, 0.01, (p1.z + p2.z) / 2);
+            roadGroup.add(line);
+
+            // Guardrails
+            const guardGeo = new THREE.BoxGeometry(0.5, 1, 25);
+            const guardMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8 });
+
+            [-1, 1].forEach(side => {
+                const guard = new THREE.Mesh(guardGeo, guardMat);
+                const offset = side * (p1.width / 2 + 0.5);
+                guard.position.set(
+                    (p1.x + p2.x) / 2 + Math.cos(p1.angle) * offset,
+                    0.5,
+                    (p1.z + p2.z) / 2 - Math.sin(p1.angle) * offset
+                );
+                guard.rotation.y = p1.angle;
+                roadGroup.add(guard);
+
+                // Reflectors
+                if (i % 5 === 0) {
+                    const reflectorGeo = new THREE.BoxGeometry(0.2, 0.3, 0.1);
+                    const reflectorMat = new THREE.MeshBasicMaterial({
+                        color: side === -1 ? 0xff0000 : 0xffffff
+                    });
+                    const reflector = new THREE.Mesh(reflectorGeo, reflectorMat);
+                    reflector.position.set(
+                        (p1.x + p2.x) / 2 + Math.cos(p1.angle) * offset,
+                        0.8,
+                        (p1.z + p2.z) / 2 - Math.sin(p1.angle) * offset
+                    );
+                    roadGroup.add(reflector);
+                }
+            });
+
+            // Checkpoint markers
+            if (p1.isCheckpoint) {
+                const checkGeo = new THREE.BoxGeometry(p1.width + 2, 5, 0.5);
+                const checkMat = new THREE.MeshBasicMaterial({
+                    color: 0x00ff88,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const checkpoint = new THREE.Mesh(checkGeo, checkMat);
+                checkpoint.position.set(p1.x, 2.5, p1.z);
+                checkpoint.rotation.y = p1.angle;
+                checkpoint.userData.checkpointIndex = Math.floor(i / 10);
+                roadGroup.add(checkpoint);
+            }
+        }
+
+        scene.add(roadGroup);
+
+        // Trees along the road
+        const treeGeo = new THREE.ConeGeometry(3, 15, 6);
+        const treeMat = new THREE.MeshStandardMaterial({ color: 0x0a3010 });
+        const trunkGeo = new THREE.CylinderGeometry(0.5, 0.8, 5);
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2817 });
+
+        for (let i = 0; i < TRACK_POINTS.length; i += 3) {
+            const p = TRACK_POINTS[i];
+            [-1, 1].forEach(side => {
+                if (Math.random() > 0.3) {
+                    const dist = TRACK_WIDTH / 2 + 5 + Math.random() * 20;
+                    const tree = new THREE.Group();
+
+                    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                    trunk.position.y = 2.5;
+                    tree.add(trunk);
+
+                    const leaves = new THREE.Mesh(treeGeo, treeMat);
+                    leaves.position.y = 10;
+                    tree.add(leaves);
+
+                    tree.position.set(
+                        p.x + Math.cos(p.angle) * side * dist + (Math.random() - 0.5) * 10,
+                        0,
+                        p.z - Math.sin(p.angle) * side * dist + (Math.random() - 0.5) * 10
+                    );
+                    tree.scale.setScalar(0.8 + Math.random() * 0.5);
+                    scene.add(tree);
+                }
+            });
+        }
+
+        // Mountain terrain
+        const terrainGeo = new THREE.PlaneGeometry(3000, 3000, 50, 50);
+        const terrainMat = new THREE.MeshStandardMaterial({
+            color: 0x1a2a1a,
+            roughness: 1
+        });
+        const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+        terrain.rotation.x = -Math.PI / 2;
+        terrain.position.y = -2;
+
+        // Add some height variation
+        const positions = terrainGeo.attributes.position.array;
+        for (let i = 0; i < positions.length; i += 3) {
+            positions[i + 2] = Math.random() * 5 - 2;
+        }
+        terrainGeo.computeVertexNormals();
+        scene.add(terrain);
+
+        // Stars
+        const starGeo = new THREE.BufferGeometry();
+        const starPositions = [];
+        for (let i = 0; i < 1000; i++) {
+            starPositions.push(
+                (Math.random() - 0.5) * 2000,
+                Math.random() * 300 + 50,
+                (Math.random() - 0.5) * 2000
+            );
+        }
+        starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+        scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 })));
+
+        // Street lights
+        for (let i = 0; i < TRACK_POINTS.length; i += 15) {
+            const p = TRACK_POINTS[i];
+            const light = new THREE.PointLight(0xff6b00, 0.8, 40);
+            light.position.set(
+                p.x + Math.cos(p.angle) * (TRACK_WIDTH / 2 + 2),
+                8,
+                p.z - Math.sin(p.angle) * (TRACK_WIDTH / 2 + 2)
+            );
+            scene.add(light);
+
+            // Light pole
+            const poleGeo = new THREE.CylinderGeometry(0.15, 0.15, 8);
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const pole = new THREE.Mesh(poleGeo, poleMat);
+            pole.position.copy(light.position);
+            pole.position.y = 4;
+            scene.add(pole);
+        }
     }
+    buildTrack();
 
-    // Mountain road grid
-    const gridMat = new THREE.LineBasicMaterial({ color: 0xff6b00, transparent: true, opacity: 0.15 });
-    const gridSize = 2000;
-    const gridDivisions = 80;
-    const gridGeo = new THREE.BufferGeometry();
-    const gridPoints = [];
-    const step = gridSize / gridDivisions;
-    const half = gridSize / 2;
+    // === VEHICLE ===
+    const vehicleGroup = new THREE.Group();
+    scene.add(vehicleGroup);
 
-    for (let i = 0; i <= gridDivisions; i++) {
-        const pos = -half + i * step;
-        gridPoints.push(-half, 0, pos, half, 0, pos);
-        gridPoints.push(pos, 0, -half, pos, 0, half);
+    let vehicleModel = null;
+    const loader = new THREE.GLTFLoader();
+    loader.load('roii.glb', (gltf) => {
+        vehicleModel = gltf.scene;
+        vehicleModel.scale.set(1.5, 1.5, 1.5);
+        vehicleModel.rotation.y = Math.PI;
+
+        vehicleModel.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                if (child.material) {
+                    child.material.color.multiplyScalar(2.2);
+                    child.material.emissive = new THREE.Color(0xff6600);
+                    child.material.emissiveIntensity = 0.2;
+                }
+            }
+        });
+
+        vehicleGroup.add(vehicleModel);
+    }, undefined, () => {
+        // Fallback
+        const bodyGeo = new THREE.BoxGeometry(4, 1.5, 8);
+        const bodyMat = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            metalness: 0.8,
+            roughness: 0.2
+        });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 1;
+        body.castShadow = true;
+        vehicleGroup.add(body);
+    });
+
+    // === GHOST CAR ===
+    let ghostGroup = null;
+    let ghostData = [];
+    let recordingData = [];
+    let showGhost = false;
+
+    function createGhostCar() {
+        ghostGroup = new THREE.Group();
+
+        const ghostGeo = new THREE.BoxGeometry(4, 1.5, 8);
+        const ghostMat = new THREE.MeshBasicMaterial({
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.3,
+            wireframe: true
+        });
+        ghostGroup.add(new THREE.Mesh(ghostGeo, ghostMat));
+        ghostGroup.visible = false;
+        scene.add(ghostGroup);
     }
-    gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gridPoints, 3));
-    const grid = new THREE.LineSegments(gridGeo, gridMat);
-    grid.position.y = -1;
-    scene.add(grid);
+    createGhostCar();
 
-    // Stars
-    const starCount = 500;
-    const starGeo = new THREE.BufferGeometry();
-    const starPositions = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount; i++) {
-        starPositions[i * 3] = (Math.random() - 0.5) * 1000;
-        starPositions[i * 3 + 1] = Math.random() * 200 + 50;
-        starPositions[i * 3 + 2] = (Math.random() - 0.5) * 1000;
-    }
-    starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
-        color: 0xffffff, size: 0.5, transparent: true, opacity: 0.8
-    }));
-    scene.add(stars);
-
-    // State
-    const state = {
-        vehicleGroup: new THREE.Group(),
-        devices: new Map(),
-        connections: [],
-        deviceCounter: 1
-    };
-    scene.add(state.vehicleGroup);
-
+    // === GAME STATE ===
     const drive = {
         speed: 0,
-        maxSpeed: 4.0,
-        acceleration: 0.08,
+        maxSpeed: 2.5,
+        acceleration: 0.06,
+        braking: 0.12,
         steering: 0,
+        angle: 0,
         drift: 0,
-        driftAmount: 0,
+        driftScore: 0,
+        driftCombo: 1,
         isDrifting: false,
         keys: { w: false, a: false, s: false, d: false, space: false }
     };
 
-    // Templates
-    const templates = {
-        lan9692: { color: 0xff6b00, size: [4, 2, 4] },
-        hpc: { color: 0xff0066, size: [5, 2.5, 5] },
-        camera: { color: 0x00ff88, size: [0.8, 0.8, 0.8] },
-        lidar: { color: 0xff6b00, size: [1.2, 1.2, 1.2] },
-        radar: { color: 0x00ccff, size: [1.2, 1.2, 1.2] }
+    let raceState = {
+        started: false,
+        finished: false,
+        lapTime: 0,
+        bestTime: localStorage.getItem('initiald_best') ? parseFloat(localStorage.getItem('initiald_best')) : null,
+        currentCheckpoint: 0,
+        totalCheckpoints: 10,
+        wrongWay: false
     };
 
-    let vehicleMeshes = [];
+    // Position vehicle at start
+    function resetPosition() {
+        const start = TRACK_POINTS[0];
+        vehicleGroup.position.set(start.x, 0.5, start.z);
+        vehicleGroup.rotation.y = -start.angle;
+        drive.speed = 0;
+        drive.steering = 0;
+        drive.angle = start.angle;
+        drive.driftScore = 0;
+        drive.driftCombo = 1;
+        raceState.lapTime = 0;
+        raceState.currentCheckpoint = 0;
+        raceState.started = false;
+        raceState.finished = false;
+        recordingData = [];
 
-    function createVehicle() {
-        const loader = new THREE.GLTFLoader();
-        loader.load('./roii.glb',
-            (gltf) => {
-                const model = gltf.scene;
-                const box = new THREE.Box3().setFromObject(model);
-                const size = box.getSize(new THREE.Vector3());
-                const center = box.getCenter(new THREE.Vector3());
-                const scale = 40 / Math.max(size.x, size.y, size.z);
-                model.scale.set(scale, scale, scale);
-                model.position.set(-center.x, -center.y + size.y * scale * 0.5 + 0.5, -center.z);
-
-                model.traverse((child) => {
-                    if (child.isMesh) {
-                        child.material.transparent = true;
-                        child.material.opacity = 0.85;
-                        child.material.side = THREE.DoubleSide;
-                        child.castShadow = true;
-                        // Racing style - slightly bright with orange tint
-                        if (child.material.color) {
-                            child.material.color.multiplyScalar(1.8);
-                        }
-                        child.material.emissive = new THREE.Color(0xff6600);
-                        child.material.emissiveIntensity = 0.15;
-                        vehicleMeshes.push(child);
-                    }
-                });
-
-                state.vehicleGroup.add(model);
-            },
-            null,
-            () => createProceduralVehicle()
-        );
+        document.getElementById('bestTime').textContent = raceState.bestTime ?
+            formatTime(raceState.bestTime) : '--:--.---';
+        document.getElementById('totalCheckpoints').textContent = raceState.totalCheckpoints;
     }
+    resetPosition();
 
-    function createProceduralVehicle() {
-        const mat = new THREE.MeshPhysicalMaterial({
-            color: 0x1a1a1a, metalness: 0.9, roughness: 0.1, clearcoat: 1.0
-        });
+    // === INPUT ===
+    window.addEventListener('keydown', (e) => {
+        const key = e.key.toLowerCase();
+        if (key === 'w') drive.keys.w = true;
+        else if (key === 'a') drive.keys.a = true;
+        else if (key === 's') drive.keys.s = true;
+        else if (key === 'd') drive.keys.d = true;
+        else if (key === ' ') { drive.keys.space = true; e.preventDefault(); }
+        else if (key === 'r') resetPosition();
+    });
 
-        const chassis = new THREE.Mesh(new THREE.BoxGeometry(16, 8, 36), mat);
-        chassis.position.y = 5;
-        chassis.castShadow = true;
-        state.vehicleGroup.add(chassis);
+    window.addEventListener('keyup', (e) => {
+        const key = e.key.toLowerCase();
+        if (key === 'w') drive.keys.w = false;
+        else if (key === 'a') drive.keys.a = false;
+        else if (key === 's') drive.keys.s = false;
+        else if (key === 'd') drive.keys.d = false;
+        else if (key === ' ') drive.keys.space = false;
+    });
 
-        // Headlights
-        const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        [[-6, 3, 18], [6, 3, 18]].forEach(pos => {
-            const light = new THREE.Mesh(new THREE.BoxGeometry(3, 2, 0.5), headlightMat);
-            light.position.set(...pos);
-            state.vehicleGroup.add(light);
-        });
+    document.getElementById('resetBtn').addEventListener('click', resetPosition);
+    document.getElementById('ghostBtn').addEventListener('click', () => {
+        showGhost = !showGhost;
+        document.getElementById('ghostBtn').textContent = 'GHOST: ' + (showGhost ? 'ON' : 'OFF');
+        if (ghostGroup) ghostGroup.visible = showGhost && ghostData.length > 0;
+    });
 
-        // Taillights
-        const tailMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        [[-6, 4, -18], [6, 4, -18]].forEach(pos => {
-            const light = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 0.5), tailMat);
-            light.position.set(...pos);
-            state.vehicleGroup.add(light);
-        });
-    }
+    // === PHYSICS ===
+    function updateDrive(delta) {
+        if (raceState.finished) return;
 
-    function addDevice(type, position, label) {
-        const t = templates[type];
-        const id = `dev-${state.deviceCounter++}`;
-        const device = { id, type, label, position: position.clone() };
-
-        const geo = type === 'lidar' && !label.includes('Center') ?
-            new THREE.CylinderGeometry(t.size[0] * 0.5, t.size[0] * 0.5, t.size[1], 16) :
-            new THREE.BoxGeometry(...t.size);
-
-        const mat = new THREE.MeshPhongMaterial({
-            color: t.color, emissive: t.color, emissiveIntensity: 0.8, shininess: 100
-        });
-
-        const group = new THREE.Group();
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.castShadow = true;
-        group.add(mesh);
-        group.add(new THREE.LineSegments(
-            new THREE.EdgesGeometry(geo),
-            new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.6, transparent: true })
-        ));
-        group.position.copy(position);
-        device.mesh = group;
-
-        state.vehicleGroup.add(group);
-        state.devices.set(id, device);
-        return device;
-    }
-
-    function createConnection(from, to) {
-        const color = from.type === 'lan9692' && to.type === 'lan9692' ? 0xff6b00 :
-                      from.type === 'hpc' || to.type === 'hpc' ? 0xff0066 : 0x00ff88;
-
-        const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
-        const tube = new THREE.Mesh(
-            new THREE.TubeGeometry(curve, 16, 0.08, 8, false),
-            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 })
-        );
-        state.vehicleGroup.add(tube);
-
-        const particles = [];
-        for (let i = 0; i < 4; i++) {
-            const p = new THREE.Mesh(
-                new THREE.SphereGeometry(0.15, 8, 8),
-                new THREE.MeshBasicMaterial({ color: 0xffffff })
-            );
-            p.userData = { t: i / 4, curve };
-            state.vehicleGroup.add(p);
-            particles.push(p);
+        // Start race on first input
+        if (!raceState.started && (drive.keys.w || drive.keys.s)) {
+            raceState.started = true;
+            countdown(3);
         }
 
-        state.connections.push({ from, to, tube, particles });
-    }
-
-    function loadScenario() {
-        createVehicle();
-
-        const acuIT = addDevice('hpc', new THREE.Vector3(0, 4, 0), 'ACU_IT');
-        const frontL = addDevice('lan9692', new THREE.Vector3(-3.5, 4, 10), 'Front-L');
-        const frontR = addDevice('lan9692', new THREE.Vector3(3.5, 4, 10), 'Front-R');
-        const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -10), 'Rear');
-
-        // Sensors
-        const lidarFL = addDevice('lidar', new THREE.Vector3(-8.5, 10, 16.2), 'LiDAR-FL');
-        const lidarFR = addDevice('lidar', new THREE.Vector3(8.5, 10, 16.2), 'LiDAR-FR');
-        addDevice('lidar', new THREE.Vector3(0, 5.5, 18.5), 'LiDAR-FC');
-        addDevice('lidar', new THREE.Vector3(0, 5.5, -18.5), 'LiDAR-RC');
-
-        addDevice('camera', new THREE.Vector3(0, 10.5, 18.5), 'Cam-FC');
-        addDevice('camera', new THREE.Vector3(-8.5, 11, 16.5), 'Cam-SL');
-        addDevice('camera', new THREE.Vector3(8.5, 11, 16.5), 'Cam-SR');
-        addDevice('camera', new THREE.Vector3(0, 9, -18.5), 'Cam-RC');
-
-        addDevice('radar', new THREE.Vector3(0, 7, 18.5), 'Radar-FC');
-        addDevice('radar', new THREE.Vector3(-7, 6.5, 17.5), 'Radar-FL');
-        addDevice('radar', new THREE.Vector3(7, 6.5, 17.5), 'Radar-FR');
-
-        createConnection(frontL, acuIT);
-        createConnection(frontR, acuIT);
-        createConnection(rear, acuIT);
-        createConnection(frontL, frontR);
-
-        state.devices.forEach(d => {
-            if (['lidar', 'camera', 'radar'].includes(d.type)) {
-                const zone = d.position.z > 0 ? (d.position.x < 0 ? frontL : frontR) : rear;
-                createConnection(zone, d);
-            }
-        });
-
-        showToast('STAGE START!');
-    }
-
-    // Driving
-    function updateDrive() {
         // Acceleration
         if (drive.keys.w) {
             drive.speed = Math.min(drive.speed + drive.acceleration, drive.maxSpeed);
         } else if (drive.keys.s) {
-            drive.speed = Math.max(drive.speed - drive.acceleration * 1.5, -drive.maxSpeed * 0.3);
+            drive.speed = Math.max(drive.speed - drive.braking, -drive.maxSpeed * 0.3);
         } else {
             drive.speed *= 0.98;
             if (Math.abs(drive.speed) < 0.01) drive.speed = 0;
         }
 
-        // Drift
-        drive.isDrifting = drive.keys.space && Math.abs(drive.speed) > 1.5;
+        // Drift mechanics
+        drive.isDrifting = drive.keys.space && Math.abs(drive.speed) > 1;
         const driftIndicator = document.getElementById('driftIndicator');
         const speedLines = document.getElementById('speedLines');
 
         if (drive.isDrifting) {
-            drive.driftAmount = Math.min(drive.driftAmount + 0.05, 1);
+            drive.drift = Math.min(drive.drift + 0.08, 1);
             driftIndicator.classList.add('visible');
+
+            // Score drifting
+            drive.driftScore += Math.abs(drive.speed) * drive.driftCombo * 0.5;
+            drive.driftCombo = Math.min(drive.driftCombo + 0.01, 5);
         } else {
-            drive.driftAmount *= 0.9;
-            if (drive.driftAmount < 0.1) driftIndicator.classList.remove('visible');
+            drive.drift *= 0.85;
+            drive.driftCombo = Math.max(1, drive.driftCombo - 0.02);
+            if (drive.drift < 0.1) driftIndicator.classList.remove('visible');
         }
 
-        // Speed lines effect
-        if (Math.abs(drive.speed) > 2) {
-            speedLines.classList.add('active');
-        } else {
-            speedLines.classList.remove('active');
-        }
+        // Speed lines
+        speedLines.classList.toggle('active', Math.abs(drive.speed) > 1.5);
 
         // Steering
-        const steerMultiplier = drive.isDrifting ? 1.8 : 1;
-        if (Math.abs(drive.speed) > 0.05) {
+        const steerMultiplier = drive.isDrifting ? 2.2 : 1;
+        const speedFactor = Math.min(1, Math.abs(drive.speed) / 1.5);
+
+        if (Math.abs(drive.speed) > 0.1) {
             if (drive.keys.a) {
-                drive.steering = Math.min(drive.steering + 0.003 * steerMultiplier, 0.05);
+                drive.steering = Math.min(drive.steering + 0.004 * steerMultiplier, 0.06);
             } else if (drive.keys.d) {
-                drive.steering = Math.max(drive.steering - 0.003 * steerMultiplier, -0.05);
+                drive.steering = Math.max(drive.steering - 0.004 * steerMultiplier, -0.06);
             } else {
                 drive.steering *= 0.85;
             }
         }
 
         // Apply movement
-        state.vehicleGroup.translateZ(drive.speed);
-        state.vehicleGroup.rotateY(drive.steering * (drive.speed > 0 ? 1 : -1));
+        drive.angle += drive.steering * (drive.speed > 0 ? 1 : -1) * speedFactor;
+        vehicleGroup.position.x += Math.sin(drive.angle) * drive.speed;
+        vehicleGroup.position.z += Math.cos(drive.angle) * drive.speed;
+        vehicleGroup.rotation.y = -drive.angle;
 
-        // Drift rotation
+        // Drift visual rotation
         if (drive.isDrifting) {
-            state.vehicleGroup.rotateY(drive.driftAmount * (drive.keys.a ? 0.02 : drive.keys.d ? -0.02 : 0));
+            const driftAngle = (drive.keys.a ? 1 : drive.keys.d ? -1 : 0) * drive.drift * 0.4;
+            vehicleGroup.rotation.y -= driftAngle;
+        }
+
+        // Update headlights
+        const headlightOffset = 4;
+        headlightL.position.set(
+            vehicleGroup.position.x + Math.sin(drive.angle - 0.2) * headlightOffset,
+            2,
+            vehicleGroup.position.z + Math.cos(drive.angle - 0.2) * headlightOffset
+        );
+        headlightR.position.set(
+            vehicleGroup.position.x + Math.sin(drive.angle + 0.2) * headlightOffset,
+            2,
+            vehicleGroup.position.z + Math.cos(drive.angle + 0.2) * headlightOffset
+        );
+
+        const lookAhead = 30;
+        headlightL.target.position.set(
+            vehicleGroup.position.x + Math.sin(drive.angle) * lookAhead,
+            0,
+            vehicleGroup.position.z + Math.cos(drive.angle) * lookAhead
+        );
+        headlightR.target.position.copy(headlightL.target.position);
+
+        // Check checkpoints
+        checkCheckpoints();
+
+        // Track boundaries / collision
+        checkTrackBounds();
+
+        // Record for ghost
+        if (raceState.started && !raceState.finished) {
+            recordingData.push({
+                x: vehicleGroup.position.x,
+                z: vehicleGroup.position.z,
+                ry: vehicleGroup.rotation.y,
+                t: raceState.lapTime
+            });
         }
 
         // Update UI
-        document.getElementById('speedValue').textContent = Math.abs(drive.speed * 60).toFixed(0);
-        document.getElementById('rpmValue').textContent = (Math.abs(drive.speed) * 2000 + 800).toFixed(0);
+        document.getElementById('speedValue').textContent = Math.abs(drive.speed * 80).toFixed(0);
+        const rpm = Math.abs(drive.speed) / drive.maxSpeed * 8000 + 1000;
+        document.getElementById('rpmValue').textContent = rpm.toFixed(0);
+        document.getElementById('rpmFill').style.width = (rpm / 9000 * 100) + '%';
+        document.getElementById('driftScore').textContent = Math.floor(drive.driftScore);
+        document.getElementById('driftCombo').textContent = drive.driftCombo.toFixed(1);
+        document.getElementById('checkpoint').textContent = raceState.currentCheckpoint;
     }
 
-    function updateCamera() {
-        const offset = new THREE.Vector3(0, 20, -55);
-        const cameraTarget = offset.clone().applyMatrix4(state.vehicleGroup.matrixWorld);
-        camera.position.lerp(cameraTarget, 0.06);
+    function checkCheckpoints() {
+        const px = vehicleGroup.position.x;
+        const pz = vehicleGroup.position.z;
 
-        const lookTarget = new THREE.Vector3(0, 5, 30);
-        lookTarget.applyMatrix4(state.vehicleGroup.matrixWorld);
+        // Check if passed checkpoint
+        const nextCheckpointIndex = raceState.currentCheckpoint;
+        const checkpointTrackIndex = (nextCheckpointIndex + 1) * 10;
+
+        if (checkpointTrackIndex < TRACK_POINTS.length) {
+            const cp = TRACK_POINTS[checkpointTrackIndex];
+            const dist = Math.sqrt((px - cp.x) ** 2 + (pz - cp.z) ** 2);
+
+            if (dist < 20) {
+                raceState.currentCheckpoint++;
+                showCheckpoint();
+
+                // Check if lap complete
+                if (raceState.currentCheckpoint >= raceState.totalCheckpoints) {
+                    finishLap();
+                }
+            }
+        }
+
+        // Wrong way detection
+        const nearestIndex = findNearestTrackPoint();
+        if (nearestIndex > 0) {
+            const p1 = TRACK_POINTS[nearestIndex - 1];
+            const p2 = TRACK_POINTS[nearestIndex];
+            const trackDir = Math.atan2(p2.x - p1.x, p2.z - p1.z);
+            const angleDiff = Math.abs(normalizeAngle(drive.angle - trackDir));
+            raceState.wrongWay = angleDiff > Math.PI / 2;
+            document.getElementById('wrongWay').classList.toggle('show', raceState.wrongWay);
+        }
+    }
+
+    function findNearestTrackPoint() {
+        let minDist = Infinity;
+        let nearestIndex = 0;
+        const px = vehicleGroup.position.x;
+        const pz = vehicleGroup.position.z;
+
+        for (let i = 0; i < TRACK_POINTS.length; i++) {
+            const p = TRACK_POINTS[i];
+            const dist = Math.sqrt((px - p.x) ** 2 + (pz - p.z) ** 2);
+            if (dist < minDist) {
+                minDist = dist;
+                nearestIndex = i;
+            }
+        }
+        return nearestIndex;
+    }
+
+    function checkTrackBounds() {
+        const nearestIndex = findNearestTrackPoint();
+        const p = TRACK_POINTS[nearestIndex];
+        const px = vehicleGroup.position.x;
+        const pz = vehicleGroup.position.z;
+
+        // Distance from track center
+        const dist = Math.sqrt((px - p.x) ** 2 + (pz - p.z) ** 2);
+
+        // If off track, slow down
+        if (dist > TRACK_WIDTH / 2 + 2) {
+            drive.speed *= 0.95;
+        }
+    }
+
+    function showCheckpoint() {
+        const el = document.getElementById('checkpointFlash');
+        el.textContent = `CHECKPOINT ${raceState.currentCheckpoint}/${raceState.totalCheckpoints}`;
+        el.classList.remove('show');
+        void el.offsetWidth;
+        el.classList.add('show');
+    }
+
+    function finishLap() {
+        raceState.finished = true;
+
+        const lapTime = raceState.lapTime;
+        const isNewRecord = !raceState.bestTime || lapTime < raceState.bestTime;
+
+        if (isNewRecord) {
+            raceState.bestTime = lapTime;
+            localStorage.setItem('initiald_best', lapTime.toString());
+            ghostData = [...recordingData];
+        }
+
+        document.getElementById('lapCompleteTime').textContent = formatTime(lapTime);
+        document.getElementById('newRecord').style.display = isNewRecord ? 'block' : 'none';
+        document.getElementById('lapComplete').classList.add('show');
+
+        setTimeout(() => {
+            document.getElementById('lapComplete').classList.remove('show');
+            resetPosition();
+        }, 4000);
+    }
+
+    function countdown(count) {
+        if (count > 0) {
+            const el = document.getElementById('countdown');
+            el.textContent = count;
+            el.classList.remove('show');
+            void el.offsetWidth;
+            el.classList.add('show');
+            setTimeout(() => countdown(count - 1), 1000);
+        } else {
+            const el = document.getElementById('countdown');
+            el.textContent = 'GO!';
+            el.classList.remove('show');
+            void el.offsetWidth;
+            el.classList.add('show');
+        }
+    }
+
+    function normalizeAngle(angle) {
+        while (angle > Math.PI) angle -= Math.PI * 2;
+        while (angle < -Math.PI) angle += Math.PI * 2;
+        return angle;
+    }
+
+    function formatTime(ms) {
+        const totalSeconds = ms / 1000;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        const millis = Math.floor((ms % 1000));
+        return `${minutes}:${seconds.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
+    }
+
+    // === CAMERA ===
+    function updateCamera() {
+        const offset = new THREE.Vector3(0, 8, -20);
+        const speed = Math.abs(drive.speed) / drive.maxSpeed;
+
+        // Dynamic camera based on speed
+        offset.z = -20 - speed * 10;
+        offset.y = 8 - speed * 2;
+
+        const cameraTarget = offset.clone();
+        cameraTarget.applyAxisAngle(new THREE.Vector3(0, 1, 0), -drive.angle);
+        cameraTarget.add(vehicleGroup.position);
+
+        camera.position.lerp(cameraTarget, 0.08);
+
+        const lookTarget = vehicleGroup.position.clone();
+        lookTarget.y += 2;
         camera.lookAt(lookTarget);
     }
 
-    // Input
-    window.addEventListener('keydown', (e) => {
-        switch (e.key.toLowerCase()) {
-            case 'w': drive.keys.w = true; break;
-            case 'a': drive.keys.a = true; break;
-            case 's': drive.keys.s = true; break;
-            case 'd': drive.keys.d = true; break;
-            case ' ': drive.keys.space = true; e.preventDefault(); break;
+    // === MINIMAP ===
+    function updateMiniMap() {
+        const canvas = document.getElementById('miniMapCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 150;
+        canvas.height = 150;
+
+        ctx.fillStyle = '#0a0515';
+        ctx.fillRect(0, 0, 150, 150);
+
+        // Find track bounds
+        let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+        TRACK_POINTS.forEach(p => {
+            minX = Math.min(minX, p.x);
+            maxX = Math.max(maxX, p.x);
+            minZ = Math.min(minZ, p.z);
+            maxZ = Math.max(maxZ, p.z);
+        });
+
+        const scale = 130 / Math.max(maxX - minX, maxZ - minZ);
+        const offsetX = 75 - (minX + maxX) / 2 * scale;
+        const offsetZ = 75 - (minZ + maxZ) / 2 * scale;
+
+        // Draw track
+        ctx.strokeStyle = '#ff6b00';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        TRACK_POINTS.forEach((p, i) => {
+            const x = p.x * scale + offsetX;
+            const y = p.z * scale + offsetZ;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Draw checkpoints
+        ctx.fillStyle = '#00ff88';
+        TRACK_POINTS.forEach((p, i) => {
+            if (p.isCheckpoint) {
+                const x = p.x * scale + offsetX;
+                const y = p.z * scale + offsetZ;
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        // Draw ghost
+        if (showGhost && ghostGroup && ghostGroup.visible) {
+            ctx.fillStyle = '#00ffff';
+            const gx = ghostGroup.position.x * scale + offsetX;
+            const gz = ghostGroup.position.z * scale + offsetZ;
+            ctx.beginPath();
+            ctx.arc(gx, gz, 4, 0, Math.PI * 2);
+            ctx.fill();
         }
-    });
 
-    window.addEventListener('keyup', (e) => {
-        switch (e.key.toLowerCase()) {
-            case 'w': drive.keys.w = false; break;
-            case 'a': drive.keys.a = false; break;
-            case 's': drive.keys.s = false; break;
-            case 'd': drive.keys.d = false; break;
-            case ' ': drive.keys.space = false; break;
-        }
-    });
+        // Draw player
+        ctx.fillStyle = '#ffffff';
+        const px = vehicleGroup.position.x * scale + offsetX;
+        const pz = vehicleGroup.position.z * scale + offsetZ;
+        ctx.beginPath();
+        ctx.arc(px, pz, 5, 0, Math.PI * 2);
+        ctx.fill();
 
-    document.getElementById('resetBtn').addEventListener('click', () => {
-        state.vehicleGroup.position.set(0, 0, 0);
-        state.vehicleGroup.rotation.set(0, 0, 0);
-        drive.speed = 0;
-        drive.steering = 0;
-        drive.driftAmount = 0;
-        showToast('RESTART');
-    });
-
-    function showToast(msg) {
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.classList.add('visible');
-        setTimeout(() => toast.classList.remove('visible'), 2000);
+        // Direction indicator
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(px, pz);
+        ctx.lineTo(
+            px + Math.sin(drive.angle) * 10,
+            pz + Math.cos(drive.angle) * 10
+        );
+        ctx.stroke();
     }
 
-    function animate() {
+    // === GHOST PLAYBACK ===
+    function updateGhost() {
+        if (!showGhost || ghostData.length === 0 || !ghostGroup) return;
+
+        ghostGroup.visible = true;
+
+        // Find ghost position at current time
+        const currentTime = raceState.lapTime;
+        let ghostFrame = ghostData.find((d, i) => {
+            return i === ghostData.length - 1 || ghostData[i + 1].t > currentTime;
+        });
+
+        if (ghostFrame) {
+            ghostGroup.position.set(ghostFrame.x, 0.5, ghostFrame.z);
+            ghostGroup.rotation.y = ghostFrame.ry;
+        }
+    }
+
+    // === MAIN LOOP ===
+    let lastTime = 0;
+
+    function animate(time) {
         requestAnimationFrame(animate);
 
-        updateDrive();
+        const delta = Math.min((time - lastTime) / 1000, 0.05);
+        lastTime = time;
+
+        // Update lap time
+        if (raceState.started && !raceState.finished) {
+            raceState.lapTime += delta * 1000;
+            document.getElementById('lapTime').textContent = formatTime(raceState.lapTime);
+        }
+
+        updateDrive(delta);
         updateCamera();
-
-        // Infinite grid
-        const pos = state.vehicleGroup.position;
-        const gridStep = gridSize / gridDivisions;
-        grid.position.x = Math.floor(pos.x / gridStep) * gridStep;
-        grid.position.z = Math.floor(pos.z / gridStep) * gridStep;
-
-        // Star rotation
-        stars.rotation.y += 0.0001;
-
-        // Animate particles
-        state.connections.forEach(conn => {
-            conn.particles.forEach(p => {
-                p.userData.t += 0.015;
-                if (p.userData.t > 1) p.userData.t = 0;
-                p.position.copy(p.userData.curve.getPoint(p.userData.t));
-            });
-        });
+        updateMiniMap();
+        updateGhost();
 
         renderer.render(scene, camera);
     }
 
-    loadScenario();
-    animate();
+    // === RESIZE ===
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate(0);
     </script>
 </body>
 </html>

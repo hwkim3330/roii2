@@ -129,12 +129,12 @@ function createVehicleModel() {
                         child.material.transparent = true;
                         child.material.opacity = vehicleOpacity;
                         child.material.side = THREE.DoubleSide;
-                        // Super bright for network view
+                        // Balanced brightness like drive.html
                         if (child.material.color) {
-                            child.material.color.multiplyScalar(3.0);
+                            child.material.color.multiplyScalar(1.5);
                         }
-                        child.material.emissive = new THREE.Color(0xffffff);
-                        child.material.emissiveIntensity = 0.8;
+                        child.material.emissive = new THREE.Color(0x333333);
+                        child.material.emissiveIntensity = 0.2;
                     }
                     child.castShadow = true;
                     child.receiveShadow = true;
