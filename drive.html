@@ -366,8 +366,7 @@
     fillLight.position.set(0, 50, 0);
     scene.add(fillLight);
 
-    // === ENVIRONMENT - Infinite Space ===
-    // No ground plane - floating in space
+    // === ENVIRONMENT - Infinite Space with Road ===
 
     // Subtle infinite grid for motion perception
     const gridMat = new THREE.LineBasicMaterial({
@@ -391,6 +390,61 @@
     const grid = new THREE.LineSegments(gridGeo, gridMat);
     grid.position.y = -1;
     scene.add(grid);
+
+    // === ROAD SYSTEM ===
+    const roadWidth = 30;
+    const roadLength = 4000;
+    const roadSegments = 10;
+
+    // Main road surface (dark asphalt)
+    const roadGeo = new THREE.PlaneGeometry(roadWidth, roadLength, 1, roadSegments);
+    const roadMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1a1a,
+        roughness: 0.9,
+        metalness: 0.0
+    });
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.rotation.x = -Math.PI / 2;
+    road.position.y = -0.5;
+    road.receiveShadow = true;
+    scene.add(road);
+
+    // Center line (dashed yellow)
+    const centerLineGeo = new THREE.PlaneGeometry(0.3, roadLength, 1, roadSegments * 10);
+    const centerLineMat = new THREE.MeshBasicMaterial({
+        color: 0xFFD700,
+        transparent: true,
+        opacity: 0.9
+    });
+    const centerLine = new THREE.Mesh(centerLineGeo, centerLineMat);
+    centerLine.rotation.x = -Math.PI / 2;
+    centerLine.position.y = -0.45;
+    scene.add(centerLine);
+
+    // Road edge lines (white)
+    const edgeLineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+    const edgeLineGeo = new THREE.PlaneGeometry(0.25, roadLength);
+    const leftEdge = new THREE.Mesh(edgeLineGeo, edgeLineMat);
+    leftEdge.rotation.x = -Math.PI / 2;
+    leftEdge.position.set(-roadWidth/2 + 1, -0.45, 0);
+    scene.add(leftEdge);
+
+    const rightEdge = new THREE.Mesh(edgeLineGeo.clone(), edgeLineMat.clone());
+    rightEdge.rotation.x = -Math.PI / 2;
+    rightEdge.position.set(roadWidth/2 - 1, -0.45, 0);
+    scene.add(rightEdge);
+
+    // Dashed center line pattern (using shader or segments)
+    const dashGroup = new THREE.Group();
+    const dashGeo = new THREE.PlaneGeometry(0.2, 6);
+    const dashMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    for (let i = -roadLength/2; i < roadLength/2; i += 15) {
+        const dash = new THREE.Mesh(dashGeo, dashMat);
+        dash.rotation.x = -Math.PI / 2;
+        dash.position.set(0, -0.44, i);
+        dashGroup.add(dash);
+    }
+    scene.add(dashGroup);
 
     // Floating particles for space feel
     const particleCount = 500;
@@ -461,12 +515,12 @@
                         child.material.opacity = 0.85;
                         child.material.side = THREE.DoubleSide;
                         child.castShadow = true;
-                        // Maximum brightness
+                        // Natural brightness (not too white)
                         if (child.material.color) {
-                            child.material.color.multiplyScalar(2.5);
+                            child.material.color.multiplyScalar(1.5);
                         }
-                        child.material.emissive = new THREE.Color(0xffffff);
-                        child.material.emissiveIntensity = 0.6;
+                        child.material.emissive = new THREE.Color(0x333333);
+                        child.material.emissiveIntensity = 0.2;
                         vehicleMeshes.push(child);
                     }
                 });
@@ -851,6 +905,14 @@
         const gridStep = gridSize / gridDivisions;
         grid.position.x = Math.floor(vehiclePos.x / gridStep) * gridStep;
         grid.position.z = Math.floor(vehiclePos.z / gridStep) * gridStep;
+
+        // Infinite road - follow vehicle
+        const roadStep = roadLength / 2;
+        road.position.z = Math.floor(vehiclePos.z / roadStep) * roadStep;
+        centerLine.position.z = road.position.z;
+        leftEdge.position.z = road.position.z;
+        rightEdge.position.z = road.position.z;
+        dashGroup.position.z = Math.floor(vehiclePos.z / 30) * 30;
 
         // Space particles follow loosely
         particles.position.x = vehiclePos.x * 0.5;

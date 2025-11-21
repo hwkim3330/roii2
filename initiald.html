@@ -429,12 +429,12 @@
                         child.material.opacity = 0.85;
                         child.material.side = THREE.DoubleSide;
                         child.castShadow = true;
-                        // Maximum brightness
+                        // Racing style - slightly bright with orange tint
                         if (child.material.color) {
-                            child.material.color.multiplyScalar(2.5);
+                            child.material.color.multiplyScalar(1.8);
                         }
-                        child.material.emissive = new THREE.Color(0xffffff);
-                        child.material.emissiveIntensity = 0.6;
+                        child.material.emissive = new THREE.Color(0xff6600);
+                        child.material.emissiveIntensity = 0.15;
                         vehicleMeshes.push(child);
                     }
                 });

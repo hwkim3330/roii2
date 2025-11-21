@@ -449,25 +449,26 @@
         const frontR = addDevice('lan9692', new THREE.Vector3(3, 3, 8), 'Front-R-9692');
         const rear = addDevice('lan9692', new THREE.Vector3(0, 3, -8), 'Rear-9692');
 
-        const lidarFL = addDevice('lidar', new THREE.Vector3(-6, 10, 13), 'LiDAR-FL');
-        const lidarFR = addDevice('lidar', new THREE.Vector3(6, 10, 13), 'LiDAR-FR');
-        const lidarFC = addDevice('lidar', new THREE.Vector3(0, 6, 15), 'LiDAR-Front-Center');
-        const lidarRC = addDevice('lidar', new THREE.Vector3(0, 6, -15), 'LiDAR-Rear-Center');
+        // Updated sensor positions (matched with drive.html)
+        const lidarFL = addDevice('lidar', new THREE.Vector3(-8.5, 10, 16.2), 'LiDAR-FL');
+        const lidarFR = addDevice('lidar', new THREE.Vector3(8.5, 10, 16.2), 'LiDAR-FR');
+        const lidarFC = addDevice('lidar', new THREE.Vector3(0, 5.5, 18.5), 'LiDAR-Front-Center');
+        const lidarRC = addDevice('lidar', new THREE.Vector3(0, 5.5, -18.5), 'LiDAR-Rear-Center');
 
-        const camFC = addDevice('camera', new THREE.Vector3(0, 11, 14), 'Cam-Front-Center');
-        const camFL = addDevice('camera', new THREE.Vector3(-1, 11, 14), 'Cam-Front-L');
-        const camFR = addDevice('camera', new THREE.Vector3(1, 11, 14), 'Cam-Front-R');
-        const camSL1 = addDevice('camera', new THREE.Vector3(-6, 11, 13), 'Cam-Side-L1');
-        const camSR1 = addDevice('camera', new THREE.Vector3(6, 11, 13), 'Cam-Side-R1');
-        const camSL2 = addDevice('camera', new THREE.Vector3(-6, 11, -13), 'Cam-Side-L2');
-        const camSR2 = addDevice('camera', new THREE.Vector3(6, 11, -13), 'Cam-Side-R2');
-        const camRC = addDevice('camera', new THREE.Vector3(0, 9, -14), 'Cam-Rear-Center');
+        const camFC = addDevice('camera', new THREE.Vector3(0, 10.5, 18.5), 'Cam-Front-Center');
+        const camFL = addDevice('camera', new THREE.Vector3(-2.5, 10.5, 18.5), 'Cam-Front-L');
+        const camFR = addDevice('camera', new THREE.Vector3(2.5, 10.5, 18.5), 'Cam-Front-R');
+        const camSL1 = addDevice('camera', new THREE.Vector3(-9.5, 8, 8), 'Cam-Side-L1');
+        const camSR1 = addDevice('camera', new THREE.Vector3(9.5, 8, 8), 'Cam-Side-R1');
+        const camSL2 = addDevice('camera', new THREE.Vector3(-9.5, 8, -8), 'Cam-Side-L2');
+        const camSR2 = addDevice('camera', new THREE.Vector3(9.5, 8, -8), 'Cam-Side-R2');
+        const camRC = addDevice('camera', new THREE.Vector3(0, 10.5, -18.5), 'Cam-Rear-Center');
 
-        const radarFC = addDevice('radar', new THREE.Vector3(0, 4, 15), 'Radar-Front-Center');
-        const radarFL = addDevice('radar', new THREE.Vector3(-5, 4, 14), 'Radar-Front-L');
-        const radarFR = addDevice('radar', new THREE.Vector3(5, 4, 14), 'Radar-Front-R');
-        const radarRL = addDevice('radar', new THREE.Vector3(-5, 4, -14), 'Radar-Rear-L');
-        const radarRR = addDevice('radar', new THREE.Vector3(5, 4, -14), 'Radar-Rear-R');
+        const radarFC = addDevice('radar', new THREE.Vector3(0, 3, 18.5), 'Radar-Front-Center');
+        const radarFL = addDevice('radar', new THREE.Vector3(-7, 3, 17.5), 'Radar-Front-L');
+        const radarFR = addDevice('radar', new THREE.Vector3(7, 3, 17.5), 'Radar-Front-R');
+        const radarRL = addDevice('radar', new THREE.Vector3(-7, 3, -17.5), 'Radar-Rear-L');
+        const radarRR = addDevice('radar', new THREE.Vector3(7, 3, -17.5), 'Radar-Rear-R');
 
         createConnection(frontL, acuIT);
         createConnection(frontR, acuIT);

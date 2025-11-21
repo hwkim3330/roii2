@@ -38,11 +38,11 @@ controls.mouseButtons = {
     RIGHT: THREE.MOUSE.ROTATE
 };
 
-// === LIGHTING ===
-const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.8);
+// === LIGHTING - Maximum brightness ===
+const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1.4);
 scene.add(ambientLight);
 
-const mainLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
+const mainLight = new THREE.DirectionalLight(0xFFFFFF, 1.8);
 mainLight.position.set(50, 100, 50);
 mainLight.castShadow = true;
 mainLight.shadow.mapSize.width = 4096;
@@ -55,9 +55,14 @@ mainLight.shadow.camera.top = 100;
 mainLight.shadow.camera.bottom = -100;
 scene.add(mainLight);
 
-const fillLight = new THREE.DirectionalLight(0xFFFFFF, 0.6);
+const fillLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
 fillLight.position.set(-30, 30, -30);
 scene.add(fillLight);
+
+// Top fill light for bright vehicle
+const topLight = new THREE.DirectionalLight(0xFFFFFF, 1.0);
+topLight.position.set(0, 80, 0);
+scene.add(topLight);
 
 // === ENVIRONMENT ===
 // Clean grid for network visualization (no road)
@@ -124,6 +129,12 @@ function createVehicleModel() {
                         child.material.transparent = true;
                         child.material.opacity = vehicleOpacity;
                         child.material.side = THREE.DoubleSide;
+                        // Super bright for network view
+                        if (child.material.color) {
+                            child.material.color.multiplyScalar(3.0);
+                        }
+                        child.material.emissive = new THREE.Color(0xffffff);
+                        child.material.emissiveIntensity = 0.8;
                     }
                     child.castShadow = true;
                     child.receiveShadow = true;
@@ -206,14 +217,97 @@ function updateVehicleOpacity(opacity) {
     });
 }
 
-// === DEVICE TEMPLATES ===
+// === DEVICE TEMPLATES WITH DETAILED SPECS ===
 const templates = {
-    lan9692: { label: 'LAN9692', color: 0x10B981, ports: 12, size: [4, 2, 4] },
-    hpc: { label: 'HPC', color: 0xE11D48, ports: 4, size: [5, 2.5, 5] },
-    camera: { label: 'Camera', color: 0xd66b00, ports: 1, size: [0.8, 0.8, 0.8] },
-    lidar: { label: 'LiDAR', color: 0x10B981, ports: 1, size: [1.2, 1.2, 1.2] },
-    radar: { label: 'Radar', color: 0x952aff, ports: 1, size: [1.2, 1.2, 1.2] },
-    ecu: { label: 'ECU', color: 0x8B5CF6, ports: 1, size: [4, 2, 4] }
+    lan9692: {
+        label: 'LAN9692',
+        color: 0x10B981,
+        ports: 12,
+        size: [4, 2, 4],
+        specs: {
+            type: 'TSN Automotive Ethernet Switch',
+            manufacturer: 'Microchip',
+            portConfig: {
+                matenet: { count: 7, speed: '100/1000BASE-T1' },
+                sfp: { count: 4, speed: '1G/10G SFP+' },
+                rj45: { count: 1, speed: '10/100/1000BASE-T' }
+            },
+            tsn: ['IEEE 802.1Qbv (TAS)', 'IEEE 802.1Qav (CBS)', 'IEEE 802.1Qbu (Preemption)', 'IEEE 802.1CB (FRER)', 'IEEE 1588 (PTP)'],
+            features: ['Cut-through switching', 'Store-and-forward', 'Multicast filtering', 'VLAN support'],
+            bandwidth: '10G aggregate',
+            latency: '<2μs port-to-port'
+        }
+    },
+    hpc: {
+        label: 'HPC',
+        color: 0xE11D48,
+        ports: 4,
+        size: [5, 2.5, 5],
+        specs: {
+            type: 'High Performance Computing Unit',
+            function: 'Central Domain Controller',
+            role: 'ACU_IT (Autonomous Computing Unit - Infotainment)',
+            connectivity: '4x 10G Ethernet',
+            processing: 'Multi-core ARM/x86 SoC',
+            features: ['Sensor fusion', 'Path planning', 'V2X communication', 'OTA updates']
+        }
+    },
+    camera: {
+        label: 'Camera',
+        color: 0xd66b00,
+        ports: 1,
+        size: [0.8, 0.8, 0.8],
+        specs: {
+            type: 'Automotive Camera',
+            resolution: '8MP (3840×2160)',
+            frameRate: '30fps / 60fps',
+            interface: '1000BASE-T1 (GMSL2)',
+            fov: '120° (surround) / 60° (forward)',
+            features: ['HDR', 'LED flicker mitigation', 'ISP'],
+            bandwidth: '~400 Mbps (compressed)'
+        }
+    },
+    lidar: {
+        label: 'LiDAR',
+        color: 0x10B981,
+        ports: 1,
+        size: [1.2, 1.2, 1.2],
+        specs: {
+            type: '3D LiDAR Sensor',
+            technology: 'Solid-state / Rotating',
+            range: '200m (10% reflectivity)',
+            resolution: '0.1° angular',
+            pointRate: '1.2M points/sec',
+            interface: '1000BASE-T1',
+            bandwidth: '~100 Mbps',
+            features: ['Rain/fog filtering', 'Multi-return', 'Time-stamped']
+        }
+    },
+    radar: {
+        label: 'Radar',
+        color: 0x952aff,
+        ports: 1,
+        size: [1.2, 1.2, 1.2],
+        specs: {
+            type: '4D Imaging Radar',
+            frequency: '77GHz (76-81GHz)',
+            range: '300m (long) / 80m (short)',
+            fov: '120° azimuth × 30° elevation',
+            interface: '100BASE-T1',
+            bandwidth: '~20 Mbps',
+            features: ['Velocity detection', 'Object classification', 'All-weather']
+        }
+    },
+    ecu: {
+        label: 'ECU',
+        color: 0x8B5CF6,
+        ports: 1,
+        size: [4, 2, 4],
+        specs: {
+            type: 'Electronic Control Unit',
+            function: 'Vehicle subsystem controller'
+        }
+    }
 };
 
 // === DEVICE CREATION ===
@@ -379,29 +473,29 @@ function loadVehicleScenario() {
     const frontR = addDevice('lan9692', new THREE.Vector3(3.5, 4, 10), 'Front-R-9692');
     const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -10), 'Rear-9692');
 
-    // === SENSORS ===
-    // LiDAR (4)
-    const lidarFL = addDevice('lidar', new THREE.Vector3(-7.5, 12, 16), 'LiDAR-FL');
-    const lidarFR = addDevice('lidar', new THREE.Vector3(7.5, 12, 16), 'LiDAR-FR');
-    const lidarFC = addDevice('lidar', new THREE.Vector3(0, 7, 18), 'LiDAR-Front-Center');
-    const lidarRC = addDevice('lidar', new THREE.Vector3(0, 7, -18), 'LiDAR-Rear-Center');
+    // === SENSORS (positions matched with drive.html) ===
+    // LiDAR (4) - Roof mounted corners + front/rear center
+    const lidarFL = addDevice('lidar', new THREE.Vector3(-8.5, 10, 16.2), 'LiDAR-FL');
+    const lidarFR = addDevice('lidar', new THREE.Vector3(8.5, 10, 16.2), 'LiDAR-FR');
+    const lidarFC = addDevice('lidar', new THREE.Vector3(0, 5.5, 18.5), 'LiDAR-Front-Center');
+    const lidarRC = addDevice('lidar', new THREE.Vector3(0, 5.5, -18.5), 'LiDAR-Rear-Center');
 
-    // Camera (8)
-    const camFC = addDevice('camera', new THREE.Vector3(0, 13, 17.5), 'Cam-Front-Center');
-    const camFL = addDevice('camera', new THREE.Vector3(-1, 13, 17.5), 'Cam-Front-L');
-    const camFR = addDevice('camera', new THREE.Vector3(1, 13, 17.5), 'Cam-Front-R');
-    const camSL1 = addDevice('camera', new THREE.Vector3(-7.5, 13, 16), 'Cam-Side-L1');
-    const camSR1 = addDevice('camera', new THREE.Vector3(7.5, 13, 16), 'Cam-Side-R1');
-    const camSL2 = addDevice('camera', new THREE.Vector3(-7.5, 13, -16), 'Cam-Side-L2');
-    const camSR2 = addDevice('camera', new THREE.Vector3(7.5, 13, -16), 'Cam-Side-R2');
-    const camRC = addDevice('camera', new THREE.Vector3(0, 11, -17.5), 'Cam-Rear-Center');
+    // Camera (8) - Front cluster + side mirrors + rear
+    const camFC = addDevice('camera', new THREE.Vector3(0, 10.5, 18.5), 'Cam-Front-Center');
+    const camFL = addDevice('camera', new THREE.Vector3(-2.5, 10.5, 18.5), 'Cam-Front-L');
+    const camFR = addDevice('camera', new THREE.Vector3(2.5, 10.5, 18.5), 'Cam-Front-R');
+    const camSL1 = addDevice('camera', new THREE.Vector3(-9.5, 8, 8), 'Cam-Side-L1');
+    const camSR1 = addDevice('camera', new THREE.Vector3(9.5, 8, 8), 'Cam-Side-R1');
+    const camSL2 = addDevice('camera', new THREE.Vector3(-9.5, 8, -8), 'Cam-Side-L2');
+    const camSR2 = addDevice('camera', new THREE.Vector3(9.5, 8, -8), 'Cam-Side-R2');
+    const camRC = addDevice('camera', new THREE.Vector3(0, 10.5, -18.5), 'Cam-Rear-Center');
 
-    // Radar (5)
-    const radarFC = addDevice('radar', new THREE.Vector3(0, 5, 18), 'Radar-Front-Center');
-    const radarFL = addDevice('radar', new THREE.Vector3(-6.5, 5, 17), 'Radar-Front-L');
-    const radarFR = addDevice('radar', new THREE.Vector3(6.5, 5, 17), 'Radar-Front-R');
-    const radarRL = addDevice('radar', new THREE.Vector3(-6.5, 5, -17), 'Radar-Rear-L');
-    const radarRR = addDevice('radar', new THREE.Vector3(6.5, 5, -17), 'Radar-Rear-R');
+    // Radar (5) - Bumper integrated
+    const radarFC = addDevice('radar', new THREE.Vector3(0, 3, 18.5), 'Radar-Front-Center');
+    const radarFL = addDevice('radar', new THREE.Vector3(-7, 3, 17.5), 'Radar-Front-L');
+    const radarFR = addDevice('radar', new THREE.Vector3(7, 3, 17.5), 'Radar-Front-R');
+    const radarRL = addDevice('radar', new THREE.Vector3(-7, 3, -17.5), 'Radar-Rear-L');
+    const radarRR = addDevice('radar', new THREE.Vector3(7, 3, -17.5), 'Radar-Rear-R');
 
     // === CONNECTIONS ===
     // All Zone Controllers → ACU_IT
@@ -597,6 +691,7 @@ function showToast(msg) {
 function showProperties(device) {
     const template = templates[device.type];
     const content = document.getElementById('propertiesContent');
+    const specs = template.specs || {};
 
     // Get connections for this device
     const deviceConns = state.connections.filter(c =>
@@ -614,6 +709,110 @@ function showProperties(device) {
         </div>`;
     }).join('');
 
+    // Build specifications HTML based on device type
+    let specsHtml = '';
+    if (device.type === 'lan9692' && specs.portConfig) {
+        specsHtml = `
+            <div class="prop-section">
+                <div class="prop-title">🔌 Port Configuration</div>
+                <div style="font-size:12px;color:#334155;">
+                    <div style="padding:4px 0;border-bottom:1px solid #e2e8f0;">
+                        <strong>MateNET T1:</strong> ${specs.portConfig.matenet.count}× ${specs.portConfig.matenet.speed}
+                    </div>
+                    <div style="padding:4px 0;border-bottom:1px solid #e2e8f0;">
+                        <strong>SFP+:</strong> ${specs.portConfig.sfp.count}× ${specs.portConfig.sfp.speed}
+                    </div>
+                    <div style="padding:4px 0;">
+                        <strong>RJ45:</strong> ${specs.portConfig.rj45.count}× ${specs.portConfig.rj45.speed}
+                    </div>
+                </div>
+            </div>
+            <div class="prop-section">
+                <div class="prop-title">⏱️ TSN Features</div>
+                <div style="font-size:11px;color:#475569;">
+                    ${specs.tsn.map(f => `<div style="padding:2px 0;">• ${f}</div>`).join('')}
+                </div>
+            </div>
+            <div class="prop-section">
+                <div class="prop-title">📊 Performance</div>
+                <div style="font-size:12px;color:#334155;">
+                    <div style="padding:4px 0;"><strong>Bandwidth:</strong> ${specs.bandwidth}</div>
+                    <div style="padding:4px 0;"><strong>Latency:</strong> ${specs.latency}</div>
+                </div>
+            </div>`;
+    } else if (device.type === 'hpc') {
+        specsHtml = `
+            <div class="prop-section">
+                <div class="prop-title">🖥️ HPC Specifications</div>
+                <div style="font-size:12px;color:#334155;">
+                    <div style="padding:4px 0;"><strong>Role:</strong> ${specs.role}</div>
+                    <div style="padding:4px 0;"><strong>Connectivity:</strong> ${specs.connectivity}</div>
+                    <div style="padding:4px 0;"><strong>Processing:</strong> ${specs.processing}</div>
+                </div>
+            </div>
+            <div class="prop-section">
+                <div class="prop-title">🧠 Functions</div>
+                <div style="font-size:11px;color:#475569;">
+                    ${specs.features.map(f => `<div style="padding:2px 0;">• ${f}</div>`).join('')}
+                </div>
+            </div>`;
+    } else if (device.type === 'lidar') {
+        specsHtml = `
+            <div class="prop-section">
+                <div class="prop-title">🔵 LiDAR Specifications</div>
+                <div style="font-size:12px;color:#334155;">
+                    <div style="padding:4px 0;"><strong>Technology:</strong> ${specs.technology}</div>
+                    <div style="padding:4px 0;"><strong>Range:</strong> ${specs.range}</div>
+                    <div style="padding:4px 0;"><strong>Resolution:</strong> ${specs.resolution}</div>
+                    <div style="padding:4px 0;"><strong>Point Rate:</strong> ${specs.pointRate}</div>
+                    <div style="padding:4px 0;"><strong>Interface:</strong> ${specs.interface}</div>
+                    <div style="padding:4px 0;"><strong>Bandwidth:</strong> ${specs.bandwidth}</div>
+                </div>
+            </div>
+            <div class="prop-section">
+                <div class="prop-title">✨ Features</div>
+                <div style="font-size:11px;color:#475569;">
+                    ${specs.features.map(f => `<div style="padding:2px 0;">• ${f}</div>`).join('')}
+                </div>
+            </div>`;
+    } else if (device.type === 'camera') {
+        specsHtml = `
+            <div class="prop-section">
+                <div class="prop-title">📷 Camera Specifications</div>
+                <div style="font-size:12px;color:#334155;">
+                    <div style="padding:4px 0;"><strong>Resolution:</strong> ${specs.resolution}</div>
+                    <div style="padding:4px 0;"><strong>Frame Rate:</strong> ${specs.frameRate}</div>
+                    <div style="padding:4px 0;"><strong>FoV:</strong> ${specs.fov}</div>
+                    <div style="padding:4px 0;"><strong>Interface:</strong> ${specs.interface}</div>
+                    <div style="padding:4px 0;"><strong>Bandwidth:</strong> ${specs.bandwidth}</div>
+                </div>
+            </div>
+            <div class="prop-section">
+                <div class="prop-title">✨ Features</div>
+                <div style="font-size:11px;color:#475569;">
+                    ${specs.features.map(f => `<div style="padding:2px 0;">• ${f}</div>`).join('')}
+                </div>
+            </div>`;
+    } else if (device.type === 'radar') {
+        specsHtml = `
+            <div class="prop-section">
+                <div class="prop-title">📡 Radar Specifications</div>
+                <div style="font-size:12px;color:#334155;">
+                    <div style="padding:4px 0;"><strong>Frequency:</strong> ${specs.frequency}</div>
+                    <div style="padding:4px 0;"><strong>Range:</strong> ${specs.range}</div>
+                    <div style="padding:4px 0;"><strong>FoV:</strong> ${specs.fov}</div>
+                    <div style="padding:4px 0;"><strong>Interface:</strong> ${specs.interface}</div>
+                    <div style="padding:4px 0;"><strong>Bandwidth:</strong> ${specs.bandwidth}</div>
+                </div>
+            </div>
+            <div class="prop-section">
+                <div class="prop-title">✨ Features</div>
+                <div style="font-size:11px;color:#475569;">
+                    ${specs.features.map(f => `<div style="padding:2px 0;">• ${f}</div>`).join('')}
+                </div>
+            </div>`;
+    }
+
     content.innerHTML = `
         <div class="prop-section">
             <div class="prop-title">Device Info</div>
@@ -623,7 +822,7 @@ function showProperties(device) {
             </div>
             <div class="form-group">
                 <label class="form-label">Type</label>
-                <input type="text" class="form-input" value="${template.label}" readonly>
+                <input type="text" class="form-input" value="${specs.type || template.label}" readonly>
             </div>
             <div style="margin-top:12px;">
                 <span class="badge ${device.status === 'fault' ? 'badge-danger' : 'badge-success'}">
@@ -631,6 +830,7 @@ function showProperties(device) {
                 </span>
             </div>
         </div>
+        ${specsHtml}
         <div class="prop-section">
             <div class="prop-title">Port Usage</div>
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
