@@ -674,8 +674,8 @@
         LANE_WIDTH: 4,
         LANE_COUNT: 3,
         SPAWN_DISTANCE: 100,
-        BASE_SPEED: 30,
-        MAX_SPEED: 100,
+        BASE_SPEED: 45,
+        MAX_SPEED: 140,
         GRAVITY: 70,
         JUMP_FORCE: 22,
         DOUBLE_JUMP_FORCE: 18,
@@ -719,6 +719,7 @@
     let objects = [];
     let particles = [];
     let trails = [];
+    let speedLines = [];
 
     // ==================== THREE.JS SETUP ====================
     const scene = new THREE.Scene();
@@ -753,6 +754,52 @@
     const frontLight = new THREE.DirectionalLight(0xffffff, 0.6);
     frontLight.position.set(0, 10, 20);
     scene.add(frontLight);
+
+    // ==================== SPEED LINES ====================
+    function createSpeedLines() {
+        const lineGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(6);
+        lineGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const lineMat = new THREE.LineBasicMaterial({
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.6
+        });
+        const line = new THREE.Line(lineGeo, lineMat);
+        return line;
+    }
+
+    // Initialize speed lines
+    for (let i = 0; i < 30; i++) {
+        const line = createSpeedLines();
+        line.userData.x = (Math.random() - 0.5) * 30;
+        line.userData.y = Math.random() * 8 + 1;
+        line.userData.z = Math.random() * -100;
+        line.userData.length = Math.random() * 3 + 2;
+        speedLines.push(line);
+        scene.add(line);
+    }
+
+    function updateSpeedLines(delta) {
+        const speedFactor = speed / CONFIG.MAX_SPEED;
+        speedLines.forEach(line => {
+            line.userData.z += speed * delta;
+            if (line.userData.z > 20) {
+                line.userData.z = -80 - Math.random() * 20;
+                line.userData.x = (Math.random() - 0.5) * 30;
+                line.userData.y = Math.random() * 8 + 1;
+            }
+            const positions = line.geometry.attributes.position.array;
+            positions[0] = line.userData.x;
+            positions[1] = line.userData.y;
+            positions[2] = line.userData.z;
+            positions[3] = line.userData.x;
+            positions[4] = line.userData.y;
+            positions[5] = line.userData.z - line.userData.length * (1 + speedFactor * 2);
+            line.geometry.attributes.position.needsUpdate = true;
+            line.material.opacity = 0.3 + speedFactor * 0.5;
+        });
+    }
 
     // ==================== TRACK ====================
     function createTrack() {
@@ -825,7 +872,7 @@
 
         const box = new THREE.Box3().setFromObject(vehicleModel);
         const size = box.getSize(new THREE.Vector3());
-        const scale = 5 / Math.max(size.x, size.y, size.z);
+        const scale = 4.2 / Math.max(size.x, size.y, size.z);
         vehicleModel.scale.set(scale, scale, scale);
         vehicleModel.rotation.y = Math.PI;
         // Raise vehicle above ground
@@ -837,10 +884,10 @@
                 child.material.transparent = true;
                 child.material.opacity = 0.95;
                 if (child.material.color) {
-                    child.material.color.multiplyScalar(2.5);
+                    child.material.color.multiplyScalar(1.8);
                 }
-                child.material.emissive = new THREE.Color(0x666666);
-                child.material.emissiveIntensity = 0.4;
+                child.material.emissive = new THREE.Color(0x444444);
+                child.material.emissiveIntensity = 0.3;
             }
         });
 
@@ -1548,6 +1595,14 @@
             t.mesh.scale.setScalar(t.life);
             return true;
         });
+
+        // Update speed lines
+        if (gameState === 'playing') {
+            updateSpeedLines(delta);
+            // Dynamic FOV for speed sensation
+            camera.fov = 75 + (speed / CONFIG.MAX_SPEED) * 15;
+            camera.updateProjectionMatrix();
+        }
 
         renderer.render(scene, camera);
     }
