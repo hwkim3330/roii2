@@ -3,14 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROii2 - Automotive TSN Network Designer (LAN9692 + HPC)</title>
+    <title>ROii2 - Automotive TSN Network Designer (Drive Mode)</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
-    <!-- External CSS -->
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Drive Mode Additions */
+        .drive-help {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 12px 24px;
+            border-radius: 30px;
+            color: white;
+            font-size: 14px;
+            display: none;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .drive-help.visible { display: flex; gap: 15px; align-items: center; }
+        .key {
+            display: inline-block;
+            background: #333;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            font-weight: bold;
+            font-family: monospace;
+            min-width: 20px;
+            text-align: center;
+        }
+        .drive-btn {
+            background: linear-gradient(135deg, #10B981, #059669) !important;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4) !important;
+        }
+        .drive-btn:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+        }
+        .drive-btn.active {
+            background: linear-gradient(135deg, #EF4444, #DC2626) !important;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4) !important;
+        }
+        .speedometer {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px 25px;
+            border-radius: 15px;
+            display: none;
+            pointer-events: none;
+            text-align: center;
+        }
+        .speedometer.visible { display: block; }
+        .speed-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #10B981;
+        }
+        .speed-unit {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .fault-panel {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+            background: rgba(30, 41, 59, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            width: 280px;
+            display: none;
+            pointer-events: auto;
+        }
+        .fault-panel.visible { display: block; }
+        .fault-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #EF4444;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .fault-item {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .fault-item:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        .fault-item.active {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: #EF4444;
+        }
+        .fault-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #f87171;
+        }
+        .fault-desc {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .recovery-status {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            display: none;
+        }
+        .recovery-status.visible { display: block; }
+        .recovery-status.success {
+            color: #34d399;
+        }
+    </style>
 </head>
 <body>
     <div class="app">
@@ -19,7 +138,7 @@
                 <img src="keti.png" alt="KETI" class="logo" onerror="this.style.display='none'">
                 <div class="title-group">
                     <h1>ROii2 - Automotive TSN Network Designer</h1>
-                    <p>2x Front + 1x Rear LAN9692 · ACU_IT + ACU_NO HPC</p>
+                    <p>2x Front + 1x Rear LAN9692 | ACU_IT + ACU_NO HPC | Drive Mode</p>
                 </div>
             </div>
             <div class="stats">
@@ -37,9 +156,10 @@
                 </div>
             </div>
             <div>
-                <button class="btn btn-success" id="vehicleBtn">🚗 Load Vehicle Scenario</button>
-                <button class="btn" id="layoutBtn">⚡ Auto Layout</button>
-                <button class="btn" id="exportBtn">📤 Export</button>
+                <button class="btn btn-success" id="vehicleBtn">Load Scenario</button>
+                <button class="btn" id="faultBtn">Fault Simulation</button>
+                <button class="btn" id="exportBtn">Export</button>
+                <button class="btn drive-btn" id="driveBtn">Start Drive</button>
             </div>
         </div>
 
@@ -47,7 +167,6 @@
             <div class="sidebar">
                 <div class="sidebar-section">
                     <div class="section-title">Central HPC</div>
-
                     <div class="device-card" data-type="hpc">
                         <div class="device-header">
                             <div class="device-icon">🔴</div>
@@ -56,83 +175,41 @@
                                 <p>High Performance Computer</p>
                             </div>
                         </div>
-                        <div class="device-specs">
-                            <strong>ACU_IT / ACU_NO</strong><br>
-                            • Central Computing Unit<br>
-                            • Multi-domain Processing<br>
-                            • 4× Network Ports
-                        </div>
                     </div>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="section-title">Zone Controllers (LAN9692)</div>
-
+                    <div class="section-title">Zone Controllers</div>
                     <div class="device-card" data-type="lan9692">
                         <div class="device-header">
                             <div class="device-icon">🟢</div>
                             <div class="device-info">
                                 <h3>LAN9692</h3>
-                                <p>12-Port Zone Controller</p>
+                                <p>12-Port TSN Switch</p>
                             </div>
-                        </div>
-                        <div class="device-specs">
-                            <strong>Physical Ports:</strong><br>
-                            • 7× MateNET T1 (100/1000BASE-T1)<br>
-                            • 4× SFP+ (Fiber, 1G/10G) ⚡<br>
-                            • 1× RJ45 (Management)<br>
-                            <br>
-                            <strong>Total: 12 Ports</strong><br>
-                            IEEE 802.1Qbv/Qav/Qbu · PTP
                         </div>
                     </div>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="section-title">Sensors & Actuators</div>
-
+                    <div class="section-title">Sensors</div>
                     <div class="device-card" data-type="camera">
                         <div class="device-header">
                             <div class="device-icon">📷</div>
-                            <div class="device-info">
-                                <h3>Camera</h3>
-                                <p>Video Sensor</p>
-                            </div>
+                            <div class="device-info"><h3>Camera</h3></div>
                         </div>
-                        <div class="device-specs">100 Mbps · Priority 6</div>
                     </div>
-
                     <div class="device-card" data-type="lidar">
                         <div class="device-header">
                             <div class="device-icon">📡</div>
-                            <div class="device-info">
-                                <h3>LiDAR</h3>
-                                <p>3D Range Sensor</p>
-                            </div>
+                            <div class="device-info"><h3>LiDAR</h3></div>
                         </div>
-                        <div class="device-specs">1000 Mbps · Priority 7</div>
                     </div>
-
                     <div class="device-card" data-type="radar">
                         <div class="device-header">
                             <div class="device-icon">📶</div>
-                            <div class="device-info">
-                                <h3>Radar</h3>
-                                <p>Object Detection</p>
-                            </div>
+                            <div class="device-info"><h3>Radar</h3></div>
                         </div>
-                        <div class="device-specs">100 Mbps · Priority 5</div>
-                    </div>
-
-                    <div class="device-card" data-type="ecu">
-                        <div class="device-header">
-                            <div class="device-icon">🖥️</div>
-                            <div class="device-info">
-                                <h3>ECU</h3>
-                                <p>Electronic Control Unit</p>
-                            </div>
-                        </div>
-                        <div class="device-specs">100 Mbps · Priority 4</div>
                     </div>
                 </div>
 
@@ -141,10 +218,7 @@
                     <div class="device-card" id="connectBtn">
                         <div class="device-header">
                             <div class="device-icon">🔗</div>
-                            <div class="device-info">
-                                <h3>Connect Mode</h3>
-                                <p>Link devices</p>
-                            </div>
+                            <div class="device-info"><h3>Connect Mode</h3></div>
                         </div>
                     </div>
                 </div>
@@ -154,9 +228,9 @@
                 <div id="canvas3d"></div>
 
                 <div class="help-text">
-                    <strong>🚗 ROii2:</strong> 2x Front + 1x Rear LAN9692 · ACU_IT + ACU_NO HPC ·
-                    <strong>👆 Select:</strong> Click to highlight ·
-                    <strong>🔗 Connect:</strong> Link devices
+                    <strong>ROii2:</strong> 2x Front + 1x Rear LAN9692 | ACU_IT + ACU_NO |
+                    <strong>Right-Click:</strong> Rotate |
+                    <strong>Scroll:</strong> Zoom
                 </div>
 
                 <div class="opacity-control">
@@ -164,15 +238,51 @@
                         <span>Vehicle Opacity</span>
                         <span class="opacity-value" id="opacityValue">30%</span>
                     </div>
-                    <input type="range" class="opacity-slider" id="opacitySlider"
-                           min="0" max="100" value="30" step="5">
+                    <input type="range" class="opacity-slider" id="opacitySlider" min="0" max="100" value="30" step="5">
                 </div>
 
                 <div class="floating-controls">
-                    <div class="control-btn" id="selectBtn" title="선택 모드">👆</div>
-                    <div class="control-btn" id="rotateBtn" title="자동 회전">🔄</div>
-                    <div class="control-btn" id="resetBtn" title="리셋">🎯</div>
-                    <div class="control-btn" id="deleteBtn" title="삭제">🗑️</div>
+                    <div class="control-btn" id="selectBtn" title="Select Mode">👆</div>
+                    <div class="control-btn" id="rotateBtn" title="Auto Rotate">🔄</div>
+                    <div class="control-btn" id="resetBtn" title="Reset View">🎯</div>
+                    <div class="control-btn" id="deleteBtn" title="Delete">🗑️</div>
+                </div>
+
+                <!-- Drive Mode UI -->
+                <div class="drive-help" id="driveHelp">
+                    <span><span class="key">W</span> Forward</span>
+                    <span><span class="key">S</span> Reverse</span>
+                    <span><span class="key">A</span><span class="key">D</span> Steer</span>
+                    <span><span class="key">Space</span> Brake</span>
+                </div>
+
+                <div class="speedometer" id="speedometer">
+                    <div class="speed-value" id="speedValue">0</div>
+                    <div class="speed-unit">km/h</div>
+                </div>
+
+                <!-- Fault Simulation Panel -->
+                <div class="fault-panel" id="faultPanel">
+                    <div class="fault-title">⚠️ Fault Injection</div>
+                    <div class="fault-item" data-fault="hpc-link">
+                        <div class="fault-name">ACU_IT ↔ ACU_NO Link Error</div>
+                        <div class="fault-desc">HPC 간 백본 연결 장애</div>
+                    </div>
+                    <div class="fault-item" data-fault="front-l-link">
+                        <div class="fault-name">Front-L-9692 ↔ ACU_IT Link Error</div>
+                        <div class="fault-desc">전방 좌측 존 컨트롤러 연결 장애</div>
+                    </div>
+                    <div class="fault-item" data-fault="rear-link">
+                        <div class="fault-name">Rear-9692 ↔ ACU_NO Link Error</div>
+                        <div class="fault-desc">후방 존 컨트롤러 연결 장애</div>
+                    </div>
+                    <div class="fault-item" data-fault="sensor">
+                        <div class="fault-name">LiDAR-FL Sensor Error</div>
+                        <div class="fault-desc">전방 좌측 LiDAR 센서 오류</div>
+                    </div>
+                    <div class="recovery-status" id="recoveryStatus">
+                        ✅ Recovery Path Active: Alternative route established
+                    </div>
                 </div>
             </div>
 
@@ -192,7 +302,6 @@
 
     <div class="toast" id="toast"></div>
 
-    <!-- External JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>
