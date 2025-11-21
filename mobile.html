@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>ROii2 Mobile</title>
+
+    <script src="libs/three.min.js"></script>
+    <script src="libs/OrbitControls.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body {
+            width: 100%; height: 100%; overflow: hidden;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            color: white;
+        }
+        #canvas3d { width: 100%; height: 100%; position: fixed; top: 0; left: 0; }
+
+        .hud { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+
+        .top-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .version-links {
+            display: flex;
+            gap: 6px;
+            pointer-events: auto;
+            flex-wrap: wrap;
+        }
+        .version-link {
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            font-size: 11px;
+            color: #10B981;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .version-link.active {
+            background: #10B981;
+            color: black;
+        }
+
+        .title {
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .title h1 { font-size: 14px; color: #10B981; }
+        .title p { font-size: 10px; color: #64748b; }
+
+        .speedometer {
+            position: absolute;
+            top: 70px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid rgba(16, 185, 129, 0.4);
+        }
+        .speed-value { font-size: 48px; font-weight: 700; color: #10B981; line-height: 1; }
+        .speed-unit { font-size: 12px; color: #64748b; margin-top: 3px; }
+
+        /* Touch Controls */
+        .touch-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            pointer-events: auto;
+        }
+
+        .joystick-area {
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            position: relative;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .joystick-knob {
+            width: 60px;
+            height: 60px;
+            background: rgba(16, 185, 129, 0.8);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+
+        .pedals {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .pedal {
+            width: 100px;
+            height: 65px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .pedal-gas {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.6), rgba(16, 185, 129, 0.3));
+            border: 2px solid rgba(16, 185, 129, 0.5);
+        }
+        .pedal-brake {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.6), rgba(239, 68, 68, 0.3));
+            border: 2px solid rgba(239, 68, 68, 0.5);
+        }
+        .pedal.active {
+            transform: scale(0.95);
+        }
+        .pedal-gas.active { background: rgba(16, 185, 129, 0.8); }
+        .pedal-brake.active { background: rgba(239, 68, 68, 0.8); }
+
+        .action-buttons {
+            position: absolute;
+            bottom: 220px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        .action-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .action-btn.active { background: rgba(59, 130, 246, 0.5); }
+
+        .fault-panel {
+            position: absolute;
+            left: 10px;
+            bottom: 220px;
+            background: rgba(0,0,0,0.85);
+            padding: 15px;
+            border-radius: 12px;
+            width: 250px;
+            pointer-events: auto;
+            display: none;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .fault-panel.visible { display: block; }
+        .fault-title { font-size: 13px; font-weight: 600; color: #EF4444; margin-bottom: 10px; }
+        .fault-item {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .fault-item.active { background: rgba(239, 68, 68, 0.3); border-color: #EF4444; }
+        .fault-name { font-size: 11px; font-weight: 600; color: #f87171; }
+        .fault-desc { font-size: 10px; color: #94a3b8; margin-top: 3px; }
+
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            padding: 15px 25px;
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        /* Landscape adjustments */
+        @media (orientation: landscape) {
+            .touch-controls { height: 160px; }
+            .joystick-area { width: 130px; height: 130px; }
+            .joystick-knob { width: 50px; height: 50px; }
+            .pedal { width: 90px; height: 55px; font-size: 12px; }
+            .speedometer { top: 10px; padding: 10px 20px; }
+            .speed-value { font-size: 36px; }
+            .action-buttons { bottom: 180px; }
+            .fault-panel { bottom: 180px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas3d"></div>
+
+    <div class="hud">
+        <div class="top-bar">
+            <div class="version-links">
+                <a href="index.html" class="version-link">Network</a>
+                <a href="drive.html" class="version-link">Drive</a>
+                <a href="mobile.html" class="version-link active">Mobile</a>
+            </div>
+            <div class="title">
+                <h1>ROii2 Mobile</h1>
+                <p>Touch to Drive</p>
+            </div>
+        </div>
+
+        <div class="speedometer">
+            <div class="speed-value" id="speedValue">0</div>
+            <div class="speed-unit">km/h</div>
+        </div>
+
+        <div class="action-buttons">
+            <div class="action-btn" id="faultBtn">!</div>
+            <div class="action-btn" id="cameraBtn">C</div>
+            <div class="action-btn" id="resetBtn">R</div>
+        </div>
+
+        <div class="touch-controls">
+            <div class="joystick-area" id="joystick">
+                <div class="joystick-knob" id="knob"></div>
+            </div>
+            <div class="pedals">
+                <div class="pedal pedal-gas" id="gasBtn">GAS</div>
+                <div class="pedal pedal-brake" id="brakeBtn">BRAKE</div>
+            </div>
+        </div>
+
+        <div class="fault-panel" id="faultPanel">
+            <div class="fault-title">Fault Injection</div>
+            <div class="fault-item" data-fault="front-backbone">
+                <div class="fault-name">Front 10G Backbone Error</div>
+                <div class="fault-desc">Front zone controller link failure</div>
+            </div>
+            <div class="fault-item" data-fault="front-l-link">
+                <div class="fault-name">Front-L → HPC Error</div>
+                <div class="fault-desc">Front-L zone controller link failure</div>
+            </div>
+            <div class="fault-item" data-fault="sensor">
+                <div class="fault-name">LiDAR-FL Sensor Error</div>
+                <div class="fault-desc">Front-left LiDAR malfunction</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+    // ROii2 Mobile - Touch Optimized
+
+    // === THREE.JS ===
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0f);
+    scene.fog = new THREE.Fog(0x0a0a0f, 60, 250);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.getElementById('canvas3d').appendChild(renderer.domElement);
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // === LIGHTING ===
+    scene.add(new THREE.AmbientLight(0xFFFFFF, 0.7));
+    const mainLight = new THREE.DirectionalLight(0xFFFFFF, 0.8);
+    mainLight.position.set(30, 60, 30);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    scene.add(mainLight);
+
+    // === ENVIRONMENT ===
+    const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(1000, 1000),
+        new THREE.MeshStandardMaterial({ color: 0x101018, roughness: 1 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.5;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Road
+    const roadGroup = new THREE.Group();
+    const road = new THREE.Mesh(
+        new THREE.PlaneGeometry(35, 2000),
+        new THREE.MeshStandardMaterial({ color: 0x222228, roughness: 0.7 })
+    );
+    road.rotation.x = -Math.PI / 2;
+    road.position.y = -0.1;
+    roadGroup.add(road);
+
+    for (let i = -500; i < 500; i += 20) {
+        const line = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.3, 10),
+            new THREE.MeshBasicMaterial({ color: 0xFFFFFF })
+        );
+        line.rotation.x = -Math.PI / 2;
+        line.position.set(0, 0.01, i);
+        roadGroup.add(line);
+    }
+    scene.add(roadGroup);
+
+    // Grid
+    const grid = new THREE.GridHelper(300, 60, 0x10B981, 0x151520);
+    grid.material.opacity = 0.1;
+    grid.material.transparent = true;
+    scene.add(grid);
+
+    // === STATE ===
+    const state = {
+        vehicleGroup: new THREE.Group(),
+        devices: new Map(),
+        connections: [],
+        deviceCounter: 1,
+        activeFaults: new Set(),
+        cameraMode: 0
+    };
+    scene.add(state.vehicleGroup);
+
+    const drive = {
+        speed: 0,
+        maxSpeed: 2.0,
+        acceleration: 0.05,
+        steerInput: 0, // -1 to 1 from joystick
+        steering: 0
+    };
+
+    const touch = {
+        gas: false,
+        brake: false,
+        joystickActive: false,
+        joystickX: 0,
+        joystickY: 0
+    };
+
+    // === TEMPLATES ===
+    const templates = {
+        lan9692: { color: 0x10B981, size: [4, 2, 4] },
+        hpc: { color: 0xE11D48, size: [5, 2.5, 5] },
+        camera: { color: 0xd66b00, size: [0.8, 0.8, 0.8] },
+        lidar: { color: 0x10B981, size: [1.2, 1.2, 1.2] },
+        radar: { color: 0x952aff, size: [1.2, 1.2, 1.2] }
+    };
+
+    // === VEHICLE ===
+    function createVehicle() {
+        const loader = new THREE.GLTFLoader();
+        loader.load('./roii.glb',
+            (gltf) => {
+                const model = gltf.scene;
+                const box = new THREE.Box3().setFromObject(model);
+                const size = box.getSize(new THREE.Vector3());
+                const center = box.getCenter(new THREE.Vector3());
+                const scale = 35 / Math.max(size.x, size.y, size.z);
+                model.scale.set(scale, scale, scale);
+                model.position.set(-center.x, -center.y + size.y * scale * 0.5 + 0.5, -center.z);
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material.transparent = true;
+                        child.material.opacity = 0.4;
+                        child.castShadow = true;
+                    }
+                });
+                state.vehicleGroup.add(model);
+            },
+            null,
+            () => {
+                // Fallback
+                const chassis = new THREE.Mesh(
+                    new THREE.BoxGeometry(14, 8, 32),
+                    new THREE.MeshPhysicalMaterial({ color: 0xf0f4f8, transparent: true, opacity: 0.35 })
+                );
+                chassis.position.y = 5;
+                chassis.castShadow = true;
+                state.vehicleGroup.add(chassis);
+            }
+        );
+    }
+
+    // === DEVICES & CONNECTIONS ===
+    function addDevice(type, position, label) {
+        const t = templates[type];
+        const id = `dev-${state.deviceCounter++}`;
+        const device = { id, type, label, position: position.clone(), status: 'normal', mesh: null };
+
+        const geo = new THREE.BoxGeometry(...t.size);
+        const mat = new THREE.MeshPhongMaterial({ color: t.color, emissive: t.color, emissiveIntensity: 0.5 });
+
+        const group = new THREE.Group();
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        group.add(mesh);
+        group.position.copy(position);
+        group.userData = { device };
+        device.mesh = group;
+
+        state.vehicleGroup.add(group);
+        state.devices.set(id, device);
+        return device;
+    }
+
+    function createConnection(from, to) {
+        const color = from.type === 'hpc' || to.type === 'hpc' ? 0xFFD700 : 0x10B981;
+        const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
+        const tube = new THREE.Mesh(
+            new THREE.TubeGeometry(curve, 12, 0.08, 6, false),
+            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 })
+        );
+        state.vehicleGroup.add(tube);
+
+        const particles = [];
+        for (let i = 0; i < 2; i++) {
+            const p = new THREE.Mesh(
+                new THREE.SphereGeometry(0.12, 6, 6),
+                new THREE.MeshBasicMaterial({ color: 0xFFFFFF })
+            );
+            p.userData = { t: i / 2, curve };
+            state.vehicleGroup.add(p);
+            particles.push(p);
+        }
+
+        const conn = { from, to, tube, curve, particles, status: 'normal', originalColor: color };
+        state.connections.push(conn);
+        return conn;
+    }
+
+    function updateConnectionVisual(conn, status) {
+        conn.status = status;
+        if (status === 'fault') {
+            conn.tube.material.color.setHex(0xEF4444);
+            conn.tube.material.opacity = 0.3;
+            conn.particles.forEach(p => p.visible = false);
+        } else {
+            conn.tube.material.color.setHex(conn.originalColor);
+            conn.tube.material.opacity = 0.7;
+            conn.particles.forEach(p => p.visible = true);
+        }
+    }
+
+    // === LOAD SCENARIO ===
+    function loadScenario() {
+        createVehicle();
+
+        const acuIT = addDevice('hpc', new THREE.Vector3(0, 4, 0), 'ACU_IT');
+        const frontL = addDevice('lan9692', new THREE.Vector3(-3, 4, 9), 'Front-L-9692');
+        const frontR = addDevice('lan9692', new THREE.Vector3(3, 4, 9), 'Front-R-9692');
+        const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -9), 'Rear-9692');
+
+        const lidarFL = addDevice('lidar', new THREE.Vector3(-6, 11, 14), 'LiDAR-FL');
+        const lidarFR = addDevice('lidar', new THREE.Vector3(6, 11, 14), 'LiDAR-FR');
+
+        createConnection(frontL, acuIT);
+        createConnection(frontR, acuIT);
+        createConnection(rear, acuIT);
+        createConnection(frontL, frontR);
+        createConnection(frontL, lidarFL);
+        createConnection(frontR, lidarFR);
+
+        showToast('Ready to drive!');
+    }
+
+    // === FAULT SIMULATION ===
+    function injectFault(faultType) {
+        if (state.activeFaults.has(faultType)) {
+            state.activeFaults.delete(faultType);
+            state.connections.forEach(conn => updateConnectionVisual(conn, 'normal'));
+            state.devices.forEach(d => {
+                if (d.label === 'LiDAR-FL') {
+                    d.mesh.children[0].material.color.setHex(templates.lidar.color);
+                    d.mesh.children[0].material.emissive.setHex(templates.lidar.color);
+                }
+            });
+            document.querySelector(`[data-fault="${faultType}"]`)?.classList.remove('active');
+            showToast('Fault cleared');
+            return;
+        }
+
+        state.activeFaults.add(faultType);
+
+        if (faultType === 'sensor') {
+            state.devices.forEach(d => {
+                if (d.label === 'LiDAR-FL') {
+                    d.mesh.children[0].material.color.setHex(0xEF4444);
+                    d.mesh.children[0].material.emissive.setHex(0xEF4444);
+                }
+            });
+        } else {
+            state.connections.forEach(conn => {
+                let match = false;
+                if (faultType === 'front-backbone' && conn.from.label.includes('Front') && conn.to.label.includes('Front')) match = true;
+                if (faultType === 'front-l-link' && (conn.from.label === 'Front-L-9692' || conn.to.label === 'Front-L-9692') &&
+                    (conn.from.label === 'ACU_IT' || conn.to.label === 'ACU_IT')) match = true;
+                if (match) updateConnectionVisual(conn, 'fault');
+            });
+        }
+
+        document.querySelector(`[data-fault="${faultType}"]`)?.classList.add('active');
+        showToast('Fault injected');
+    }
+
+    // === DRIVE PHYSICS ===
+    function updateDrive() {
+        // Gas/Brake
+        if (touch.gas) {
+            drive.speed = Math.min(drive.speed + drive.acceleration, drive.maxSpeed);
+        } else if (touch.brake) {
+            drive.speed = Math.max(drive.speed - drive.acceleration * 2, -drive.maxSpeed * 0.4);
+        } else {
+            drive.speed *= 0.97;
+            if (Math.abs(drive.speed) < 0.01) drive.speed = 0;
+        }
+
+        // Steering from joystick
+        if (Math.abs(drive.speed) > 0.05) {
+            drive.steering = touch.joystickX * 0.04 * (drive.speed > 0 ? 1 : -1);
+        } else {
+            drive.steering = 0;
+        }
+
+        // Apply
+        state.vehicleGroup.translateZ(drive.speed);
+        state.vehicleGroup.rotateY(drive.steering);
+
+        // Speedometer
+        document.getElementById('speedValue').textContent = Math.abs(drive.speed * 50).toFixed(0);
+    }
+
+    function updateCamera() {
+        const offsets = [
+            new THREE.Vector3(0, 20, -50),
+            new THREE.Vector3(0, 60, 0),
+            new THREE.Vector3(50, 20, 0)
+        ];
+        const offset = offsets[state.cameraMode];
+        const cameraTarget = offset.clone().applyMatrix4(state.vehicleGroup.matrixWorld);
+        camera.position.lerp(cameraTarget, 0.1);
+
+        const lookTarget = new THREE.Vector3(0, 5, state.cameraMode === 1 ? 0 : 20);
+        lookTarget.applyMatrix4(state.vehicleGroup.matrixWorld);
+        camera.lookAt(lookTarget);
+    }
+
+    // === TOUCH CONTROLS ===
+    const joystick = document.getElementById('joystick');
+    const knob = document.getElementById('knob');
+    const joystickRect = { cx: 0, cy: 0, radius: 0 };
+
+    function updateJoystickRect() {
+        const rect = joystick.getBoundingClientRect();
+        joystickRect.cx = rect.left + rect.width / 2;
+        joystickRect.cy = rect.top + rect.height / 2;
+        joystickRect.radius = rect.width / 2 - 30;
+    }
+
+    joystick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touch.joystickActive = true;
+        updateJoystickRect();
+        handleJoystickMove(e.touches[0]);
+    });
+
+    joystick.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (touch.joystickActive) handleJoystickMove(e.touches[0]);
+    });
+
+    joystick.addEventListener('touchend', () => {
+        touch.joystickActive = false;
+        touch.joystickX = 0;
+        touch.joystickY = 0;
+        knob.style.transform = 'translate(-50%, -50%)';
+    });
+
+    function handleJoystickMove(t) {
+        let dx = t.clientX - joystickRect.cx;
+        let dy = t.clientY - joystickRect.cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist > joystickRect.radius) {
+            dx = dx / dist * joystickRect.radius;
+            dy = dy / dist * joystickRect.radius;
+        }
+
+        touch.joystickX = dx / joystickRect.radius;
+        touch.joystickY = dy / joystickRect.radius;
+
+        knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    }
+
+    // Pedals
+    const gasBtn = document.getElementById('gasBtn');
+    const brakeBtn = document.getElementById('brakeBtn');
+
+    gasBtn.addEventListener('touchstart', (e) => { e.preventDefault(); touch.gas = true; gasBtn.classList.add('active'); });
+    gasBtn.addEventListener('touchend', () => { touch.gas = false; gasBtn.classList.remove('active'); });
+
+    brakeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); touch.brake = true; brakeBtn.classList.add('active'); });
+    brakeBtn.addEventListener('touchend', () => { touch.brake = false; brakeBtn.classList.remove('active'); });
+
+    // Action buttons
+    document.getElementById('faultBtn').addEventListener('click', () => {
+        document.getElementById('faultPanel').classList.toggle('visible');
+    });
+
+    document.getElementById('cameraBtn').addEventListener('click', () => {
+        state.cameraMode = (state.cameraMode + 1) % 3;
+        showToast('Camera ' + (state.cameraMode + 1));
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        state.vehicleGroup.position.set(0, 0, 0);
+        state.vehicleGroup.rotation.set(0, 0, 0);
+        drive.speed = 0;
+        showToast('Reset');
+    });
+
+    document.querySelectorAll('.fault-item').forEach(item => {
+        item.addEventListener('click', () => injectFault(item.dataset.fault));
+    });
+
+    // === UI ===
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('visible');
+        setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
+    // === ANIMATION ===
+    function animate() {
+        requestAnimationFrame(animate);
+
+        updateDrive();
+        updateCamera();
+
+        state.connections.forEach(conn => {
+            if (conn.status === 'normal') {
+                conn.particles.forEach(p => {
+                    p.userData.t += 0.012;
+                    if (p.userData.t > 1) p.userData.t = 0;
+                    p.position.copy(p.userData.curve.getPoint(p.userData.t));
+                });
+            }
+        });
+
+        renderer.render(scene, camera);
+    }
+
+    // === INIT ===
+    loadScenario();
+    animate();
+
+    // Prevent default touch behaviors
+    document.addEventListener('touchmove', (e) => {
+        if (e.target.closest('.touch-controls') || e.target.closest('.fault-panel')) return;
+        e.preventDefault();
+    }, { passive: false });
+    </script>
+</body>
+</html>

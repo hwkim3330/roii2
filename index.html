@@ -3,73 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROii2 - Automotive TSN Network Designer (Drive Mode)</title>
+    <title>ROii2 - Automotive TSN Network Designer</title>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="libs/three.min.js"></script>
+    <script src="libs/OrbitControls.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
 
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Drive Mode Additions */
-        .drive-help {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            padding: 12px 24px;
-            border-radius: 30px;
-            color: white;
-            font-size: 14px;
-            display: none;
-            pointer-events: none;
-            z-index: 100;
-        }
-        .drive-help.visible { display: flex; gap: 15px; align-items: center; }
-        .key {
-            display: inline-block;
-            background: #333;
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid #555;
-            font-weight: bold;
-            font-family: monospace;
-            min-width: 20px;
-            text-align: center;
-        }
-        .drive-btn {
-            background: linear-gradient(135deg, #10B981, #059669) !important;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4) !important;
-        }
-        .drive-btn:hover {
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
-        }
-        .drive-btn.active {
-            background: linear-gradient(135deg, #EF4444, #DC2626) !important;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4) !important;
-        }
-        .speedometer {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.8);
-            padding: 15px 25px;
-            border-radius: 15px;
-            display: none;
-            pointer-events: none;
-            text-align: center;
-        }
-        .speedometer.visible { display: block; }
-        .speed-value {
-            font-size: 48px;
-            font-weight: 700;
-            color: #10B981;
-        }
-        .speed-unit {
-            font-size: 14px;
-            color: #94a3b8;
-        }
         .fault-panel {
             position: absolute;
             left: 20px;
@@ -129,6 +70,32 @@
         .recovery-status.success {
             color: #34d399;
         }
+        .version-links {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            display: flex;
+            gap: 8px;
+        }
+        .version-link {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #3B82F6;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .version-link:hover {
+            background: #3B82F6;
+            color: white;
+        }
+        .version-link.active {
+            background: #3B82F6;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -138,7 +105,7 @@
                 <img src="keti.png" alt="KETI" class="logo" onerror="this.style.display='none'">
                 <div class="title-group">
                     <h1>ROii2 - Automotive TSN Network Designer</h1>
-                    <p>2x Front + 1x Rear LAN9692 | ACU_IT + ACU_NO HPC | Drive Mode</p>
+                    <p>2x Front + 1x Rear LAN9692 | ACU_IT HPC | Network Topology</p>
                 </div>
             </div>
             <div class="stats">
@@ -159,7 +126,6 @@
                 <button class="btn btn-success" id="vehicleBtn">Load Scenario</button>
                 <button class="btn" id="faultBtn">Fault Simulation</button>
                 <button class="btn" id="exportBtn">Export</button>
-                <button class="btn drive-btn" id="driveBtn">Start Drive</button>
             </div>
         </div>
 
@@ -227,8 +193,14 @@
             <div class="canvas">
                 <div id="canvas3d"></div>
 
-                <div class="help-text">
-                    <strong>ROii2:</strong> 2x Front + 1x Rear LAN9692 | ACU_IT + ACU_NO |
+                <div class="version-links">
+                    <a href="index.html" class="version-link active">Network</a>
+                    <a href="drive.html" class="version-link">Drive Game</a>
+                    <a href="mobile.html" class="version-link">Mobile</a>
+                </div>
+
+                <div class="help-text" style="left: auto; right: 240px; transform: none;">
+                    <strong>ROii2:</strong> 2x Front + 1x Rear LAN9692 | ACU_IT |
                     <strong>Right-Click:</strong> Rotate |
                     <strong>Scroll:</strong> Zoom
                 </div>
@@ -246,19 +218,6 @@
                     <div class="control-btn" id="rotateBtn" title="Auto Rotate">🔄</div>
                     <div class="control-btn" id="resetBtn" title="Reset View">🎯</div>
                     <div class="control-btn" id="deleteBtn" title="Delete">🗑️</div>
-                </div>
-
-                <!-- Drive Mode UI -->
-                <div class="drive-help" id="driveHelp">
-                    <span><span class="key">W</span> Forward</span>
-                    <span><span class="key">S</span> Reverse</span>
-                    <span><span class="key">A</span><span class="key">D</span> Steer</span>
-                    <span><span class="key">Space</span> Brake</span>
-                </div>
-
-                <div class="speedometer" id="speedometer">
-                    <div class="speed-value" id="speedValue">0</div>
-                    <div class="speed-unit">km/h</div>
                 </div>
 
                 <!-- Fault Simulation Panel -->

@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ROii2 - Drive Game</title>
+
+    <script src="libs/three.min.js"></script>
+    <script src="libs/OrbitControls.js"></script>
+    <script src="libs/GLTFLoader.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            overflow: hidden;
+            color: white;
+        }
+        #canvas3d { width: 100vw; height: 100vh; }
+
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .top-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .version-links {
+            display: flex;
+            gap: 8px;
+            pointer-events: auto;
+        }
+        .version-link {
+            padding: 8px 16px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #10B981;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .version-link:hover { background: rgba(16, 185, 129, 0.2); }
+        .version-link.active {
+            background: #10B981;
+            color: black;
+        }
+
+        .title {
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .title h1 {
+            font-size: 18px;
+            color: #10B981;
+        }
+        .title p {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .speedometer {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            background: rgba(0,0,0,0.8);
+            padding: 25px 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid rgba(16, 185, 129, 0.4);
+        }
+        .speed-value {
+            font-size: 72px;
+            font-weight: 700;
+            color: #10B981;
+            line-height: 1;
+        }
+        .speed-unit {
+            font-size: 16px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .controls-help {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 15px 30px;
+            border-radius: 30px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .key {
+            display: inline-block;
+            background: #333;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            font-weight: bold;
+            font-family: monospace;
+            min-width: 24px;
+            text-align: center;
+            margin-right: 5px;
+        }
+        .control-item { font-size: 13px; color: #94a3b8; }
+
+        .fault-panel {
+            position: absolute;
+            left: 20px;
+            bottom: 40px;
+            background: rgba(0,0,0,0.85);
+            padding: 20px;
+            border-radius: 15px;
+            width: 300px;
+            pointer-events: auto;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .fault-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #EF4444;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .fault-item {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .fault-item:hover { background: rgba(239, 68, 68, 0.2); }
+        .fault-item.active {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: #EF4444;
+        }
+        .fault-name { font-size: 12px; font-weight: 600; color: #f87171; }
+        .fault-desc { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        .recovery-status {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            display: none;
+            color: #34d399;
+            font-size: 12px;
+        }
+        .recovery-status.visible { display: block; }
+
+        .btn-group {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-fault {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+        .btn-fault:hover { background: rgba(239, 68, 68, 0.3); }
+        .btn-fault.active { background: #EF4444; color: white; }
+        .btn-reset {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+        }
+        .btn-reset:hover { background: rgba(59, 130, 246, 0.3); }
+
+        .toast {
+            position: fixed;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 14px 28px;
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .mini-map {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+        .mini-map canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas3d"></div>
+
+    <div class="hud">
+        <div class="top-bar">
+            <div class="version-links">
+                <a href="index.html" class="version-link">Network</a>
+                <a href="drive.html" class="version-link active">Drive Game</a>
+                <a href="mobile.html" class="version-link">Mobile</a>
+            </div>
+            <div class="title">
+                <h1>ROii2 - Autonomous Vehicle Simulator</h1>
+                <p>ACU_IT HPC | 3x LAN9692 Zone Controllers | 17 Sensors</p>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-fault" id="faultBtn">Fault Sim</button>
+            <button class="btn btn-reset" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="speedometer">
+            <div class="speed-value" id="speedValue">0</div>
+            <div class="speed-unit">km/h</div>
+        </div>
+
+        <div class="controls-help">
+            <span class="control-item"><span class="key">W</span> Forward</span>
+            <span class="control-item"><span class="key">S</span> Reverse</span>
+            <span class="control-item"><span class="key">A</span><span class="key">D</span> Steer</span>
+            <span class="control-item"><span class="key">Space</span> Brake</span>
+            <span class="control-item"><span class="key">V</span> Camera</span>
+        </div>
+
+        <div class="fault-panel" id="faultPanel" style="display: none;">
+            <div class="fault-title">Fault Injection</div>
+            <div class="fault-item" data-fault="front-backbone">
+                <div class="fault-name">Front-L ↔ Front-R 10G Link Error</div>
+                <div class="fault-desc">Front zone controller 10G backbone failure</div>
+            </div>
+            <div class="fault-item" data-fault="front-l-link">
+                <div class="fault-name">Front-L-9692 ↔ ACU_IT Link Error</div>
+                <div class="fault-desc">Front-L zone controller → HPC link failure</div>
+            </div>
+            <div class="fault-item" data-fault="rear-link">
+                <div class="fault-name">Rear-9692 ↔ ACU_IT Link Error</div>
+                <div class="fault-desc">Rear zone controller → HPC link failure</div>
+            </div>
+            <div class="fault-item" data-fault="sensor">
+                <div class="fault-name">LiDAR-FL Sensor Error</div>
+                <div class="fault-desc">Front-left LiDAR sensor malfunction</div>
+            </div>
+            <div class="recovery-status" id="recoveryStatus">
+                Recovery: Rerouting via Front-R 10G Backbone
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+    // ROii2 Drive Game - Standalone Version
+
+    // === THREE.JS SETUP ===
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0f);
+    scene.fog = new THREE.Fog(0x0a0a0f, 80, 350);
+
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.getElementById('canvas3d').appendChild(renderer.domElement);
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // === LIGHTING ===
+    scene.add(new THREE.AmbientLight(0xFFFFFF, 0.6));
+
+    const mainLight = new THREE.DirectionalLight(0xFFFFFF, 1.0);
+    mainLight.position.set(50, 100, 50);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 4096;
+    mainLight.shadow.mapSize.height = 4096;
+    mainLight.shadow.camera.near = 0.5;
+    mainLight.shadow.camera.far = 300;
+    mainLight.shadow.camera.left = -100;
+    mainLight.shadow.camera.right = 100;
+    mainLight.shadow.camera.top = 100;
+    mainLight.shadow.camera.bottom = -100;
+    scene.add(mainLight);
+
+    scene.add(new THREE.DirectionalLight(0x8080FF, 0.3).position.set(-30, 30, -30));
+
+    // === ENVIRONMENT ===
+    // Ground
+    const groundGeo = new THREE.PlaneGeometry(2000, 2000);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x101018, roughness: 1 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.5;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Road
+    function createRoad() {
+        const roadGroup = new THREE.Group();
+
+        // Main road
+        const roadGeo = new THREE.PlaneGeometry(40, 4000);
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x222228, roughness: 0.7 });
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        road.position.y = -0.1;
+        road.receiveShadow = true;
+        roadGroup.add(road);
+
+        // Center dashed lines
+        for (let i = -1000; i < 1000; i += 20) {
+            const lineGeo = new THREE.PlaneGeometry(0.4, 12);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+            const line = new THREE.Mesh(lineGeo, lineMat);
+            line.rotation.x = -Math.PI / 2;
+            line.position.set(0, 0.01, i);
+            roadGroup.add(line);
+        }
+
+        // Side lines
+        [-18, 18].forEach(x => {
+            const sideGeo = new THREE.PlaneGeometry(0.3, 4000);
+            const sideMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+            const sideLine = new THREE.Mesh(sideGeo, sideMat);
+            sideLine.rotation.x = -Math.PI / 2;
+            sideLine.position.set(x, 0.02, 0);
+            roadGroup.add(sideLine);
+        });
+
+        return roadGroup;
+    }
+    scene.add(createRoad());
+
+    // Grid
+    const grid = new THREE.GridHelper(500, 100, 0x10B981, 0x151520);
+    grid.material.opacity = 0.15;
+    grid.material.transparent = true;
+    grid.position.y = -0.3;
+    scene.add(grid);
+
+    // === STATE ===
+    const state = {
+        vehicleGroup: new THREE.Group(),
+        devices: new Map(),
+        connections: [],
+        deviceCounter: 1,
+        activeFaults: new Set(),
+        cameraMode: 0 // 0: follow, 1: top, 2: side
+    };
+    scene.add(state.vehicleGroup);
+
+    const drive = {
+        speed: 0,
+        maxSpeed: 2.5,
+        acceleration: 0.04,
+        steering: 0,
+        maxSteering: 0.035,
+        keys: { w: false, a: false, s: false, d: false, space: false }
+    };
+
+    // === TEMPLATES ===
+    const templates = {
+        lan9692: { color: 0x10B981, size: [4, 2, 4] },
+        hpc: { color: 0xE11D48, size: [5, 2.5, 5] },
+        camera: { color: 0xd66b00, size: [0.8, 0.8, 0.8] },
+        lidar: { color: 0x10B981, size: [1.2, 1.2, 1.2] },
+        radar: { color: 0x952aff, size: [1.2, 1.2, 1.2] }
+    };
+
+    // === VEHICLE MODEL ===
+    let vehicleMeshes = [];
+
+    function createVehicle() {
+        const loader = new THREE.GLTFLoader();
+        loader.load('./roii.glb',
+            (gltf) => {
+                const model = gltf.scene;
+                const box = new THREE.Box3().setFromObject(model);
+                const size = box.getSize(new THREE.Vector3());
+                const center = box.getCenter(new THREE.Vector3());
+
+                const scale = 40 / Math.max(size.x, size.y, size.z);
+                model.scale.set(scale, scale, scale);
+                model.position.set(-center.x, -center.y + size.y * scale * 0.5 + 0.5, -center.z);
+
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material.transparent = true;
+                        child.material.opacity = 0.4;
+                        child.material.side = THREE.DoubleSide;
+                        child.castShadow = true;
+                        vehicleMeshes.push(child);
+                    }
+                });
+
+                state.vehicleGroup.add(model);
+            },
+            null,
+            () => createProceduralVehicle()
+        );
+    }
+
+    function createProceduralVehicle() {
+        const chassisMat = new THREE.MeshPhysicalMaterial({
+            color: 0xf0f4f8, transparent: true, opacity: 0.35,
+            metalness: 0.1, roughness: 0.2, clearcoat: 0.5
+        });
+
+        const chassis = new THREE.Mesh(new THREE.BoxGeometry(16, 10, 36), chassisMat);
+        chassis.position.y = 6;
+        chassis.castShadow = true;
+        state.vehicleGroup.add(chassis);
+        vehicleMeshes.push(chassis);
+
+        const roof = new THREE.Mesh(new THREE.BoxGeometry(14, 4, 30), chassisMat.clone());
+        roof.position.y = 13;
+        roof.castShadow = true;
+        state.vehicleGroup.add(roof);
+        vehicleMeshes.push(roof);
+
+        // Wheels
+        const wheelGeo = new THREE.CylinderGeometry(2.5, 2.5, 1.5, 24);
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+        wheelGeo.rotateZ(Math.PI / 2);
+
+        [[-8, 2.5, 12], [8, 2.5, 12], [-8, 2.5, -12], [8, 2.5, -12]].forEach(pos => {
+            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+            wheel.position.set(...pos);
+            wheel.castShadow = true;
+            state.vehicleGroup.add(wheel);
+        });
+
+        // Front/rear indicators
+        const front = new THREE.Mesh(new THREE.BoxGeometry(14, 2, 0.5), new THREE.MeshBasicMaterial({ color: 0x10B981 }));
+        front.position.set(0, 6, 18.1);
+        state.vehicleGroup.add(front);
+
+        const rear = new THREE.Mesh(new THREE.BoxGeometry(14, 2, 0.5), new THREE.MeshBasicMaterial({ color: 0xEF4444 }));
+        rear.position.set(0, 6, -18.1);
+        state.vehicleGroup.add(rear);
+    }
+
+    // === DEVICE & CONNECTION ===
+    function addDevice(type, position, label) {
+        const t = templates[type];
+        const id = `dev-${state.deviceCounter++}`;
+        const device = { id, type, label, position: position.clone(), status: 'normal', mesh: null };
+
+        const geo = type === 'lidar' && !label.includes('Center') ?
+            new THREE.CylinderGeometry(t.size[0] * 0.5, t.size[0] * 0.5, t.size[1], 16) :
+            new THREE.BoxGeometry(...t.size);
+
+        const mat = new THREE.MeshPhongMaterial({
+            color: t.color, emissive: t.color, emissiveIntensity: 0.5, shininess: 30
+        });
+
+        const group = new THREE.Group();
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        group.add(mesh);
+        group.add(new THREE.LineSegments(
+            new THREE.EdgesGeometry(geo),
+            new THREE.LineBasicMaterial({ color: 0xFFFFFF, opacity: 0.8, transparent: true })
+        ));
+        group.position.copy(position);
+        group.userData = { device, isDevice: true };
+        device.mesh = group;
+
+        state.vehicleGroup.add(group);
+        state.devices.set(id, device);
+        return device;
+    }
+
+    function createConnection(from, to) {
+        const color = from.type === 'hpc' || to.type === 'hpc' ? 0xFFD700 :
+                     from.type === 'lan9692' || to.type === 'lan9692' ? 0x10B981 : 0x3B82F6;
+
+        const curve = new THREE.CatmullRomCurve3([from.position.clone(), to.position.clone()]);
+        const tube = new THREE.Mesh(
+            new THREE.TubeGeometry(curve, 16, 0.08, 8, false),
+            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 })
+        );
+        state.vehicleGroup.add(tube);
+
+        const particles = [];
+        for (let i = 0; i < 3; i++) {
+            const p = new THREE.Mesh(
+                new THREE.SphereGeometry(0.15, 8, 8),
+                new THREE.MeshBasicMaterial({ color: 0xFFFFFF })
+            );
+            p.userData = { t: i / 3, curve };
+            state.vehicleGroup.add(p);
+            particles.push(p);
+        }
+
+        const conn = { from, to, tube, curve, particles, status: 'normal', originalColor: color };
+        state.connections.push(conn);
+        return conn;
+    }
+
+    function updateConnectionVisual(conn, status) {
+        conn.status = status;
+        if (status === 'fault') {
+            conn.tube.material.color.setHex(0xEF4444);
+            conn.tube.material.opacity = 0.3;
+            conn.particles.forEach(p => p.visible = false);
+        } else {
+            conn.tube.material.color.setHex(conn.originalColor);
+            conn.tube.material.opacity = 0.7;
+            conn.particles.forEach(p => p.visible = true);
+        }
+    }
+
+    // === LOAD SCENARIO ===
+    function loadScenario() {
+        // Clear
+        state.devices.forEach(d => state.vehicleGroup.remove(d.mesh));
+        state.connections.forEach(c => {
+            state.vehicleGroup.remove(c.tube);
+            c.particles.forEach(p => state.vehicleGroup.remove(p));
+        });
+        state.devices.clear();
+        state.connections = [];
+        state.deviceCounter = 1;
+
+        createVehicle();
+
+        // HPC
+        const acuIT = addDevice('hpc', new THREE.Vector3(0, 4, 0), 'ACU_IT');
+
+        // Zone Controllers
+        const frontL = addDevice('lan9692', new THREE.Vector3(-3.5, 4, 10), 'Front-L-9692');
+        const frontR = addDevice('lan9692', new THREE.Vector3(3.5, 4, 10), 'Front-R-9692');
+        const rear = addDevice('lan9692', new THREE.Vector3(0, 4, -10), 'Rear-9692');
+
+        // Sensors
+        const lidarFL = addDevice('lidar', new THREE.Vector3(-7.5, 12, 16), 'LiDAR-FL');
+        const lidarFR = addDevice('lidar', new THREE.Vector3(7.5, 12, 16), 'LiDAR-FR');
+        const lidarFC = addDevice('lidar', new THREE.Vector3(0, 7, 18), 'LiDAR-Front-Center');
+        const lidarRC = addDevice('lidar', new THREE.Vector3(0, 7, -18), 'LiDAR-Rear-Center');
+
+        const camFC = addDevice('camera', new THREE.Vector3(0, 13, 17.5), 'Cam-Front-Center');
+        const camFL = addDevice('camera', new THREE.Vector3(-1, 13, 17.5), 'Cam-Front-L');
+        const camFR = addDevice('camera', new THREE.Vector3(1, 13, 17.5), 'Cam-Front-R');
+        const camSL1 = addDevice('camera', new THREE.Vector3(-7.5, 13, 16), 'Cam-Side-L1');
+        const camSR1 = addDevice('camera', new THREE.Vector3(7.5, 13, 16), 'Cam-Side-R1');
+        const camSL2 = addDevice('camera', new THREE.Vector3(-7.5, 13, -16), 'Cam-Side-L2');
+        const camSR2 = addDevice('camera', new THREE.Vector3(7.5, 13, -16), 'Cam-Side-R2');
+        const camRC = addDevice('camera', new THREE.Vector3(0, 11, -17.5), 'Cam-Rear-Center');
+
+        const radarFC = addDevice('radar', new THREE.Vector3(0, 5, 18), 'Radar-Front-Center');
+        const radarFL = addDevice('radar', new THREE.Vector3(-6.5, 5, 17), 'Radar-Front-L');
+        const radarFR = addDevice('radar', new THREE.Vector3(6.5, 5, 17), 'Radar-Front-R');
+        const radarRL = addDevice('radar', new THREE.Vector3(-6.5, 5, -17), 'Radar-Rear-L');
+        const radarRR = addDevice('radar', new THREE.Vector3(6.5, 5, -17), 'Radar-Rear-R');
+
+        // Connections
+        createConnection(frontL, acuIT);
+        createConnection(frontR, acuIT);
+        createConnection(rear, acuIT);
+        createConnection(frontL, frontR); // 10G backbone
+
+        createConnection(frontL, lidarFL);
+        createConnection(frontL, lidarFC);
+        createConnection(frontL, camFL);
+        createConnection(frontL, camSL1);
+        createConnection(frontL, radarFL);
+
+        createConnection(frontR, lidarFR);
+        createConnection(frontR, camFC);
+        createConnection(frontR, camFR);
+        createConnection(frontR, camSR1);
+        createConnection(frontR, radarFC);
+        createConnection(frontR, radarFR);
+
+        createConnection(rear, lidarRC);
+        createConnection(rear, camRC);
+        createConnection(rear, camSL2);
+        createConnection(rear, camSR2);
+        createConnection(rear, radarRL);
+        createConnection(rear, radarRR);
+
+        showToast('Vehicle loaded - Use WASD to drive!');
+    }
+
+    // === FAULT SIMULATION ===
+    function injectFault(faultType) {
+        if (state.activeFaults.has(faultType)) {
+            state.activeFaults.delete(faultType);
+            clearFault(faultType);
+            return;
+        }
+
+        state.activeFaults.add(faultType);
+
+        switch(faultType) {
+            case 'front-backbone':
+                state.connections.forEach(conn => {
+                    if ((conn.from.label === 'Front-L-9692' && conn.to.label === 'Front-R-9692') ||
+                        (conn.from.label === 'Front-R-9692' && conn.to.label === 'Front-L-9692')) {
+                        updateConnectionVisual(conn, 'fault');
+                    }
+                });
+                showToast('FAULT: Front 10G Backbone Down');
+                break;
+
+            case 'front-l-link':
+                state.connections.forEach(conn => {
+                    if ((conn.from.label === 'Front-L-9692' && conn.to.label === 'ACU_IT') ||
+                        (conn.from.label === 'ACU_IT' && conn.to.label === 'Front-L-9692')) {
+                        updateConnectionVisual(conn, 'fault');
+                    }
+                });
+                showToast('FAULT: Front-L → HPC Link Down');
+                setTimeout(() => document.getElementById('recoveryStatus').classList.add('visible'), 1000);
+                break;
+
+            case 'rear-link':
+                state.connections.forEach(conn => {
+                    if ((conn.from.label === 'Rear-9692' && conn.to.label === 'ACU_IT') ||
+                        (conn.from.label === 'ACU_IT' && conn.to.label === 'Rear-9692')) {
+                        updateConnectionVisual(conn, 'fault');
+                    }
+                });
+                showToast('FAULT: Rear → HPC Link Down');
+                break;
+
+            case 'sensor':
+                state.devices.forEach(device => {
+                    if (device.label === 'LiDAR-FL') {
+                        device.status = 'fault';
+                        device.mesh.children[0].material.color.setHex(0xEF4444);
+                        device.mesh.children[0].material.emissive.setHex(0xEF4444);
+                    }
+                });
+                showToast('FAULT: LiDAR-FL Sensor Error');
+                break;
+        }
+
+        document.querySelector(`[data-fault="${faultType}"]`)?.classList.add('active');
+    }
+
+    function clearFault(faultType) {
+        switch(faultType) {
+            case 'front-backbone':
+            case 'front-l-link':
+            case 'rear-link':
+                state.connections.forEach(conn => updateConnectionVisual(conn, 'normal'));
+                document.getElementById('recoveryStatus').classList.remove('visible');
+                break;
+
+            case 'sensor':
+                state.devices.forEach(device => {
+                    if (device.label === 'LiDAR-FL') {
+                        device.status = 'normal';
+                        device.mesh.children[0].material.color.setHex(templates.lidar.color);
+                        device.mesh.children[0].material.emissive.setHex(templates.lidar.color);
+                    }
+                });
+                break;
+        }
+
+        document.querySelector(`[data-fault="${faultType}"]`)?.classList.remove('active');
+        showToast('Fault Cleared');
+    }
+
+    // === DRIVING ===
+    function updateDrive() {
+        // Acceleration
+        if (drive.keys.w) {
+            drive.speed = Math.min(drive.speed + drive.acceleration, drive.maxSpeed);
+        } else if (drive.keys.s) {
+            drive.speed = Math.max(drive.speed - drive.acceleration, -drive.maxSpeed * 0.5);
+        } else {
+            drive.speed *= 0.98;
+            if (Math.abs(drive.speed) < 0.01) drive.speed = 0;
+        }
+
+        // Brake
+        if (drive.keys.space) drive.speed *= 0.9;
+
+        // Steering
+        if (Math.abs(drive.speed) > 0.05) {
+            if (drive.keys.a) {
+                drive.steering = Math.min(drive.steering + 0.002, drive.maxSteering);
+            } else if (drive.keys.d) {
+                drive.steering = Math.max(drive.steering - 0.002, -drive.maxSteering);
+            } else {
+                drive.steering *= 0.85;
+            }
+        }
+
+        // Apply
+        state.vehicleGroup.translateZ(drive.speed);
+        state.vehicleGroup.rotateY(drive.steering * (drive.speed > 0 ? 1 : -1));
+
+        // Speedometer
+        document.getElementById('speedValue').textContent = Math.abs(drive.speed * 50).toFixed(0);
+    }
+
+    function updateCamera() {
+        const offset = state.cameraMode === 0 ? new THREE.Vector3(0, 25, -60) :
+                       state.cameraMode === 1 ? new THREE.Vector3(0, 80, 0) :
+                       new THREE.Vector3(80, 30, 0);
+
+        const cameraTarget = offset.clone().applyMatrix4(state.vehicleGroup.matrixWorld);
+        camera.position.lerp(cameraTarget, 0.08);
+
+        const lookTarget = new THREE.Vector3(0, 5, state.cameraMode === 1 ? 0 : 30);
+        lookTarget.applyMatrix4(state.vehicleGroup.matrixWorld);
+        camera.lookAt(lookTarget);
+    }
+
+    // === INPUT ===
+    window.addEventListener('keydown', (e) => {
+        switch (e.key.toLowerCase()) {
+            case 'w': drive.keys.w = true; break;
+            case 'a': drive.keys.a = true; break;
+            case 's': drive.keys.s = true; break;
+            case 'd': drive.keys.d = true; break;
+            case ' ': drive.keys.space = true; e.preventDefault(); break;
+            case 'v': state.cameraMode = (state.cameraMode + 1) % 3; break;
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        switch (e.key.toLowerCase()) {
+            case 'w': drive.keys.w = false; break;
+            case 'a': drive.keys.a = false; break;
+            case 's': drive.keys.s = false; break;
+            case 'd': drive.keys.d = false; break;
+            case ' ': drive.keys.space = false; break;
+        }
+    });
+
+    // === UI ===
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('visible');
+        setTimeout(() => toast.classList.remove('visible'), 2500);
+    }
+
+    document.getElementById('faultBtn').addEventListener('click', function() {
+        const panel = document.getElementById('faultPanel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        this.classList.toggle('active');
+    });
+
+    document.querySelectorAll('.fault-item').forEach(item => {
+        item.addEventListener('click', () => injectFault(item.dataset.fault));
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        state.vehicleGroup.position.set(0, 0, 0);
+        state.vehicleGroup.rotation.set(0, 0, 0);
+        drive.speed = 0;
+        drive.steering = 0;
+        state.activeFaults.forEach(f => clearFault(f));
+        state.activeFaults.clear();
+        showToast('Reset complete');
+    });
+
+    // === ANIMATION ===
+    function animate() {
+        requestAnimationFrame(animate);
+
+        updateDrive();
+        updateCamera();
+
+        // Animate particles
+        state.connections.forEach(conn => {
+            if (conn.status === 'normal') {
+                conn.particles.forEach(p => {
+                    p.userData.t += 0.01;
+                    if (p.userData.t > 1) p.userData.t = 0;
+                    p.position.copy(p.userData.curve.getPoint(p.userData.t));
+                });
+            }
+        });
+
+        renderer.render(scene, camera);
+    }
+
+    // === INIT ===
+    loadScenario();
+    animate();
+    </script>
+</body>
+</html>

@@ -1,5 +1,6 @@
-// ROii2 - Automotive TSN Network Designer with Drive Mode & Fault Simulation
-// LAN9692 x 3 Zone Controllers + ACU_IT/ACU_NO HPC Configuration
+// ROii2 - Automotive TSN Network Designer
+// LAN9692 x 3 Zone Controllers + ACU_IT HPC Configuration
+// Network Topology Viewer (No Drive Mode - see drive.html for game)
 
 // === THREE.JS SETUP ===
 const scene = new THREE.Scene();
@@ -131,20 +132,9 @@ const state = {
     deviceCounter: 1,
     autoRotate: false,
     vehicleGroup: new THREE.Group(),
-    isDriving: false,
     activeFaults: new Set()
 };
 scene.add(state.vehicleGroup);
-
-// Drive physics
-const driveState = {
-    speed: 0,
-    maxSpeed: 2.0,
-    acceleration: 0.03,
-    steering: 0,
-    maxSteering: 0.03,
-    keys: { w: false, a: false, s: false, d: false, space: false }
-};
 
 // === VEHICLE MODEL ===
 let vehicleModel = null;
@@ -576,123 +566,12 @@ function clearFault(faultType) {
     showToast('✅ Fault Cleared');
 }
 
-// === DRIVE MODE ===
-function startDriveMode() {
-    state.isDriving = true;
-    state.mode = 'drive';
-    controls.enabled = false;
-
-    document.getElementById('driveBtn').classList.add('active');
-    document.getElementById('driveBtn').textContent = 'Stop Drive';
-    document.getElementById('driveHelp').classList.add('visible');
-    document.getElementById('speedometer').classList.add('visible');
-
-    // Initial camera behind vehicle
-    updateFollowCamera(true);
-    showToast('Drive Mode ON - Use WASD to control');
-}
-
-function stopDriveMode() {
-    state.isDriving = false;
-    state.mode = 'select';
-    controls.enabled = true;
-    driveState.speed = 0;
-    driveState.steering = 0;
-
-    document.getElementById('driveBtn').classList.remove('active');
-    document.getElementById('driveBtn').textContent = 'Start Drive';
-    document.getElementById('driveHelp').classList.remove('visible');
-    document.getElementById('speedometer').classList.remove('visible');
-
-    showToast('Drive Mode OFF');
-}
-
-function updateDrivePhysics() {
-    if (!state.isDriving) return;
-
-    // Acceleration
-    if (driveState.keys.w) {
-        driveState.speed = Math.min(driveState.speed + driveState.acceleration, driveState.maxSpeed);
-    } else if (driveState.keys.s) {
-        driveState.speed = Math.max(driveState.speed - driveState.acceleration, -driveState.maxSpeed * 0.5);
-    } else {
-        // Friction
-        driveState.speed *= 0.98;
-        if (Math.abs(driveState.speed) < 0.01) driveState.speed = 0;
-    }
-
-    // Brake
-    if (driveState.keys.space) {
-        driveState.speed *= 0.92;
-    }
-
-    // Steering (only when moving)
-    if (Math.abs(driveState.speed) > 0.05) {
-        if (driveState.keys.a) {
-            driveState.steering = Math.min(driveState.steering + 0.002, driveState.maxSteering);
-        } else if (driveState.keys.d) {
-            driveState.steering = Math.max(driveState.steering - 0.002, -driveState.maxSteering);
-        } else {
-            driveState.steering *= 0.85;
-        }
-    }
-
-    // Apply movement
-    state.vehicleGroup.translateZ(driveState.speed);
-    state.vehicleGroup.rotateY(driveState.steering * (driveState.speed > 0 ? 1 : -1));
-
-    // Update speedometer
-    const speedKmh = Math.abs(driveState.speed * 50).toFixed(0);
-    document.getElementById('speedValue').textContent = speedKmh;
-
-    // Follow camera
-    updateFollowCamera();
-}
-
-function updateFollowCamera(instant = false) {
-    const offset = new THREE.Vector3(0, 25, -60);
-    const cameraTarget = offset.clone().applyMatrix4(state.vehicleGroup.matrixWorld);
-
-    const lookTarget = new THREE.Vector3(0, 5, 30);
-    lookTarget.applyMatrix4(state.vehicleGroup.matrixWorld);
-
-    if (instant) {
-        camera.position.copy(cameraTarget);
-    } else {
-        camera.position.lerp(cameraTarget, 0.08);
-    }
-    camera.lookAt(lookTarget);
-}
-
-// === KEYBOARD INPUT ===
-window.addEventListener('keydown', (e) => {
-    if (!state.isDriving) return;
-    switch (e.key.toLowerCase()) {
-        case 'w': driveState.keys.w = true; break;
-        case 'a': driveState.keys.a = true; break;
-        case 's': driveState.keys.s = true; break;
-        case 'd': driveState.keys.d = true; break;
-        case ' ': driveState.keys.space = true; e.preventDefault(); break;
-    }
-});
-
-window.addEventListener('keyup', (e) => {
-    switch (e.key.toLowerCase()) {
-        case 'w': driveState.keys.w = false; break;
-        case 'a': driveState.keys.a = false; break;
-        case 's': driveState.keys.s = false; break;
-        case 'd': driveState.keys.d = false; break;
-        case ' ': driveState.keys.space = false; break;
-    }
-});
 
 // === MOUSE INTERACTION ===
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 renderer.domElement.addEventListener('click', (e) => {
-    if (state.isDriving) return;
-
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -774,14 +653,6 @@ function showProperties(device) {
 // === EVENT LISTENERS ===
 document.getElementById('vehicleBtn').addEventListener('click', loadVehicleScenario);
 
-document.getElementById('driveBtn').addEventListener('click', () => {
-    if (state.isDriving) {
-        stopDriveMode();
-    } else {
-        startDriveMode();
-    }
-});
-
 document.getElementById('faultBtn').addEventListener('click', () => {
     document.getElementById('faultPanel').classList.toggle('visible');
 });
@@ -814,7 +685,6 @@ document.getElementById('rotateBtn').addEventListener('click', function() {
 document.getElementById('resetBtn').addEventListener('click', () => {
     state.vehicleGroup.position.set(0, 0, 0);
     state.vehicleGroup.rotation.set(0, 0, 0);
-    driveState.speed = 0;
     camera.position.set(50, 35, 70);
     controls.target.set(0, 0, 0);
     controls.update();
@@ -871,11 +741,7 @@ document.getElementById('opacitySlider').addEventListener('input', function() {
 function animate() {
     requestAnimationFrame(animate);
 
-    if (state.isDriving) {
-        updateDrivePhysics();
-    } else {
-        controls.update();
-    }
+    controls.update();
 
     // Animate connection particles
     state.connections.forEach(conn => {
