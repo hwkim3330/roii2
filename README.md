@@ -1,52 +1,64 @@
-# ROii2 - Automotive TSN Network Designer
+# ROii2 - Automotive TSN Network Visualizer
 
-3D visualization and simulation of Time-Sensitive Networking (TSN) architecture for autonomous vehicles.
+<p align="center">
+  <img src="https://img.shields.io/badge/Three.js-r128-black?logo=three.js" alt="Three.js">
+  <img src="https://img.shields.io/badge/TSN-802.1Qbv%2FQav-blue" alt="TSN">
+  <img src="https://img.shields.io/badge/Versions-25-green" alt="25 Versions">
+  <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT">
+</p>
+
+Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous vehicles. Features 25 unique visualization styles from technical blueprints to arcade games.
+
+## [Launch App](https://hwkim3330.github.io/roii2/home.html)
+
+---
 
 ## Live Demo
 
-### Core Views
-| Version | URL | Description |
-|---------|-----|-------------|
-| **Network** | [index.html](https://hwkim3330.github.io/roii2/) | Network topology visualization |
-| **Drive** | [drive.html](https://hwkim3330.github.io/roii2/drive.html) | Driving simulator (WASD) |
-| **Mobile** | [mobile.html](https://hwkim3330.github.io/roii2/mobile.html) | Touch/mouse controls |
-| **Dashboard** | [dashboard.html](https://hwkim3330.github.io/roii2/dashboard.html) | Real-time monitoring dashboard |
-| **Presentation** | [presentation.html](https://hwkim3330.github.io/roii2/presentation.html) | Auto-demo presentation mode |
-| **Editor** | [editor.html](https://hwkim3330.github.io/roii2/editor.html) | Network topology editor |
+### Core Views (9)
+| Version | Description |
+|---------|-------------|
+| [**Index**](https://hwkim3330.github.io/roii2/) | Network topology with device properties |
+| [**Drive**](https://hwkim3330.github.io/roii2/drive.html) | WASD driving simulator |
+| [**Network**](https://hwkim3330.github.io/roii2/mobile.html) | Mobile-friendly touch controls |
+| [**Dashboard**](https://hwkim3330.github.io/roii2/dashboard.html) | Real-time monitoring |
+| [**Editor**](https://hwkim3330.github.io/roii2/editor.html) | Topology editor |
+| [**Demo**](https://hwkim3330.github.io/roii2/demo.html) | Auto-cycling presentation (6 scenes) |
+| [**Scenario**](https://hwkim3330.github.io/roii2/scenario.html) | Autonomous driving scenarios |
+| [**Traffic**](https://hwkim3330.github.io/roii2/traffic.html) | Network packet flow visualization |
+| [**Presentation**](https://hwkim3330.github.io/roii2/presentation.html) | Auto-demo mode |
 
-### Visual Themes
-| Version | URL | Description |
-|---------|-----|-------------|
-| **Blueprint** | [blueprint.html](https://hwkim3330.github.io/roii2/blueprint.html) | Technical drawing style |
-| **Heatmap** | [heatmap.html](https://hwkim3330.github.io/roii2/heatmap.html) | Sensor coverage visualization |
-| **Wireframe** | [wireframe.html](https://hwkim3330.github.io/roii2/wireframe.html) | TRON/retro neon style |
-| **Data Flow** | [dataflow.html](https://hwkim3330.github.io/roii2/dataflow.html) | Animated data packets |
-| **Hologram** | [hologram.html](https://hwkim3330.github.io/roii2/hologram.html) | Sci-fi holographic display |
-| **Night Vision** | [nightvision.html](https://hwkim3330.github.io/roii2/nightvision.html) | Military green NV style |
-| **Dark** | [dark.html](https://hwkim3330.github.io/roii2/dark.html) | Cyberpunk neon theme |
-| **Simple** | [simple.html](https://hwkim3330.github.io/roii2/simple.html) | Minimal clean view |
-| **Initial D** | [initiald.html](https://hwkim3330.github.io/roii2/initiald.html) | Racing drift mode |
+### Visual Themes (6)
+| Version | Description |
+|---------|-------------|
+| [**Blueprint**](https://hwkim3330.github.io/roii2/blueprint.html) | Technical drawing style |
+| [**Wireframe**](https://hwkim3330.github.io/roii2/wireframe.html) | TRON neon style |
+| [**Dataflow**](https://hwkim3330.github.io/roii2/dataflow.html) | Animated data packets |
+| [**Hologram**](https://hwkim3330.github.io/roii2/hologram.html) | Sci-fi holographic display |
+| [**Nightvision**](https://hwkim3330.github.io/roii2/nightvision.html) | Military NV style |
+| [**Heatmap**](https://hwkim3330.github.io/roii2/heatmap.html) | Sensor coverage cones |
 
-### Games
-| Version | URL | Description |
-|---------|-----|-------------|
-| **Runner** | [runner.html](https://hwkim3330.github.io/roii2/runner.html) | TSN Data Packet Runner - Collect sensor data, avoid faults |
-| **Defender** | [defender.html](https://hwkim3330.github.io/roii2/defender.html) | TSN Network Defense - Protect vehicle from cyber threats |
-| **Snake** | [snake.html](https://hwkim3330.github.io/roii2/snake.html) | Network Snake - Build your network topology |
-| **Shooter** | [shooter.html](https://hwkim3330.github.io/roii2/shooter.html) | TSN Space Defense - Space invaders with sensor weapons |
+### Games (6)
+| Version | Description |
+|---------|-------------|
+| [**Runner**](https://hwkim3330.github.io/roii2/runner.html) | Endless runner - collect sensor data |
+| [**Defender**](https://hwkim3330.github.io/roii2/defender.html) | Tower defense vs cyber threats |
+| [**Snake**](https://hwkim3330.github.io/roii2/snake.html) | Build network topology |
+| [**Shooter**](https://hwkim3330.github.io/roii2/shooter.html) | Space invaders with sensor weapons |
+| [**Arcade**](https://hwkim3330.github.io/roii2/arcade.html) | Classic arcade racing |
+| [**Circuit**](https://hwkim3330.github.io/roii2/circuit.html) | Oval track racing with AI |
+
+### Special (4)
+| Version | Description |
+|---------|-------------|
+| [**Dark**](https://hwkim3330.github.io/roii2/dark.html) | Cyberpunk neon theme |
+| [**Simple**](https://hwkim3330.github.io/roii2/simple.html) | Minimal clean view |
+| [**Retro**](https://hwkim3330.github.io/roii2/retro.html) | 8-bit pixel arcade |
+| [**Minimal**](https://hwkim3330.github.io/roii2/minimal.html) | Clean white theme |
+
+---
 
 ## Architecture
-
-### Central HPC
-- **ACU_IT** - Autonomous Computing Unit (Infotainment)
-
-### Zone Controllers (3x LAN9692)
-
-| Zone | Controller | Position | Connected Sensors |
-|------|------------|----------|-------------------|
-| Front-L | Front-L-9692 | Left front | LiDAR-FL, LiDAR-Front-Center, Cam-Front-L, Cam-Side-L1, Radar-Front-L |
-| Front-R | Front-R-9692 | Right front | LiDAR-FR, Cam-Front-Center, Cam-Front-R, Cam-Side-R1, Radar-Front-Center, Radar-Front-R |
-| Rear | Rear-9692 | Center rear | LiDAR-Rear-Center, Cam-Rear-Center, Cam-Side-L2, Cam-Side-R2, Radar-Rear-L, Radar-Rear-R |
 
 ### Network Topology
 
@@ -57,11 +69,11 @@
                          └──────┬──────┘
                 ┌───────────────┼───────────────┐
                 │               │               │
-         ┌──────┴──────┐        │        ┌──────┴──────┐
-         │ Front-L-9692 ├───────┼────────┤ Front-R-9692 │
-         └──────┬──────┘   10G Backbone  └──────┬──────┘
+         ┌──────┴──────┐   10G Backbone  ┌──────┴──────┐
+         │ Front-L-9692 ├────────────────┤ Front-R-9692 │
+         └──────┬──────┘                 └──────┬──────┘
                 │                               │
-        [5 Sensors]                      [6 Sensors]
+         [5 Sensors]                     [6 Sensors]
 
                          ┌──────┴──────┐
                          │  Rear-9692  │
@@ -70,13 +82,13 @@
                          [6 Sensors]
 ```
 
-### LAN9692 Specifications
+### Zone Controllers (3x LAN9692)
 
-- **7x MateNET T1** - 100/1000BASE-T1 automotive Ethernet
-- **4x SFP+** - 1G/10G fiber optic
-- **1x RJ45** - Management port
-- **Total: 12 Ports**
-- **TSN Features:** IEEE 802.1Qbv/Qav/Qbu, PTP (IEEE 1588)
+| Zone | Position | Connected Sensors |
+|------|----------|-------------------|
+| Front-L | Left front | LiDAR-FL, LiDAR-FC, Cam-FL, Cam-SL1, Radar-FL |
+| Front-R | Right front | LiDAR-FR, Cam-FC, Cam-FR, Cam-SR1, Radar-FC, Radar-FR |
+| Rear | Center rear | LiDAR-RC, Cam-RC, Cam-SL2, Cam-SR2, Radar-RL, Radar-RR |
 
 ### Sensors (17 Total)
 
@@ -86,243 +98,90 @@
 | Camera | 8 | Front (3), Side (4), Rear (1) |
 | Radar | 5 | Front (3), Rear (2) |
 
-## Version Details
+### LAN9692 Specifications
 
-### Network View (index.html)
-- 3D visualization with Three.js
-- Click devices to view properties (port usage, connections, bandwidth)
-- Fault injection simulation
-- JSON configuration export
-- Auto-rotate view
-- Bandwidth-based connection styling (10G thick, 1G thin)
+- **7x MateNET T1** - 100/1000BASE-T1 automotive Ethernet
+- **4x SFP+** - 1G/10G fiber optic
+- **TSN Features:** IEEE 802.1Qbv/Qav/Qbu, PTP (IEEE 1588)
 
-### Drive Mode (drive.html)
-- WASD keyboard controls
-- Multiple camera views (V key)
-- Speedometer
-- Sky gradient background
-- Fault simulation while driving
-
-### Mobile (mobile.html)
-- Touch joystick for steering
-- Gas/brake pedals
-- Mouse support for desktop
-- Keyboard (WASD/arrows) support
-- Full 17-sensor network with properties panel
-
-### Dashboard (dashboard.html)
-- Real-time network monitoring
-- Traffic visualization with animated charts
-- Device list with status indicators
-- Connection bandwidth usage
-- Alert system
-
-### Presentation (presentation.html)
-- Auto-rotating demo mode
-- Fullscreen optimized (F key)
-- Animated fault demonstration
-- Recovery simulation
-- Pause/Resume (Space key)
-
-### Editor (editor.html)
-- Add devices by clicking
-- Create connections between devices
-- Delete devices and connections
-- Import/Export JSON topology
-- Load vehicle template
-
-### Dark Mode (dark.html)
-- Cyberpunk neon aesthetic
-- Wireframe vehicle model
-- Glowing connections
-- Scanline overlay effect
-
-### Simple View (simple.html)
-- Minimal clean design
-- White background
-- Essential controls only
-- Auto-rotate by default
-
-### Initial D Mode (initiald.html)
-- Night mountain racing aesthetic
-- Drift mechanics (Space key)
-- Speed lines effect
-- Digital speedometer & tachometer
-- Eurobeat-style UI
-- Orange neon color scheme
-
-### Blueprint View (blueprint.html)
-- Technical drawing style with blue lines
-- Dashed connection lines
-- Title block with drawing info
-- Specifications panel
-- Auto-rotate with grid
-
-### Heatmap View (heatmap.html)
-- Sensor coverage cone visualization
-- Toggle layers (LiDAR/Camera/Radar)
-- Coverage analysis percentages
-- Signal strength legend
-- Interactive layer controls
-
-### Wireframe / TRON (wireframe.html)
-- Retro TRON movie aesthetic
-- Neon cyan wireframe vehicle
-- Glowing edges and particles
-- Scanline overlay effect
-- Pulsing device lights
-
-### Data Flow (dataflow.html)
-- Animated data packets flowing through network
-- Real-time traffic statistics
-- Speed control slider
-- Per-sensor bandwidth display
-- Packet count visualization
-
-### Hologram (hologram.html)
-- Sci-fi holographic display
-- Rotating platform rings
-- Vertical scan effect
-- Hexagonal stat displays
-- Translucent wireframe vehicle
-
-### Night Vision (nightvision.html)
-- Military night vision green style
-- Scanline and noise effects
-- Crosshair overlay
-- Tactical information display
-- Blinking sensor indicators
-- Real-time clock
-
-### TSN Data Runner (runner.html)
-- Endless runner with ROii2 vehicle model
-- Collect LiDAR, Camera, Radar data packets
-- Avoid network faults and packet loss events
-- Zone bonuses (Front-L, ACU_IT, Front-R)
-- Network health meter and real-time graph
-- Level progression based on throughput
-
-### TSN Network Defender (defender.html)
-- Tower defense style gameplay
-- ROii2 vehicle at center with sensor turrets
-- LiDAR (AOE), Camera (multi-target), Radar (homing)
-- Wave-based cyber threat attacks
-- Zone controller status indicators
-- Power-up system
-
-### Network Snake (snake.html)
-- Classic snake with network topology theme
-- ACU_IT head collects sensor nodes
-- Grow your TSN network connections
-- Mini-map showing topology
-- Bandwidth meter tracking
-- Various sensor types with different values
-
-### TSN Space Defense (shooter.html)
-- Space invaders with ROii2 vehicle
-- Three weapon types: LiDAR, Camera, Radar
-- Enemy types: Malware, DDoS, Ransomware, APT
-- Combo system for score multipliers
-- Power-ups: Rapid Fire, Triple Shot, Shield Boost
-- Wave-based progression
-
-## Fault Simulation
-
-Simulate network failures to test redundancy:
-
-| Fault | Description | Recovery |
-|-------|-------------|----------|
-| Front 10G Backbone | Front-L ↔ Front-R link failure | Reroute via HPC |
-| Front-L → HPC | Front-L zone controller link down | Reroute via Front-R backbone |
-| Rear → HPC | Rear zone controller link down | - |
-| LiDAR-FL Sensor | Front-left LiDAR malfunction | Sensor fusion fallback |
+---
 
 ## Controls
 
-### Desktop (drive.html)
+### Driving (drive.html)
 | Key | Action |
 |-----|--------|
-| W | Accelerate |
-| S | Reverse |
-| A | Steer left |
-| D | Steer right |
+| W/S | Accelerate/Reverse |
+| A/D | Steer left/right |
 | Space | Brake |
 | V | Change camera |
-
-### Presentation Mode
-| Key | Action |
-|-----|--------|
-| F | Fullscreen |
-| Space | Pause/Resume |
-| R | Reset |
-
-### Mobile (mobile.html)
-- **Left joystick**: Steering
-- **GAS button**: Accelerate
-- **BRAKE button**: Decelerate/reverse
-- **Camera icon**: Change view
-- **Reset icon**: Reset position
 
 ### Games
 | Game | Controls |
 |------|----------|
-| **Runner** | ← → / A D: Switch lanes, ↑ / SPACE: Jump, Swipe on mobile |
-| **Defender** | Click threats to target, 1/Q: LiDAR, 2/W: Camera, 3/E: Radar |
-| **Snake** | Arrow keys / WASD: Move, SPACE: Speed boost |
-| **Shooter** | ← → / A D: Move, SPACE / Click: Fire, 1/2/3: Switch weapons |
+| **Runner** | ← → A D: Lanes, Space: Jump |
+| **Defender** | Click: Target, 1/2/3: Weapons |
+| **Snake** | Arrows/WASD: Move |
+| **Shooter** | ← → A D: Move, Space: Fire |
+| **Circuit** | ← → A D: Steer, ↑: Gas, ↓: Brake |
 
-## Technology Stack
+---
+
+## Technology
 
 - **Three.js** r128 - 3D rendering
+- **GLTFLoader** - Vehicle model (roii.glb)
+- **OrbitControls** - Camera interaction
 - **Font Awesome** 6.5 - Icons
-- **GLTFLoader** - 3D model loading
-- **OrbitControls** - Camera controls
+
+---
+
+## Quick Start
+
+```bash
+git clone https://github.com/hwkim3330/roii2.git
+cd roii2
+# Open home.html in browser
+```
+
+---
 
 ## File Structure
 
 ```
 roii2/
-├── index.html        # Network topology viewer
-├── drive.html        # Driving simulator
-├── mobile.html       # Touch-optimized version
-├── dashboard.html    # Monitoring dashboard
-├── presentation.html # Auto-demo mode
-├── editor.html       # Topology editor
-├── blueprint.html    # Technical drawing style
-├── heatmap.html      # Sensor coverage visualization
-├── wireframe.html    # TRON/retro style
-├── dataflow.html     # Animated data packets
-├── hologram.html     # Sci-fi holographic
-├── nightvision.html  # Military NV style
-├── dark.html         # Cyberpunk neon theme
-├── simple.html       # Minimal view
-├── initiald.html     # Racing drift mode
-├── runner.html       # TSN Data Runner game
-├── defender.html     # Network defense game
-├── snake.html        # Network snake game
-├── shooter.html      # Space invaders game
-├── script.js         # Main application logic
-├── roii.glb          # 3D vehicle model
-├── keti.png          # KETI logo
-├── libs/
-│   ├── three.min.js
-│   ├── OrbitControls.js
-│   └── GLTFLoader.js
-└── README.md
+├── home.html          # Version launcher
+├── index.html         # Network topology
+├── drive.html         # Driving simulator
+├── mobile.html        # Touch controls
+├── dashboard.html     # Monitoring
+├── editor.html        # Topology editor
+├── demo.html          # Auto presentation
+├── scenario.html      # Driving scenarios
+├── traffic.html       # Packet flow
+├── presentation.html  # Demo mode
+├── blueprint.html     # Blueprint theme
+├── wireframe.html     # TRON theme
+├── dataflow.html      # Data packets
+├── hologram.html      # Holographic
+├── nightvision.html   # Night vision
+├── heatmap.html       # Coverage map
+├── runner.html        # Runner game
+├── defender.html      # Defense game
+├── snake.html         # Snake game
+├── shooter.html       # Shooter game
+├── arcade.html        # Arcade racing
+├── circuit.html       # Track racing
+├── dark.html          # Cyberpunk
+├── simple.html        # Minimal
+├── retro.html         # 8-bit pixel
+├── minimal.html       # Clean white
+├── script.js          # Core logic
+├── roii.glb           # 3D model
+└── libs/              # Three.js libs
 ```
 
-## Development
-
-All JavaScript libraries are hosted locally (no CDN dependency for core functionality).
-
-```bash
-# Clone repository
-git clone https://github.com/hwkim3330/roii2.git
-cd roii2
-
-# Open in browser
-open index.html
-```
+---
 
 ## KETI
 
@@ -330,4 +189,4 @@ Korea Electronics Technology Institute - TSN Research Project
 
 ---
 
-*Built with Three.js and Font Awesome*
+*Built with Three.js*
