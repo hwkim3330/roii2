@@ -9,47 +9,43 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg: #f5f5f7;
+            --bg: #f8f9fa;
             --card: #ffffff;
-            --border: #e5e5e7;
-            --text: #1d1d1f;
-            --text-secondary: #86868b;
-            --blue: #0071e3;
-            --green: #34c759;
-            --red: #ff3b30;
-            --yellow: #ff9500;
-            --purple: #af52de;
-            --cyan: #5ac8fa;
+            --border: #e9ecef;
+            --text: #212529;
+            --text-muted: #6c757d;
+            --blue: #0d6efd;
+            --green: #198754;
+            --red: #dc3545;
+            --yellow: #ffc107;
+            --cyan: #0dcaf0;
+            --purple: #6f42c1;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
             overflow: hidden;
             height: 100vh;
         }
 
-        /* Layout */
         .container {
             display: grid;
-            grid-template-columns: 300px 1fr 360px;
-            grid-template-rows: 64px 1fr;
+            grid-template-columns: 320px 1fr 380px;
+            grid-template-rows: 60px 1fr;
             height: 100vh;
         }
 
         /* Header */
         .header {
             grid-column: 1 / -1;
-            background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: var(--card);
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 24px;
-            z-index: 100;
         }
 
         .logo {
@@ -58,63 +54,61 @@
             gap: 16px;
         }
 
-        .logo img {
-            height: 32px;
-        }
-
-        .logo-text {
-            font-size: 18px;
-            font-weight: 600;
-        }
+        .logo img { height: 28px; }
 
         .logo-divider {
             width: 1px;
-            height: 24px;
+            height: 20px;
             background: var(--border);
         }
 
-        .logo-sub {
-            font-size: 14px;
-            color: var(--text-secondary);
-            font-weight: 500;
+        .logo h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
         }
 
-        .status-bar {
+        .logo span {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+
+        .header-right {
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: 20px;
         }
 
-        .status-badge {
+        .status-pill {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            transition: all 0.3s;
         }
 
-        .status-badge.normal {
-            background: rgba(52, 199, 89, 0.1);
+        .status-pill.normal {
+            background: rgba(25, 135, 84, 0.1);
             color: var(--green);
         }
 
-        .status-badge.critical {
-            background: rgba(255, 59, 48, 0.1);
+        .status-pill.critical {
+            background: rgba(220, 53, 69, 0.1);
             color: var(--red);
-            animation: critical-pulse 0.5s infinite;
+            animation: pulse-critical 1s infinite;
         }
 
-        .status-badge.repairing {
-            background: rgba(255, 149, 0, 0.1);
-            color: var(--yellow);
+        .status-pill.recovering {
+            background: rgba(255, 193, 7, 0.15);
+            color: #997404;
         }
 
-        @keyframes critical-pulse {
+        @keyframes pulse-critical {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
+            50% { opacity: 0.7; }
         }
 
         .status-dot {
@@ -124,9 +118,9 @@
             background: currentColor;
         }
 
-        .time-display {
+        .clock {
             font-size: 13px;
-            color: var(--text-secondary);
+            color: var(--text-muted);
             font-variant-numeric: tabular-nums;
         }
 
@@ -134,69 +128,59 @@
         .sidebar {
             background: var(--card);
             border-right: 1px solid var(--border);
-            padding: 20px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
             overflow-y: auto;
         }
 
         .panel {
             background: var(--bg);
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 16px;
         }
-
-        .panel-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .panel-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-        }
-
-        .panel-icon.red { background: rgba(255,59,48,0.1); color: var(--red); }
-        .panel-icon.blue { background: rgba(0,113,227,0.1); color: var(--blue); }
-        .panel-icon.green { background: rgba(52,199,89,0.1); color: var(--green); }
-        .panel-icon.purple { background: rgba(175,82,222,0.1); color: var(--purple); }
 
         .panel-title {
-            font-size: 15px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title i {
+            font-size: 12px;
         }
 
         /* Fault Buttons */
-        .fault-grid {
+        .fault-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .fault-btn {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
+            gap: 10px;
+            padding: 12px;
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
-            text-align: left;
+            transition: all 0.15s;
+            font-size: 13px;
+            color: var(--text);
         }
 
         .fault-btn:hover {
             border-color: var(--red);
-            background: rgba(255,59,48,0.02);
+            background: rgba(220, 53, 69, 0.03);
         }
 
         .fault-btn.active {
@@ -206,51 +190,44 @@
         }
 
         .fault-btn i {
-            width: 20px;
+            width: 16px;
             color: var(--red);
+            font-size: 12px;
         }
 
-        .fault-btn.active i {
-            color: white;
-        }
+        .fault-btn.active i { color: white; }
 
-        .fault-btn span {
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        /* Recovery Button */
+        /* Recovery */
         .recovery-btn {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             background: var(--blue);
             border: none;
-            border-radius: 12px;
+            border-radius: 8px;
             color: white;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            transition: all 0.15s;
         }
 
-        .recovery-btn:hover {
-            background: #0077ed;
-            transform: scale(1.02);
+        .recovery-btn:hover:not(:disabled) {
+            background: #0b5ed7;
         }
 
         .recovery-btn:disabled {
             background: var(--border);
-            color: var(--text-secondary);
+            color: var(--text-muted);
             cursor: not-allowed;
-            transform: none;
         }
 
         .recovery-btn.processing {
             background: var(--yellow);
+            color: #000;
         }
 
         .recovery-btn.processing i {
@@ -258,7 +235,6 @@
         }
 
         @keyframes spin {
-            from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
@@ -266,37 +242,82 @@
         .metrics-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 8px;
         }
 
-        .metric-item {
+        .metric {
             background: var(--card);
-            padding: 16px;
-            border-radius: 12px;
+            padding: 12px;
+            border-radius: 8px;
             border: 1px solid var(--border);
         }
 
         .metric-label {
-            font-size: 11px;
-            color: var(--text-secondary);
+            font-size: 10px;
+            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+            margin-bottom: 4px;
         }
 
         .metric-value {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 700;
             font-variant-numeric: tabular-nums;
+            transition: color 0.3s;
         }
 
         .metric-value.good { color: var(--green); }
-        .metric-value.warning { color: var(--yellow); }
-        .metric-value.danger { color: var(--red); }
+        .metric-value.warn { color: var(--yellow); }
+        .metric-value.bad { color: var(--red); }
+
+        .metric-unit {
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        /* Opacity Slider */
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-group label {
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 60px;
+        }
+
+        .slider-group input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--blue);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 35px;
+            text-align: right;
+        }
 
         /* Main View */
         .main-view {
-            background: var(--bg);
+            background: linear-gradient(180deg, #f0f0f0 0%, #e8e8e8 100%);
             position: relative;
         }
 
@@ -305,106 +326,92 @@
             height: 100%;
         }
 
-        /* Info Overlay */
-        .info-overlay {
+        .overlay-chips {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 16px;
+            left: 16px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
-        .info-chip {
+        .chip {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 14px;
-            background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .info-chip i {
-            color: var(--blue);
-        }
-
-        /* Topology Panel */
-        .topology-panel {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 300px;
+            gap: 6px;
+            padding: 6px 12px;
             background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .chip i { color: var(--blue); font-size: 10px; }
+
+        /* Topology */
+        .topology-box {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            width: 280px;
+            background: rgba(255,255,255,0.98);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .topology-title {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 16px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
         }
 
-        .topology-svg {
+        .topo-svg {
             width: 100%;
-            height: 140px;
+            height: 100px;
         }
 
-        .topo-node {
-            cursor: pointer;
+        .topo-link {
+            stroke: var(--cyan);
+            stroke-width: 2;
+            opacity: 0.5;
+            transition: all 0.3s;
         }
 
-        .topo-node-bg {
+        .topo-link.fault {
+            stroke: var(--red);
+            stroke-dasharray: 5 3;
+            opacity: 1;
+            animation: link-blink 0.4s infinite;
+        }
+
+        @keyframes link-blink {
+            50% { opacity: 0.3; }
+        }
+
+        .topo-node circle {
             fill: white;
             stroke: var(--border);
             stroke-width: 2;
             transition: all 0.3s;
         }
 
-        .topo-node.fault .topo-node-bg {
+        .topo-node.fault circle {
             stroke: var(--red);
             stroke-width: 3;
         }
 
-        .topo-node-icon {
-            fill: var(--text-secondary);
-            font-size: 10px;
-        }
-
-        .topo-node-label {
-            fill: var(--text);
-            font-size: 9px;
+        .topo-node text {
+            font-size: 8px;
             font-weight: 600;
+            fill: var(--text);
             text-anchor: middle;
         }
 
-        .topo-link {
-            stroke: var(--cyan);
-            stroke-width: 2;
-            opacity: 0.6;
-        }
-
-        .topo-link.fault {
-            stroke: var(--red);
-            stroke-dasharray: 6 3;
-            opacity: 1;
-            animation: link-flash 0.4s infinite;
-        }
-
-        @keyframes link-flash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
         .topo-sensor {
-            transition: all 0.3s;
+            transition: fill 0.3s;
         }
 
         .topo-sensor.fault {
@@ -419,36 +426,36 @@
             flex-direction: column;
         }
 
-        /* Chart Section */
-        .chart-section {
-            padding: 20px;
+        /* Chart */
+        .chart-box {
+            padding: 16px;
             border-bottom: 1px solid var(--border);
         }
 
         .chart-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
+            align-items: baseline;
+            margin-bottom: 12px;
         }
 
-        .chart-title {
-            font-size: 13px;
+        .chart-label {
+            font-size: 12px;
             font-weight: 600;
-            color: var(--text-secondary);
+            color: var(--text-muted);
         }
 
-        .chart-value {
-            font-size: 28px;
+        .chart-big {
+            font-size: 24px;
             font-weight: 700;
             font-variant-numeric: tabular-nums;
         }
 
-        .chart-canvas-container {
-            height: 120px;
+        .chart-area {
+            height: 100px;
             background: var(--bg);
-            border-radius: 12px;
-            padding: 12px;
+            border-radius: 8px;
+            padding: 8px;
         }
 
         #ptpChart {
@@ -457,112 +464,88 @@
         }
 
         /* Terminal */
-        .terminal-section {
+        .terminal-box {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        .terminal-header {
-            padding: 16px 20px;
+        .terminal-head {
+            padding: 12px 16px;
             border-bottom: 1px solid var(--border);
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
         }
 
         .terminal-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .terminal-badge {
-            padding: 3px 8px;
-            background: rgba(52,199,89,0.1);
-            color: var(--green);
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 600;
-        }
-
-        .terminal-content {
-            flex: 1;
-            padding: 16px 20px;
-            overflow-y: auto;
-            font-family: 'SF Mono', 'Menlo', monospace;
             font-size: 12px;
-            line-height: 1.8;
-            background: #fafafa;
+            font-weight: 600;
+            color: var(--text-muted);
         }
 
-        .log-line {
+        .live-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            background: rgba(25, 135, 84, 0.1);
+            color: var(--green);
+            border-radius: 3px;
+        }
+
+        .terminal-logs {
+            flex: 1;
+            padding: 12px 16px;
+            overflow-y: auto;
+            background: #fafbfc;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .log {
             display: flex;
-            gap: 12px;
+            gap: 10px;
         }
 
         .log-time {
             color: #999;
-            min-width: 70px;
-            font-variant-numeric: tabular-nums;
+            min-width: 65px;
         }
 
         .log-msg { color: #333; }
         .log-msg.info { color: var(--blue); }
-        .log-msg.success { color: var(--green); }
-        .log-msg.error { color: var(--red); font-weight: 600; }
-        .log-msg.warning { color: var(--yellow); }
+        .log-msg.ok { color: var(--green); }
+        .log-msg.err { color: var(--red); font-weight: 600; }
+        .log-msg.warn { color: #b45309; }
         .log-msg.cmd { color: var(--purple); }
         .log-msg.cmd::before { content: '$ '; color: #999; }
 
-        .terminal-input {
-            padding: 12px 20px;
+        .terminal-prompt {
+            padding: 10px 16px;
             border-top: 1px solid var(--border);
+            background: #fafbfc;
+            font-family: 'SF Mono', monospace;
+            font-size: 11px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-family: 'SF Mono', monospace;
-            font-size: 12px;
-            background: #fafafa;
+            gap: 6px;
         }
 
-        .terminal-prompt {
-            color: var(--green);
-            font-weight: 600;
-        }
-
-        .terminal-cursor {
-            width: 8px;
-            height: 16px;
+        .prompt-user { color: var(--green); font-weight: 600; }
+        .cursor {
+            width: 7px;
+            height: 13px;
             background: var(--blue);
             animation: blink 1s step-end infinite;
         }
-
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
+        @keyframes blink { 50% { opacity: 0; } }
 
         /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #ccc;
-        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -572,98 +555,91 @@
             <div class="logo">
                 <img src="keti.png" alt="KETI">
                 <div class="logo-divider"></div>
-                <span class="logo-text">ROii2</span>
-                <span class="logo-sub">TSN Fault Simulator</span>
+                <h1>ROii2</h1>
+                <span>TSN Fault Simulator</span>
             </div>
-            <div class="status-bar">
-                <div class="status-badge normal" id="statusBadge">
+            <div class="header-right">
+                <div class="status-pill normal" id="statusPill">
                     <div class="status-dot"></div>
                     <span id="statusText">Operational</span>
                 </div>
-                <div class="time-display" id="timeDisplay">00:00:00</div>
+                <div class="clock" id="clock">00:00:00</div>
             </div>
         </header>
 
         <!-- Sidebar -->
         <aside class="sidebar">
-            <!-- Fault Injection -->
             <div class="panel">
-                <div class="panel-header">
-                    <div class="panel-icon red"><i class="fas fa-bolt"></i></div>
-                    <div class="panel-title">Fault Injection</div>
-                </div>
-                <div class="fault-grid">
+                <div class="panel-title"><i class="fas fa-bolt"></i> Fault Injection</div>
+                <div class="fault-list">
                     <button class="fault-btn" data-fault="lidar" onclick="injectFault('lidar')">
                         <i class="fas fa-satellite-dish"></i>
-                        <span>LiDAR-FL Sensor Failure</span>
+                        LiDAR-FL Sensor Failure
                     </button>
                     <button class="fault-btn" data-fault="camera" onclick="injectFault('camera')">
                         <i class="fas fa-video"></i>
-                        <span>Camera Link Down</span>
+                        Camera Link Down
                     </button>
                     <button class="fault-btn" data-fault="backbone" onclick="injectFault('backbone')">
                         <i class="fas fa-network-wired"></i>
-                        <span>10G Backbone Fault</span>
+                        10G Backbone Fault
                     </button>
                     <button class="fault-btn" data-fault="ptp" onclick="injectFault('ptp')">
                         <i class="fas fa-clock"></i>
-                        <span>PTP Sync Loss</span>
+                        PTP Synchronization Loss
                     </button>
                     <button class="fault-btn" data-fault="zone" onclick="injectFault('zone')">
                         <i class="fas fa-microchip"></i>
-                        <span>Zone Controller Fail</span>
+                        Zone Controller Failure
                     </button>
                 </div>
             </div>
 
-            <!-- Recovery -->
             <div class="panel">
-                <div class="panel-header">
-                    <div class="panel-icon blue"><i class="fas fa-wrench"></i></div>
-                    <div class="panel-title">Recovery</div>
-                </div>
+                <div class="panel-title"><i class="fas fa-tools"></i> Recovery</div>
                 <button class="recovery-btn" id="recoveryBtn" onclick="startRecovery()" disabled>
                     <i class="fas fa-sync-alt"></i>
-                    <span>Auto-Reconfigure</span>
+                    Auto-Reconfigure
                 </button>
             </div>
 
-            <!-- Metrics -->
             <div class="panel">
-                <div class="panel-header">
-                    <div class="panel-icon green"><i class="fas fa-chart-line"></i></div>
-                    <div class="panel-title">Live Metrics</div>
-                </div>
+                <div class="panel-title"><i class="fas fa-tachometer-alt"></i> Network Metrics</div>
                 <div class="metrics-grid">
-                    <div class="metric-item">
+                    <div class="metric">
                         <div class="metric-label">PTP Offset</div>
-                        <div class="metric-value good" id="metricPTP">0.05µs</div>
+                        <div class="metric-value good" id="mPtp">48<span class="metric-unit">ns</span></div>
                     </div>
-                    <div class="metric-item">
+                    <div class="metric">
+                        <div class="metric-label">Jitter</div>
+                        <div class="metric-value good" id="mJitter">12<span class="metric-unit">ns</span></div>
+                    </div>
+                    <div class="metric">
                         <div class="metric-label">Packet Loss</div>
-                        <div class="metric-value good" id="metricLoss">0.00%</div>
+                        <div class="metric-value good" id="mLoss">0.000<span class="metric-unit">%</span></div>
                     </div>
-                    <div class="metric-item">
+                    <div class="metric">
                         <div class="metric-label">CRC Errors</div>
-                        <div class="metric-value good" id="metricCRC">0</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-label">Link Status</div>
-                        <div class="metric-value good" id="metricLink">17/17</div>
+                        <div class="metric-value good" id="mCrc">0<span class="metric-unit">/s</span></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Device -->
-            <div class="panel" style="margin-top: auto;">
-                <div class="panel-header">
-                    <div class="panel-icon purple"><i class="fas fa-server"></i></div>
-                    <div class="panel-title">Connected Device</div>
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-sliders-h"></i> Display</div>
+                <div class="slider-group">
+                    <label>Opacity</label>
+                    <input type="range" min="20" max="100" value="75" id="opacitySlider" oninput="setOpacity(this.value)">
+                    <span class="slider-value" id="opacityValue">75%</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
-                    <div style="font-size: 14px; font-weight: 600;">LAN9662</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">VelocityDRIVE-SP</div>
-                    <div style="margin-left: auto; width: 8px; height: 8px; background: var(--green); border-radius: 50%;"></div>
+            </div>
+
+            <div class="panel" style="margin-top:auto;">
+                <div class="panel-title"><i class="fas fa-server"></i> Device</div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+                    <span style="font-weight:600;">LAN9662</span>
+                    <span style="color:var(--text-muted);">VelocityDRIVE-SP</span>
+                    <span style="margin-left:auto;width:8px;height:8px;background:var(--green);border-radius:50%;"></span>
                 </div>
             </div>
         </aside>
@@ -672,89 +648,64 @@
         <main class="main-view">
             <canvas id="canvas3d"></canvas>
 
-            <div class="info-overlay">
-                <div class="info-chip">
-                    <i class="fas fa-car"></i>
-                    ROii2 Vehicle
-                </div>
-                <div class="info-chip">
-                    <i class="fas fa-sitemap"></i>
-                    17 Sensors • 3 Zones
-                </div>
+            <div class="overlay-chips">
+                <div class="chip"><i class="fas fa-car"></i> ROii2 Vehicle</div>
+                <div class="chip"><i class="fas fa-sitemap"></i> 17 Sensors / 3 Zones</div>
             </div>
 
-            <!-- Network Topology -->
-            <div class="topology-panel">
+            <div class="topology-box">
                 <div class="topology-title">Network Topology</div>
-                <svg class="topology-svg" viewBox="0 0 260 140">
-                    <!-- Links -->
-                    <line class="topo-link" id="link-hpc-fl" x1="130" y1="30" x2="50" y2="80"/>
-                    <line class="topo-link" id="link-hpc-fr" x1="130" y1="30" x2="210" y2="80"/>
-                    <line class="topo-link" id="link-hpc-rear" x1="130" y1="30" x2="130" y2="120"/>
-                    <line class="topo-link" id="link-fl-fr" x1="50" y1="80" x2="210" y2="80"/>
+                <svg class="topo-svg" viewBox="0 0 240 100">
+                    <line class="topo-link" id="link-hpc-fl" x1="120" y1="15" x2="40" y2="55"/>
+                    <line class="topo-link" id="link-hpc-fr" x1="120" y1="15" x2="200" y2="55"/>
+                    <line class="topo-link" id="link-hpc-rear" x1="120" y1="15" x2="120" y2="85"/>
+                    <line class="topo-link" id="link-fl-fr" x1="40" y1="55" x2="200" y2="55"/>
 
-                    <!-- HPC Node -->
                     <g class="topo-node" id="node-hpc">
-                        <circle class="topo-node-bg" cx="130" cy="30" r="20"/>
-                        <text class="topo-node-label" x="130" y="34">HPC</text>
+                        <circle cx="120" cy="15" r="12"/>
+                        <text x="120" y="18">HPC</text>
                     </g>
-
-                    <!-- Front-L Node -->
                     <g class="topo-node" id="node-fl">
-                        <circle class="topo-node-bg" cx="50" cy="80" r="18"/>
-                        <text class="topo-node-label" x="50" y="84">FL</text>
+                        <circle cx="40" cy="55" r="11"/>
+                        <text x="40" y="58">FL</text>
                     </g>
-
-                    <!-- Front-R Node -->
                     <g class="topo-node" id="node-fr">
-                        <circle class="topo-node-bg" cx="210" cy="80" r="18"/>
-                        <text class="topo-node-label" x="210" y="84">FR</text>
+                        <circle cx="200" cy="55" r="11"/>
+                        <text x="200" y="58">FR</text>
                     </g>
-
-                    <!-- Rear Node -->
                     <g class="topo-node" id="node-rear">
-                        <circle class="topo-node-bg" cx="130" cy="120" r="18"/>
-                        <text class="topo-node-label" x="130" y="124">REAR</text>
+                        <circle cx="120" cy="85" r="11"/>
+                        <text x="120" y="88">REAR</text>
                     </g>
 
-                    <!-- Sensors -->
-                    <circle class="topo-sensor" id="topo-lidar-fl" cx="25" cy="60" r="5" fill="#34c759"/>
-                    <circle class="topo-sensor" id="topo-cam-fl" cx="35" cy="55" r="4" fill="#5ac8fa"/>
-                    <circle class="topo-sensor" id="topo-radar-fl" cx="30" cy="68" r="4" fill="#ff9500"/>
-
-                    <circle class="topo-sensor" id="topo-lidar-fr" cx="235" cy="60" r="5" fill="#34c759"/>
-                    <circle class="topo-sensor" id="topo-cam-fr" cx="225" cy="55" r="4" fill="#5ac8fa"/>
-                    <circle class="topo-sensor" id="topo-radar-fr" cx="230" cy="68" r="4" fill="#ff9500"/>
+                    <circle class="topo-sensor" id="ts-lidar" cx="20" cy="40" r="4" fill="#198754"/>
+                    <circle class="topo-sensor" id="ts-cam" cx="30" cy="35" r="3" fill="#0dcaf0"/>
+                    <circle class="topo-sensor" id="ts-radar" cx="25" cy="48" r="3" fill="#ffc107"/>
                 </svg>
             </div>
         </main>
 
         <!-- Right Panel -->
         <aside class="right-panel">
-            <!-- Chart -->
-            <div class="chart-section">
+            <div class="chart-box">
                 <div class="chart-header">
-                    <div class="chart-title">PTP Clock Offset</div>
-                    <div class="chart-value" id="chartValue">0.05 µs</div>
+                    <span class="chart-label">PTP Clock Offset</span>
+                    <span class="chart-big" id="chartVal">48 ns</span>
                 </div>
-                <div class="chart-canvas-container">
+                <div class="chart-area">
                     <canvas id="ptpChart"></canvas>
                 </div>
             </div>
 
-            <!-- Terminal -->
-            <div class="terminal-section">
-                <div class="terminal-header">
-                    <div class="terminal-title">
-                        <i class="fas fa-terminal"></i>
-                        CORECONF Output
-                    </div>
-                    <div class="terminal-badge">LIVE</div>
+            <div class="terminal-box">
+                <div class="terminal-head">
+                    <span class="terminal-title"><i class="fas fa-terminal" style="margin-right:6px;"></i>System Log</span>
+                    <span class="live-badge">LIVE</span>
                 </div>
-                <div class="terminal-content" id="terminalContent"></div>
-                <div class="terminal-input">
-                    <span class="terminal-prompt">keti@tsn:~$</span>
-                    <div class="terminal-cursor"></div>
+                <div class="terminal-logs" id="logs"></div>
+                <div class="terminal-prompt">
+                    <span class="prompt-user">root@lan9662:~#</span>
+                    <div class="cursor"></div>
                 </div>
             </div>
         </aside>
@@ -765,28 +716,38 @@
     <script src="libs/GLTFLoader.js"></script>
     <script>
         // ============================================
-        // State
+        // State & Realistic Metrics
         // ============================================
         const state = {
-            status: 'normal',
-            activeFaults: new Set(),
-            logId: 0
+            status: 'normal', // normal, critical, recovering
+            faults: new Set(),
+            metrics: {
+                ptpOffset: 48,      // nanoseconds (normal: 20-100ns)
+                jitter: 12,         // nanoseconds (normal: 5-30ns)
+                packetLoss: 0,      // percentage (normal: 0%)
+                crcErrors: 0        // per second (normal: 0)
+            },
+            targetMetrics: null
         };
+
+        let vehicleOpacity = 0.75;
+        const vehicleMeshes = [];
 
         // ============================================
         // Three.js Setup
         // ============================================
         const canvas = document.getElementById('canvas3d');
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xf5f5f7);
+        scene.background = new THREE.Color(0xf0f0f0);
 
         const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-        camera.position.set(40, 30, 40);
+        camera.position.set(45, 30, 45);
 
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
@@ -795,64 +756,60 @@
         controls.maxDistance = 100;
         controls.target.set(0, 5, 0);
 
-        // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
+        // Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
-        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        mainLight.position.set(30, 50, 30);
-        mainLight.castShadow = true;
-        scene.add(mainLight);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(30, 50, 30);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        scene.add(sunLight);
 
-        const fillLight = new THREE.DirectionalLight(0x87ceeb, 0.3);
-        fillLight.position.set(-20, 20, -20);
-        scene.add(fillLight);
+        scene.add(new THREE.DirectionalLight(0x88aaff, 0.3).position.set(-20, 30, -20));
 
         // Ground
-        const groundGeometry = new THREE.PlaneGeometry(200, 200);
-        const groundMaterial = new THREE.MeshStandardMaterial({
-            color: 0xeeeeee,
-            roughness: 0.9
-        });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(200, 200),
+            new THREE.MeshStandardMaterial({ color: 0xe5e5e5, roughness: 0.9 })
+        );
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
 
-        // Grid
-        const gridHelper = new THREE.GridHelper(100, 50, 0xdddddd, 0xeeeeee);
-        gridHelper.position.y = 0.01;
-        scene.add(gridHelper);
+        const grid = new THREE.GridHelper(100, 50, 0xcccccc, 0xdddddd);
+        grid.position.y = 0.01;
+        scene.add(grid);
 
         // ============================================
-        // Vehicle & Sensors (Matching script.js exactly)
+        // Sensor Configuration (from script.js)
         // ============================================
-        let vehicle = null;
+        const sensorConfig = {
+            'LiDAR-FL': { pos: [-8.5, 10, 16.2], type: 'lidar', color: 0x198754 },
+            'LiDAR-FR': { pos: [8.5, 10, 16.2], type: 'lidar', color: 0x198754 },
+            'LiDAR-FC': { pos: [0, 5.5, 18.5], type: 'lidar', color: 0x198754 },
+            'LiDAR-RC': { pos: [0, 5.5, -18.5], type: 'lidar', color: 0x198754 },
+            'Cam-FC': { pos: [0, 10.5, 18.5], type: 'camera', color: 0x0dcaf0 },
+            'Cam-FL': { pos: [0.6, 10.5, 18.5], type: 'camera', color: 0x0dcaf0 },
+            'Cam-FR': { pos: [-0.6, 10.5, 18.5], type: 'camera', color: 0x0dcaf0 },
+            'Cam-SL1': { pos: [-8.5, 11, 16.5], type: 'camera', color: 0x0dcaf0 },
+            'Cam-SR1': { pos: [8.5, 11, 16.5], type: 'camera', color: 0x0dcaf0 },
+            'Cam-SL2': { pos: [-8.5, 11, 15.9], type: 'camera', color: 0x0dcaf0 },
+            'Cam-SR2': { pos: [8.5, 11, 15.9], type: 'camera', color: 0x0dcaf0 },
+            'Cam-RC': { pos: [0, 9, -18.5], type: 'camera', color: 0x0dcaf0 },
+            'Radar-FC': { pos: [0, 7, 18.5], type: 'radar', color: 0xffc107 },
+            'Radar-FL': { pos: [-7, 6.5, 17.5], type: 'radar', color: 0xffc107 },
+            'Radar-FR': { pos: [7, 6.5, 17.5], type: 'radar', color: 0xffc107 },
+            'Radar-RL': { pos: [-7, 6.5, -18], type: 'radar', color: 0xffc107 },
+            'Radar-RR': { pos: [7, 6.5, -18], type: 'radar', color: 0xffc107 }
+        };
+
         const sensors = {};
         const sensorMeshes = [];
 
-        // Exact sensor positions from script.js
-        const sensorConfig = {
-            'LiDAR-FL': { pos: [-8.5, 10, 16.2], type: 'lidar', color: 0x34c759 },
-            'LiDAR-FR': { pos: [8.5, 10, 16.2], type: 'lidar', color: 0x34c759 },
-            'LiDAR-FC': { pos: [0, 5.5, 18.5], type: 'lidar', color: 0x34c759 },
-            'LiDAR-RC': { pos: [0, 5.5, -18.5], type: 'lidar', color: 0x34c759 },
-            'Cam-FC': { pos: [0, 10.5, 18.5], type: 'camera', color: 0x5ac8fa },
-            'Cam-FL': { pos: [0.6, 10.5, 18.5], type: 'camera', color: 0x5ac8fa },
-            'Cam-FR': { pos: [-0.6, 10.5, 18.5], type: 'camera', color: 0x5ac8fa },
-            'Cam-SL1': { pos: [-8.5, 11, 16.5], type: 'camera', color: 0x5ac8fa },
-            'Cam-SR1': { pos: [8.5, 11, 16.5], type: 'camera', color: 0x5ac8fa },
-            'Cam-SL2': { pos: [-8.5, 11, 15.9], type: 'camera', color: 0x5ac8fa },
-            'Cam-SR2': { pos: [8.5, 11, 15.9], type: 'camera', color: 0x5ac8fa },
-            'Cam-RC': { pos: [0, 9, -18.5], type: 'camera', color: 0x5ac8fa },
-            'Radar-FC': { pos: [0, 7, 18.5], type: 'radar', color: 0xff9500 },
-            'Radar-FL': { pos: [-7, 6.5, 17.5], type: 'radar', color: 0xff9500 },
-            'Radar-FR': { pos: [7, 6.5, 17.5], type: 'radar', color: 0xff9500 },
-            'Radar-RL': { pos: [-7, 6.5, -18], type: 'radar', color: 0xff9500 },
-            'Radar-RR': { pos: [7, 6.5, -18], type: 'radar', color: 0xff9500 }
-        };
-
-        // Load vehicle (same logic as script.js)
+        // ============================================
+        // Load Vehicle (Keep Original Textures!)
+        // ============================================
         const loader = new THREE.GLTFLoader();
         loader.load('roii.glb', (gltf) => {
             const model = gltf.scene;
@@ -860,7 +817,6 @@
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
 
-            // Same scaling as script.js
             const targetSize = 40;
             const scale = targetSize / Math.max(size.x, size.y, size.z);
             model.scale.set(scale, scale, scale);
@@ -868,56 +824,51 @@
             const scaledHeight = size.y * scale;
             model.position.set(-center.x * scale, -center.y * scale + scaledHeight * 0.5 + 0.5, -center.z * scale);
 
+            // Keep original materials, just modify them
             model.traverse((child) => {
-                if (child.isMesh) {
-                    child.material = new THREE.MeshStandardMaterial({
-                        color: 0x444444,
-                        metalness: 0.6,
-                        roughness: 0.4,
-                        transparent: true,
-                        opacity: 0.85
-                    });
-                    child.material.color.multiplyScalar(1.5);
+                if (child.isMesh && child.material) {
+                    child.material.transparent = true;
+                    child.material.opacity = vehicleOpacity;
+                    child.material.side = THREE.DoubleSide;
+                    if (child.material.color) {
+                        child.material.color.multiplyScalar(1.5);
+                    }
+                    child.material.emissive = new THREE.Color(0x333333);
+                    child.material.emissiveIntensity = 0.2;
                     child.castShadow = true;
+                    child.receiveShadow = true;
+                    vehicleMeshes.push(child);
                 }
             });
 
-            vehicle = model;
-            scene.add(vehicle);
+            scene.add(model);
             createSensors();
 
-            addLog('info', 'System initialized. ROii2 Vehicle loaded.');
-            addLog('success', 'VelocityDRIVE-SP Connected (LAN9662).');
-            addLog('info', 'All 17 sensors online. Network operational.');
+            log('info', 'ROii2 vehicle model loaded successfully');
+            log('ok', 'LAN9662 VelocityDRIVE-SP connected via /dev/ttyACM0');
+            log('info', 'PTP grandmaster synchronized (GM: 00:1B:19:00:00:00)');
+            log('ok', 'All 17 sensors online, TSN streams active');
         });
 
         function createSensors() {
-            Object.entries(sensorConfig).forEach(([name, config]) => {
-                let geometry;
-                if (config.type === 'lidar') {
-                    geometry = new THREE.OctahedronGeometry(0.6);
-                } else if (config.type === 'camera') {
-                    geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-                } else {
-                    geometry = new THREE.ConeGeometry(0.4, 0.8, 8);
-                }
+            Object.entries(sensorConfig).forEach(([name, cfg]) => {
+                let geo;
+                if (cfg.type === 'lidar') geo = new THREE.OctahedronGeometry(0.6);
+                else if (cfg.type === 'camera') geo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                else geo = new THREE.ConeGeometry(0.4, 0.8, 8);
 
-                const material = new THREE.MeshStandardMaterial({
-                    color: config.color,
-                    emissive: config.color,
+                const mat = new THREE.MeshStandardMaterial({
+                    color: cfg.color,
+                    emissive: cfg.color,
                     emissiveIntensity: 0.3,
                     metalness: 0.5,
                     roughness: 0.3
                 });
 
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.position.set(...config.pos);
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(...cfg.pos);
                 mesh.name = name;
-                mesh.userData = {
-                    type: config.type,
-                    originalColor: config.color,
-                    fault: false
-                };
+                mesh.userData = { type: cfg.type, baseColor: cfg.color, fault: false };
 
                 scene.add(mesh);
                 sensors[name] = mesh;
@@ -926,62 +877,87 @@
         }
 
         // ============================================
-        // Fault Injection
+        // Opacity Control
         // ============================================
-        function injectFault(faultType) {
-            if (state.status === 'repairing') return;
+        function setOpacity(val) {
+            vehicleOpacity = val / 100;
+            document.getElementById('opacityValue').textContent = val + '%';
+            vehicleMeshes.forEach(m => {
+                if (m.material) m.material.opacity = vehicleOpacity;
+            });
+        }
+
+        // ============================================
+        // Fault Injection (Realistic)
+        // ============================================
+        function injectFault(type) {
+            if (state.status === 'recovering') return;
 
             state.status = 'critical';
-            state.activeFaults.add(faultType);
-            updateUI();
+            state.faults.add(type);
+            updateStatusUI();
 
-            document.querySelector(`[data-fault="${faultType}"]`).classList.add('active');
+            document.querySelector(`[data-fault="${type}"]`).classList.add('active');
             document.getElementById('recoveryBtn').disabled = false;
 
-            switch(faultType) {
+            // Set target metrics for gradual transition
+            state.targetMetrics = {
+                ptpOffset: 2500 + Math.random() * 2000,  // 2.5-4.5 µs
+                jitter: 800 + Math.random() * 400,       // 800-1200 ns
+                packetLoss: 0.5 + Math.random() * 1.5,   // 0.5-2%
+                crcErrors: 150 + Math.floor(Math.random() * 200)  // 150-350/s
+            };
+
+            switch(type) {
                 case 'lidar':
                     setSensorFault('LiDAR-FL', true);
-                    document.getElementById('topo-lidar-fl').classList.add('fault');
+                    document.getElementById('ts-lidar').classList.add('fault');
                     document.getElementById('node-fl').classList.add('fault');
-                    addLog('error', 'ALERT: LiDAR-FL sensor failure detected!');
-                    addLog('error', 'CRITICAL: Point cloud data loss.');
+                    log('err', 'FAULT: LiDAR-FL (swp1) - No carrier detected');
+                    log('warn', 'ieee802-dot1q-bridge: Port swp1 state changed to DISABLED');
+                    log('info', 'Initiating sensor fusion fallback for Front-Left zone');
                     break;
 
                 case 'camera':
                     setSensorFault('Cam-FL', true);
                     setSensorFault('Cam-SL1', true);
-                    document.getElementById('topo-cam-fl').classList.add('fault');
-                    addLog('error', 'ALERT: Camera link down!');
-                    addLog('error', 'CRITICAL: Vision processing degraded.');
+                    document.getElementById('ts-cam').classList.add('fault');
+                    log('err', 'FAULT: Camera cluster FL - MIPI CSI link failure');
+                    log('warn', 'Stream ID 0x0A01 - Bandwidth dropped to 0 Mbps');
+                    log('info', 'Vision processing switching to degraded mode');
                     break;
 
                 case 'backbone':
                     document.getElementById('link-fl-fr').classList.add('fault');
-                    addLog('error', 'ALERT: 10G Backbone fault!');
-                    addLog('error', 'CRITICAL: Redundancy path FAILED.');
+                    log('err', 'FAULT: 10G backbone (sfp0) - Signal loss detected');
+                    log('warn', 'ieee802-dot1cb-frer: Redundancy path A unavailable');
+                    log('info', 'Rerouting traffic via HPC backbone');
                     break;
 
                 case 'ptp':
-                    addLog('error', 'ALERT: PTP sync lost!');
-                    addLog('error', 'CRITICAL: Clock offset > 1.0µs.');
+                    state.targetMetrics.ptpOffset = 15000 + Math.random() * 10000; // 15-25 µs
+                    log('err', 'FAULT: PTP sync lost - offset exceeds 1µs threshold');
+                    log('warn', 'ieee1588-ptp: BMC election triggered');
+                    log('info', 'TAS/CBS scheduling may be affected');
                     break;
 
                 case 'zone':
                     document.getElementById('node-fl').classList.add('fault');
                     document.getElementById('link-hpc-fl').classList.add('fault');
-                    addLog('error', 'ALERT: Front-L Zone Controller offline!');
-                    addLog('error', 'CRITICAL: 5 sensors disconnected.');
+                    ['LiDAR-FL', 'LiDAR-FC', 'Cam-FL', 'Cam-SL1', 'Radar-FL'].forEach(s => setSensorFault(s, true));
+                    log('err', 'FAULT: Front-L zone controller - Watchdog timeout');
+                    log('warn', '5 sensors disconnected from network');
+                    log('info', 'Emergency stop signal sent to ADAS controller');
                     break;
             }
         }
 
-        function setSensorFault(name, isFault) {
-            const sensor = sensors[name];
-            if (!sensor) return;
-
-            sensor.userData.fault = isFault;
-            sensor.material.color.setHex(isFault ? 0xff3b30 : sensor.userData.originalColor);
-            sensor.material.emissive.setHex(isFault ? 0xff3b30 : sensor.userData.originalColor);
+        function setSensorFault(name, fault) {
+            const s = sensors[name];
+            if (!s) return;
+            s.userData.fault = fault;
+            s.material.color.setHex(fault ? 0xdc3545 : s.userData.baseColor);
+            s.material.emissive.setHex(fault ? 0xdc3545 : s.userData.baseColor);
         }
 
         // ============================================
@@ -990,154 +966,189 @@
         function startRecovery() {
             if (state.status !== 'critical') return;
 
-            state.status = 'repairing';
-            updateUI();
+            state.status = 'recovering';
+            updateStatusUI();
 
             const btn = document.getElementById('recoveryBtn');
             btn.classList.add('processing');
-            btn.querySelector('span').textContent = 'Processing...';
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Processing...';
 
-            addLog('info', 'Initiating recovery...');
-            setTimeout(() => addLog('cmd', 'keti-ct ipatch policy/recovery.yaml'), 500);
-            setTimeout(() => addLog('info', 'Applying TAS/CBS parameters...'), 1200);
-            setTimeout(() => addLog('cmd', 'ptp4l -i swp1 -m -2 -s'), 2000);
+            log('info', 'Initiating CORECONF policy-based recovery...');
+
+            setTimeout(() => log('cmd', 'coreconf-client patch /policy/auto-recovery.yaml'), 400);
+            setTimeout(() => log('info', 'Resetting TAS gate control list...'), 1000);
+            setTimeout(() => log('cmd', 'tc qdisc replace dev swp1 parent root taprio ...'), 1500);
+            setTimeout(() => log('info', 'Re-establishing PTP synchronization...'), 2200);
+            setTimeout(() => log('cmd', 'pmc -u -b 0 "SET GRANDMASTER_SETTINGS_NP ..."'), 2800);
+
+            // Gradual recovery
+            state.targetMetrics = {
+                ptpOffset: 40 + Math.random() * 30,
+                jitter: 10 + Math.random() * 10,
+                packetLoss: 0,
+                crcErrors: 0
+            };
 
             setTimeout(() => {
-                // Reset all
-                state.activeFaults.clear();
                 state.status = 'normal';
+                state.faults.clear();
 
-                document.querySelectorAll('.fault-btn.active').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.topo-node.fault').forEach(el => el.classList.remove('fault'));
-                document.querySelectorAll('.topo-link.fault').forEach(el => el.classList.remove('fault'));
-                document.querySelectorAll('.topo-sensor.fault').forEach(el => el.classList.remove('fault'));
+                document.querySelectorAll('.fault-btn.active').forEach(e => e.classList.remove('active'));
+                document.querySelectorAll('.fault').forEach(e => e.classList.remove('fault'));
 
                 Object.values(sensors).forEach(s => {
                     s.userData.fault = false;
-                    s.material.color.setHex(s.userData.originalColor);
-                    s.material.emissive.setHex(s.userData.originalColor);
+                    s.material.color.setHex(s.userData.baseColor);
+                    s.material.emissive.setHex(s.userData.baseColor);
                 });
 
                 btn.classList.remove('processing');
-                btn.querySelector('span').textContent = 'Auto-Reconfigure';
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Auto-Reconfigure';
                 btn.disabled = true;
 
-                updateUI();
-                addLog('success', 'System recovered. All services operational.');
-            }, 3500);
+                updateStatusUI();
+                log('ok', 'Recovery complete - all systems operational');
+                log('ok', 'TSN streams restored, PTP synchronized');
+            }, 4000);
         }
 
         // ============================================
         // UI Updates
         // ============================================
-        function updateUI() {
-            const badge = document.getElementById('statusBadge');
+        function updateStatusUI() {
+            const pill = document.getElementById('statusPill');
             const text = document.getElementById('statusText');
 
-            badge.className = 'status-badge ' + state.status;
+            pill.className = 'status-pill ' + state.status;
+            text.textContent = state.status === 'normal' ? 'Operational' :
+                               state.status === 'critical' ? 'Critical' : 'Recovering';
+        }
 
-            if (state.status === 'normal') {
-                text.textContent = 'Operational';
-            } else if (state.status === 'critical') {
-                text.textContent = 'Critical';
+        function updateMetricsUI() {
+            const m = state.metrics;
+
+            // PTP Offset
+            const ptpEl = document.getElementById('mPtp');
+            if (m.ptpOffset < 100) {
+                ptpEl.innerHTML = Math.round(m.ptpOffset) + '<span class="metric-unit">ns</span>';
+                ptpEl.className = 'metric-value good';
+            } else if (m.ptpOffset < 1000) {
+                ptpEl.innerHTML = Math.round(m.ptpOffset) + '<span class="metric-unit">ns</span>';
+                ptpEl.className = 'metric-value warn';
             } else {
-                text.textContent = 'Repairing';
+                ptpEl.innerHTML = (m.ptpOffset / 1000).toFixed(1) + '<span class="metric-unit">µs</span>';
+                ptpEl.className = 'metric-value bad';
             }
 
-            // Update metrics
-            const ptp = document.getElementById('metricPTP');
-            const loss = document.getElementById('metricLoss');
-            const crc = document.getElementById('metricCRC');
-            const link = document.getElementById('metricLink');
-
-            if (state.status === 'critical') {
-                ptp.textContent = '1.24µs'; ptp.className = 'metric-value danger';
-                loss.textContent = '2.45%'; loss.className = 'metric-value danger';
-                crc.textContent = '1,247'; crc.className = 'metric-value danger';
-                link.textContent = '12/17'; link.className = 'metric-value warning';
-            } else if (state.status === 'repairing') {
-                ptp.textContent = '0.42µs'; ptp.className = 'metric-value warning';
-                loss.textContent = '0.12%'; loss.className = 'metric-value warning';
-                crc.textContent = '23'; crc.className = 'metric-value warning';
-                link.textContent = '15/17'; link.className = 'metric-value warning';
+            // Jitter
+            const jitEl = document.getElementById('mJitter');
+            if (m.jitter < 50) {
+                jitEl.innerHTML = Math.round(m.jitter) + '<span class="metric-unit">ns</span>';
+                jitEl.className = 'metric-value good';
+            } else if (m.jitter < 500) {
+                jitEl.innerHTML = Math.round(m.jitter) + '<span class="metric-unit">ns</span>';
+                jitEl.className = 'metric-value warn';
             } else {
-                ptp.textContent = '0.05µs'; ptp.className = 'metric-value good';
-                loss.textContent = '0.00%'; loss.className = 'metric-value good';
-                crc.textContent = '0'; crc.className = 'metric-value good';
-                link.textContent = '17/17'; link.className = 'metric-value good';
+                jitEl.innerHTML = (m.jitter / 1000).toFixed(2) + '<span class="metric-unit">µs</span>';
+                jitEl.className = 'metric-value bad';
             }
+
+            // Packet Loss
+            const lossEl = document.getElementById('mLoss');
+            lossEl.innerHTML = m.packetLoss.toFixed(3) + '<span class="metric-unit">%</span>';
+            lossEl.className = 'metric-value ' + (m.packetLoss === 0 ? 'good' : m.packetLoss < 0.1 ? 'warn' : 'bad');
+
+            // CRC Errors
+            const crcEl = document.getElementById('mCrc');
+            crcEl.innerHTML = Math.round(m.crcErrors) + '<span class="metric-unit">/s</span>';
+            crcEl.className = 'metric-value ' + (m.crcErrors === 0 ? 'good' : m.crcErrors < 10 ? 'warn' : 'bad');
+        }
+
+        // Gradual metric transitions
+        function updateMetrics() {
+            const m = state.metrics;
+            const t = state.targetMetrics;
+
+            if (t) {
+                m.ptpOffset += (t.ptpOffset - m.ptpOffset) * 0.1;
+                m.jitter += (t.jitter - m.jitter) * 0.1;
+                m.packetLoss += (t.packetLoss - m.packetLoss) * 0.1;
+                m.crcErrors += (t.crcErrors - m.crcErrors) * 0.1;
+            } else {
+                // Normal fluctuation
+                m.ptpOffset = 40 + Math.random() * 30 + Math.sin(Date.now() / 1000) * 10;
+                m.jitter = 10 + Math.random() * 10;
+                m.packetLoss = 0;
+                m.crcErrors = 0;
+            }
+
+            updateMetricsUI();
         }
 
         // ============================================
         // Logging
         // ============================================
-        function addLog(type, msg) {
+        function log(type, msg) {
             const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-            const terminal = document.getElementById('terminalContent');
-            const line = document.createElement('div');
-            line.className = 'log-line';
-            line.innerHTML = `<span class="log-time">${time}</span><span class="log-msg ${type}">${msg}</span>`;
-            terminal.appendChild(line);
-            terminal.scrollTop = terminal.scrollHeight;
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = 'log';
+            div.innerHTML = `<span class="log-time">${time}</span><span class="log-msg ${type}">${msg}</span>`;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
         }
 
         // ============================================
         // Chart
         // ============================================
         const chartCanvas = document.getElementById('ptpChart');
-        const chartCtx = chartCanvas.getContext('2d');
-        const chartData = Array(50).fill(0.05);
+        const ctx = chartCanvas.getContext('2d');
+        const chartData = Array(60).fill(48);
 
         function drawChart() {
             const w = chartCanvas.width = chartCanvas.clientWidth * 2;
             const h = chartCanvas.height = chartCanvas.clientHeight * 2;
-            chartCtx.scale(2, 2);
+            ctx.setTransform(2, 0, 0, 2, 0, 0);
 
             const width = w / 2;
             const height = h / 2;
 
-            chartCtx.clearRect(0, 0, width, height);
+            ctx.clearRect(0, 0, width, height);
 
-            const maxVal = Math.max(...chartData, 0.5);
-            const color = state.status === 'critical' ? '#ff3b30' : '#0071e3';
+            // Adaptive scale
+            const maxVal = Math.max(...chartData, 100);
+            const color = state.status === 'critical' ? '#dc3545' : '#0d6efd';
 
-            // Line
-            chartCtx.beginPath();
-            chartCtx.strokeStyle = color;
-            chartCtx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
 
-            chartData.forEach((val, i) => {
+            chartData.forEach((v, i) => {
                 const x = (width / (chartData.length - 1)) * i;
-                const y = height - (val / maxVal) * (height - 8);
-                if (i === 0) chartCtx.moveTo(x, y);
-                else chartCtx.lineTo(x, y);
+                const y = height - 4 - (v / maxVal) * (height - 8);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             });
-            chartCtx.stroke();
+            ctx.stroke();
 
-            // Fill
-            chartCtx.lineTo(width, height);
-            chartCtx.lineTo(0, height);
-            chartCtx.closePath();
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.closePath();
 
-            const gradient = chartCtx.createLinearGradient(0, 0, 0, height);
-            gradient.addColorStop(0, color + '40');
-            gradient.addColorStop(1, color + '00');
-            chartCtx.fillStyle = gradient;
-            chartCtx.fill();
+            const grad = ctx.createLinearGradient(0, 0, 0, height);
+            grad.addColorStop(0, color + '30');
+            grad.addColorStop(1, color + '00');
+            ctx.fillStyle = grad;
+            ctx.fill();
         }
 
         function updateChart() {
-            let val;
-            if (state.status === 'critical') val = 1.0 + Math.random() * 0.5;
-            else if (state.status === 'repairing') val = 0.3 + Math.random() * 0.2;
-            else val = 0.03 + Math.random() * 0.04;
-
             chartData.shift();
-            chartData.push(val);
+            chartData.push(state.metrics.ptpOffset);
 
-            const chartValue = document.getElementById('chartValue');
-            chartValue.textContent = val.toFixed(2) + ' µs';
-            chartValue.style.color = state.status === 'critical' ? '#ff3b30' : '#1d1d1f';
+            const chartVal = document.getElementById('chartVal');
+            const v = state.metrics.ptpOffset;
+            chartVal.textContent = v < 1000 ? Math.round(v) + ' ns' : (v / 1000).toFixed(2) + ' µs';
+            chartVal.style.color = state.status === 'critical' ? '#dc3545' : '#212529';
 
             drawChart();
         }
@@ -1151,11 +1162,9 @@
             time += 0.016;
 
             sensorMeshes.forEach(s => {
-                if (s.userData.fault) {
-                    s.material.emissiveIntensity = 0.3 + Math.sin(time * 10) * 0.3;
-                } else {
-                    s.material.emissiveIntensity = 0.2 + Math.sin(time * 2) * 0.1;
-                }
+                s.material.emissiveIntensity = s.userData.fault
+                    ? 0.3 + Math.sin(time * 10) * 0.3
+                    : 0.2 + Math.sin(time * 2) * 0.1;
             });
 
             controls.update();
@@ -1165,13 +1174,14 @@
         // ============================================
         // Init
         // ============================================
-        function updateTime() {
-            document.getElementById('timeDisplay').textContent =
+        function updateClock() {
+            document.getElementById('clock').textContent =
                 new Date().toLocaleTimeString('en-US', { hour12: false });
         }
 
-        setInterval(updateTime, 1000);
-        setInterval(updateChart, 800);
+        setInterval(updateClock, 1000);
+        setInterval(updateMetrics, 200);
+        setInterval(updateChart, 500);
 
         window.addEventListener('resize', () => {
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
@@ -1179,7 +1189,7 @@
             renderer.setSize(canvas.clientWidth, canvas.clientHeight);
         });
 
-        updateTime();
+        updateClock();
         drawChart();
         animate();
     </script>
