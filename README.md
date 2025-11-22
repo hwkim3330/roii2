@@ -3,11 +3,11 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Three.js-r128-black?logo=three.js" alt="Three.js">
   <img src="https://img.shields.io/badge/TSN-802.1Qbv%2FQav-blue" alt="TSN">
-  <img src="https://img.shields.io/badge/Versions-25-green" alt="25 Versions">
+  <img src="https://img.shields.io/badge/Versions-26-green" alt="26 Versions">
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT">
 </p>
 
-Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous vehicles. Features 25 unique visualization styles from technical blueprints to arcade games.
+Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous vehicles. Features 26 unique visualization styles from technical blueprints to arcade games.
 
 ## [Launch App](https://hwkim3330.github.io/roii2/home.html)
 
@@ -15,7 +15,7 @@ Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous v
 
 ## Live Demo
 
-### Core Views (9)
+### Core Views (10)
 | Version | Description |
 |---------|-------------|
 | [**Index**](https://hwkim3330.github.io/roii2/) | Network topology with device properties |
@@ -26,6 +26,7 @@ Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous v
 | [**Demo**](https://hwkim3330.github.io/roii2/demo.html) | Auto-cycling presentation (6 scenes) |
 | [**Scenario**](https://hwkim3330.github.io/roii2/scenario.html) | Autonomous driving scenarios |
 | [**Traffic**](https://hwkim3330.github.io/roii2/traffic.html) | Network packet flow visualization |
+| [**Fault**](https://hwkim3330.github.io/roii2/fault.html) | Fault injection & auto-recovery |
 | [**Presentation**](https://hwkim3330.github.io/roii2/presentation.html) | Auto-demo mode |
 
 ### Visual Themes (6)
@@ -159,6 +160,7 @@ roii2/
 ├── demo.html          # Auto presentation
 ├── scenario.html      # Driving scenarios
 ├── traffic.html       # Packet flow
+├── fault.html         # Fault simulator
 ├── presentation.html  # Demo mode
 ├── blueprint.html     # Blueprint theme
 ├── wireframe.html     # TRON theme
