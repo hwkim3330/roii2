@@ -637,7 +637,7 @@
             <div class="panel" style="margin-top:auto;">
                 <div class="panel-title"><i class="fas fa-server"></i> Device</div>
                 <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
-                    <span style="font-weight:600;">LAN9662</span>
+                    <span style="font-weight:600;">LAN9692</span>
                     <span style="color:var(--text-muted);">VelocityDRIVE-SP</span>
                     <span style="margin-left:auto;width:8px;height:8px;background:var(--green);border-radius:50%;"></span>
                 </div>
@@ -704,7 +704,7 @@
                 </div>
                 <div class="terminal-logs" id="logs"></div>
                 <div class="terminal-prompt">
-                    <span class="prompt-user">root@lan9662:~#</span>
+                    <span class="prompt-user">root@lan9692:~#</span>
                     <div class="cursor"></div>
                 </div>
             </div>
@@ -808,13 +808,13 @@
         const sensorMeshes = [];
 
         // ============================================
-        // Zone Controllers (HPC + 3x LAN9662)
+        // Zone Controllers (HPC + 3x LAN9692)
         // ============================================
         const zoneConfig = {
             'ACU_IT': { pos: [0, 4, 0], type: 'hpc', color: 0xffd700, size: [3, 1.5, 2] },
-            'Front-L-9662': { pos: [-3.5, 4, 10], type: 'lan9662', color: 0x3b82f6, size: [2, 1, 1.5] },
-            'Front-R-9662': { pos: [3.5, 4, 10], type: 'lan9662', color: 0x3b82f6, size: [2, 1, 1.5] },
-            'Rear-9662': { pos: [0, 4, -10], type: 'lan9662', color: 0x3b82f6, size: [2, 1, 1.5] }
+            'Front-L-9692': { pos: [-3.5, 4, 10], type: 'lan9692', color: 0x3b82f6, size: [2, 1, 1.5] },
+            'Front-R-9692': { pos: [3.5, 4, 10], type: 'lan9692', color: 0x3b82f6, size: [2, 1, 1.5] },
+            'Rear-9692': { pos: [0, 4, -10], type: 'lan9692', color: 0x3b82f6, size: [2, 1, 1.5] }
         };
 
         const zoneControllers = {};
@@ -822,14 +822,14 @@
 
         // Sensor to Zone mapping
         const sensorZoneMap = {
-            'LiDAR-FL': 'Front-L-9662', 'LiDAR-FC': 'Front-L-9662',
-            'Cam-FL': 'Front-L-9662', 'Cam-SL1': 'Front-L-9662', 'Cam-SL2': 'Front-L-9662',
-            'Radar-FL': 'Front-L-9662',
-            'LiDAR-FR': 'Front-R-9662',
-            'Cam-FC': 'Front-R-9662', 'Cam-FR': 'Front-R-9662', 'Cam-SR1': 'Front-R-9662', 'Cam-SR2': 'Front-R-9662',
-            'Radar-FC': 'Front-R-9662', 'Radar-FR': 'Front-R-9662',
-            'LiDAR-RC': 'Rear-9662', 'Cam-RC': 'Rear-9662',
-            'Radar-RL': 'Rear-9662', 'Radar-RR': 'Rear-9662'
+            'LiDAR-FL': 'Front-L-9692', 'LiDAR-FC': 'Front-L-9692',
+            'Cam-FL': 'Front-L-9692', 'Cam-SL1': 'Front-L-9692', 'Cam-SL2': 'Front-L-9692',
+            'Radar-FL': 'Front-L-9692',
+            'LiDAR-FR': 'Front-R-9692',
+            'Cam-FC': 'Front-R-9692', 'Cam-FR': 'Front-R-9692', 'Cam-SR1': 'Front-R-9692', 'Cam-SR2': 'Front-R-9692',
+            'Radar-FC': 'Front-R-9692', 'Radar-FR': 'Front-R-9692',
+            'LiDAR-RC': 'Rear-9692', 'Cam-RC': 'Rear-9692',
+            'Radar-RL': 'Rear-9692', 'Radar-RR': 'Rear-9692'
         };
 
         // ============================================
@@ -872,7 +872,7 @@
             createNetworkConnections();
 
             log('info', 'ROii2 vehicle model loaded successfully');
-            log('ok', 'LAN9662 VelocityDRIVE-SP x3 connected');
+            log('ok', 'LAN9692 VelocityDRIVE-SP x3 connected');
             log('info', 'ACU_IT (HPC) initialized - TSN gateway active');
             log('info', 'PTP grandmaster synchronized (GM: 00:1B:19:00:00:00)');
             log('ok', 'All 17 sensors online, network topology established');
@@ -965,12 +965,12 @@
         // ============================================
         function createNetworkConnections() {
             // HPC to Zone Controllers (gold, thick)
-            createNetworkLine('ACU_IT', 'Front-L-9662', 0xffd700, 0.08);
-            createNetworkLine('ACU_IT', 'Front-R-9662', 0xffd700, 0.08);
-            createNetworkLine('ACU_IT', 'Rear-9662', 0xffd700, 0.08);
+            createNetworkLine('ACU_IT', 'Front-L-9692', 0xffd700, 0.08);
+            createNetworkLine('ACU_IT', 'Front-R-9692', 0xffd700, 0.08);
+            createNetworkLine('ACU_IT', 'Rear-9692', 0xffd700, 0.08);
 
             // Backbone (blue, thicker)
-            createNetworkLine('Front-L-9662', 'Front-R-9662', 0x3b82f6, 0.1);
+            createNetworkLine('Front-L-9692', 'Front-R-9692', 0x3b82f6, 0.1);
 
             // Sensor connections (green, thin)
             Object.entries(sensorZoneMap).forEach(([sensorName, zoneName]) => {
@@ -1073,7 +1073,7 @@
 
                 case 'backbone':
                     document.getElementById('link-fl-fr').classList.add('fault');
-                    setNetworkFault('link-Front-L-9662-Front-R-9662', true);
+                    setNetworkFault('link-Front-L-9692-Front-R-9692', true);
                     log('err', 'FAULT: 10G backbone (sfp0) - Signal loss detected');
                     log('warn', 'ieee802-dot1cb-frer: Redundancy path A unavailable');
                     log('info', 'Rerouting traffic via HPC backbone');
@@ -1089,10 +1089,10 @@
                 case 'zone':
                     document.getElementById('node-fl').classList.add('fault');
                     document.getElementById('link-hpc-fl').classList.add('fault');
-                    setZoneFault('Front-L-9662', true);
-                    setNetworkFault('link-ACU_IT-Front-L-9662', true);
+                    setZoneFault('Front-L-9692', true);
+                    setNetworkFault('link-ACU_IT-Front-L-9692', true);
                     ['LiDAR-FL', 'LiDAR-FC', 'Cam-FL', 'Cam-SL1', 'Cam-SL2', 'Radar-FL'].forEach(s => setSensorFault(s, true));
-                    log('err', 'FAULT: Front-L zone controller (LAN9662) - Watchdog timeout');
+                    log('err', 'FAULT: Front-L zone controller (LAN9692) - Watchdog timeout');
                     log('warn', '6 sensors disconnected from network');
                     log('info', 'Emergency stop signal sent to ADAS controller');
                     break;

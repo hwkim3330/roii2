@@ -3,11 +3,11 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Three.js-r128-black?logo=three.js" alt="Three.js">
   <img src="https://img.shields.io/badge/TSN-802.1Qbv%2FQav-blue" alt="TSN">
-  <img src="https://img.shields.io/badge/Versions-27-green" alt="27 Versions">
+  <img src="https://img.shields.io/badge/Versions-28-green" alt="28 Versions">
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT">
 </p>
 
-Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous vehicles. Features 27 unique visualization styles from technical blueprints to arcade games.
+Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous vehicles. Features 28 unique visualization styles from technical blueprints to arcade games.
 
 ## [Launch App](https://hwkim3330.github.io/roii2/home.html)
 
@@ -30,7 +30,7 @@ Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous v
 | [**Presentation**](https://hwkim3330.github.io/roii2/presentation.html) | Auto-demo mode |
 | [**Hand Control**](https://hwkim3330.github.io/roii2/handtrack.html) | MediaPipe gesture control via webcam |
 
-### Visual Themes (6)
+### Visual Themes (7)
 | Version | Description |
 |---------|-------------|
 | [**Blueprint**](https://hwkim3330.github.io/roii2/blueprint.html) | Technical drawing style |
@@ -39,6 +39,7 @@ Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous v
 | [**Hologram**](https://hwkim3330.github.io/roii2/hologram.html) | Sci-fi holographic display |
 | [**Nightvision**](https://hwkim3330.github.io/roii2/nightvision.html) | Military NV style |
 | [**Heatmap**](https://hwkim3330.github.io/roii2/heatmap.html) | Sensor coverage cones |
+| [**Living Network**](https://hwkim3330.github.io/roii2/alive.html) | Cute sensors with tracking eyes |
 
 ### Games (6)
 | Version | Description |
@@ -180,6 +181,7 @@ roii2/
 ├── hologram.html      # Holographic
 ├── nightvision.html   # Night vision
 ├── heatmap.html       # Coverage map
+├── alive.html         # Living network (tracking eyes)
 ├── runner.html        # Runner game
 ├── defender.html      # Defense game
 ├── snake.html         # Snake game
