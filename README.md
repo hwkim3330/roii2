@@ -3,11 +3,11 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Three.js-r128-black?logo=three.js" alt="Three.js">
   <img src="https://img.shields.io/badge/TSN-802.1Qbv%2FQav-blue" alt="TSN">
-  <img src="https://img.shields.io/badge/Versions-26-green" alt="26 Versions">
+  <img src="https://img.shields.io/badge/Versions-27-green" alt="27 Versions">
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT">
 </p>
 
-Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous vehicles. Features 26 unique visualization styles from technical blueprints to arcade games.
+Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous vehicles. Features 27 unique visualization styles from technical blueprints to arcade games.
 
 ## [Launch App](https://hwkim3330.github.io/roii2/home.html)
 
@@ -15,7 +15,7 @@ Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous v
 
 ## Live Demo
 
-### Core Views (10)
+### Core Views (11)
 | Version | Description |
 |---------|-------------|
 | [**Index**](https://hwkim3330.github.io/roii2/) | Network topology with device properties |
@@ -28,6 +28,7 @@ Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous v
 | [**Traffic**](https://hwkim3330.github.io/roii2/traffic.html) | Network packet flow visualization |
 | [**Fault**](https://hwkim3330.github.io/roii2/fault.html) | Fault injection & auto-recovery |
 | [**Presentation**](https://hwkim3330.github.io/roii2/presentation.html) | Auto-demo mode |
+| [**Hand Control**](https://hwkim3330.github.io/roii2/handtrack.html) | MediaPipe gesture control via webcam |
 
 ### Visual Themes (6)
 | Version | Description |
@@ -117,6 +118,15 @@ Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous v
 | Space | Brake |
 | V | Change camera |
 
+### Hand Control (handtrack.html)
+| Gesture | Action |
+|---------|--------|
+| Open Palm (Move) | Rotate camera / Steer vehicle |
+| Fist (Action) | Zoom in / Accelerate |
+| Point (Select) | Select device / Brake |
+| Peace Sign | Reset view / Reset position |
+| 1/2 Keys | Switch Network/Drive mode |
+
 ### Games
 | Game | Controls |
 |------|----------|
@@ -133,6 +143,7 @@ Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous v
 - **Three.js** r128 - 3D rendering
 - **GLTFLoader** - Vehicle model (roii.glb)
 - **OrbitControls** - Camera interaction
+- **MediaPipe Hands** - Hand tracking & gesture recognition
 - **Font Awesome** 6.5 - Icons
 
 ---
@@ -162,6 +173,7 @@ roii2/
 ├── traffic.html       # Packet flow
 ├── fault.html         # Fault simulator
 ├── presentation.html  # Demo mode
+├── handtrack.html     # Hand gesture control
 ├── blueprint.html     # Blueprint theme
 ├── wireframe.html     # TRON theme
 ├── dataflow.html      # Data packets
