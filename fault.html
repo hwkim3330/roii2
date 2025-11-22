@@ -808,6 +808,31 @@
         const sensorMeshes = [];
 
         // ============================================
+        // Zone Controllers (HPC + 3x LAN9662)
+        // ============================================
+        const zoneConfig = {
+            'ACU_IT': { pos: [0, 4, 0], type: 'hpc', color: 0xffd700, size: [3, 1.5, 2] },
+            'Front-L-9662': { pos: [-3.5, 4, 10], type: 'lan9662', color: 0x3b82f6, size: [2, 1, 1.5] },
+            'Front-R-9662': { pos: [3.5, 4, 10], type: 'lan9662', color: 0x3b82f6, size: [2, 1, 1.5] },
+            'Rear-9662': { pos: [0, 4, -10], type: 'lan9662', color: 0x3b82f6, size: [2, 1, 1.5] }
+        };
+
+        const zoneControllers = {};
+        const networkLines = [];
+
+        // Sensor to Zone mapping
+        const sensorZoneMap = {
+            'LiDAR-FL': 'Front-L-9662', 'LiDAR-FC': 'Front-L-9662',
+            'Cam-FL': 'Front-L-9662', 'Cam-SL1': 'Front-L-9662', 'Cam-SL2': 'Front-L-9662',
+            'Radar-FL': 'Front-L-9662',
+            'LiDAR-FR': 'Front-R-9662',
+            'Cam-FC': 'Front-R-9662', 'Cam-FR': 'Front-R-9662', 'Cam-SR1': 'Front-R-9662', 'Cam-SR2': 'Front-R-9662',
+            'Radar-FC': 'Front-R-9662', 'Radar-FR': 'Front-R-9662',
+            'LiDAR-RC': 'Rear-9662', 'Cam-RC': 'Rear-9662',
+            'Radar-RL': 'Rear-9662', 'Radar-RR': 'Rear-9662'
+        };
+
+        // ============================================
         // Load Vehicle (Keep Original Textures!)
         // ============================================
         const loader = new THREE.GLTFLoader();
@@ -843,11 +868,14 @@
 
             scene.add(model);
             createSensors();
+            createZoneControllers();
+            createNetworkConnections();
 
             log('info', 'ROii2 vehicle model loaded successfully');
-            log('ok', 'LAN9662 VelocityDRIVE-SP connected via /dev/ttyACM0');
+            log('ok', 'LAN9662 VelocityDRIVE-SP x3 connected');
+            log('info', 'ACU_IT (HPC) initialized - TSN gateway active');
             log('info', 'PTP grandmaster synchronized (GM: 00:1B:19:00:00:00)');
-            log('ok', 'All 17 sensors online, TSN streams active');
+            log('ok', 'All 17 sensors online, network topology established');
         });
 
         function createSensors() {
@@ -874,6 +902,122 @@
                 sensors[name] = mesh;
                 sensorMeshes.push(mesh);
             });
+        }
+
+        // ============================================
+        // Create Zone Controllers
+        // ============================================
+        function createZoneControllers() {
+            Object.entries(zoneConfig).forEach(([name, cfg]) => {
+                const group = new THREE.Group();
+
+                // Main box
+                const geo = new THREE.BoxGeometry(...cfg.size);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: cfg.color,
+                    metalness: 0.7,
+                    roughness: 0.3,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.castShadow = true;
+                group.add(mesh);
+
+                // Wireframe
+                const wire = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(geo),
+                    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 })
+                );
+                group.add(wire);
+
+                // Label sprite
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.roundRect(0, 0, 256, 64, 8);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 24px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(name, 128, 40);
+
+                const tex = new THREE.CanvasTexture(canvas);
+                const spriteMat = new THREE.SpriteMaterial({ map: tex });
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.position.set(0, cfg.size[1] + 1.5, 0);
+                sprite.scale.set(4, 1, 1);
+                group.add(sprite);
+
+                group.position.set(...cfg.pos);
+                group.name = name;
+                group.userData = { type: cfg.type, baseColor: cfg.color, fault: false };
+
+                scene.add(group);
+                zoneControllers[name] = group;
+            });
+        }
+
+        // ============================================
+        // Create Network Connections
+        // ============================================
+        function createNetworkConnections() {
+            // HPC to Zone Controllers (gold, thick)
+            createNetworkLine('ACU_IT', 'Front-L-9662', 0xffd700, 0.08);
+            createNetworkLine('ACU_IT', 'Front-R-9662', 0xffd700, 0.08);
+            createNetworkLine('ACU_IT', 'Rear-9662', 0xffd700, 0.08);
+
+            // Backbone (blue, thicker)
+            createNetworkLine('Front-L-9662', 'Front-R-9662', 0x3b82f6, 0.1);
+
+            // Sensor connections (green, thin)
+            Object.entries(sensorZoneMap).forEach(([sensorName, zoneName]) => {
+                createSensorLine(sensorName, zoneName);
+            });
+        }
+
+        function createNetworkLine(from, to, color, radius) {
+            const fromPos = new THREE.Vector3(...zoneConfig[from].pos);
+            const toPos = new THREE.Vector3(...zoneConfig[to].pos);
+
+            const curve = new THREE.CatmullRomCurve3([fromPos, toPos]);
+            const geo = new THREE.TubeGeometry(curve, 16, radius, 8, false);
+            const mat = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.7
+            });
+            const tube = new THREE.Mesh(geo, mat);
+            tube.name = `link-${from}-${to}`;
+            tube.userData = { from, to, baseColor: color, fault: false };
+
+            scene.add(tube);
+            networkLines.push(tube);
+        }
+
+        function createSensorLine(sensorName, zoneName) {
+            const sensor = sensors[sensorName];
+            const zone = zoneControllers[zoneName];
+            if (!sensor || !zone) return;
+
+            const fromPos = sensor.position.clone();
+            const toPos = new THREE.Vector3(...zoneConfig[zoneName].pos);
+
+            const points = [fromPos, toPos];
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const mat = new THREE.LineBasicMaterial({
+                color: 0x10b981,
+                transparent: true,
+                opacity: 0.4
+            });
+            const line = new THREE.Line(geo, mat);
+            line.name = `sensor-link-${sensorName}`;
+            line.userData = { sensor: sensorName, zone: zoneName };
+
+            scene.add(line);
+            networkLines.push(line);
         }
 
         // ============================================
@@ -929,6 +1073,7 @@
 
                 case 'backbone':
                     document.getElementById('link-fl-fr').classList.add('fault');
+                    setNetworkFault('link-Front-L-9662-Front-R-9662', true);
                     log('err', 'FAULT: 10G backbone (sfp0) - Signal loss detected');
                     log('warn', 'ieee802-dot1cb-frer: Redundancy path A unavailable');
                     log('info', 'Rerouting traffic via HPC backbone');
@@ -944,9 +1089,11 @@
                 case 'zone':
                     document.getElementById('node-fl').classList.add('fault');
                     document.getElementById('link-hpc-fl').classList.add('fault');
-                    ['LiDAR-FL', 'LiDAR-FC', 'Cam-FL', 'Cam-SL1', 'Radar-FL'].forEach(s => setSensorFault(s, true));
-                    log('err', 'FAULT: Front-L zone controller - Watchdog timeout');
-                    log('warn', '5 sensors disconnected from network');
+                    setZoneFault('Front-L-9662', true);
+                    setNetworkFault('link-ACU_IT-Front-L-9662', true);
+                    ['LiDAR-FL', 'LiDAR-FC', 'Cam-FL', 'Cam-SL1', 'Cam-SL2', 'Radar-FL'].forEach(s => setSensorFault(s, true));
+                    log('err', 'FAULT: Front-L zone controller (LAN9662) - Watchdog timeout');
+                    log('warn', '6 sensors disconnected from network');
                     log('info', 'Emergency stop signal sent to ADAS controller');
                     break;
             }
@@ -958,6 +1105,27 @@
             s.userData.fault = fault;
             s.material.color.setHex(fault ? 0xdc3545 : s.userData.baseColor);
             s.material.emissive.setHex(fault ? 0xdc3545 : s.userData.baseColor);
+        }
+
+        function setZoneFault(name, fault) {
+            const zone = zoneControllers[name];
+            if (!zone) return;
+            zone.userData.fault = fault;
+            zone.children.forEach(child => {
+                if (child.isMesh && child.material) {
+                    child.material.color.setHex(fault ? 0xdc3545 : zone.userData.baseColor);
+                }
+            });
+        }
+
+        function setNetworkFault(lineName, fault) {
+            const line = networkLines.find(l => l.name === lineName);
+            if (!line) return;
+            line.userData.fault = fault;
+            if (line.material) {
+                line.material.color.setHex(fault ? 0xdc3545 : line.userData.baseColor);
+                line.material.opacity = fault ? 0.3 : 0.7;
+            }
         }
 
         // ============================================
@@ -996,10 +1164,30 @@
                 document.querySelectorAll('.fault-btn.active').forEach(e => e.classList.remove('active'));
                 document.querySelectorAll('.fault').forEach(e => e.classList.remove('fault'));
 
+                // Reset sensors
                 Object.values(sensors).forEach(s => {
                     s.userData.fault = false;
                     s.material.color.setHex(s.userData.baseColor);
                     s.material.emissive.setHex(s.userData.baseColor);
+                });
+
+                // Reset zone controllers
+                Object.values(zoneControllers).forEach(zone => {
+                    zone.userData.fault = false;
+                    zone.children.forEach(child => {
+                        if (child.isMesh && child.material) {
+                            child.material.color.setHex(zone.userData.baseColor);
+                        }
+                    });
+                });
+
+                // Reset network lines
+                networkLines.forEach(line => {
+                    line.userData.fault = false;
+                    if (line.material) {
+                        line.material.color.setHex(line.userData.baseColor || 0x10b981);
+                        line.material.opacity = line.userData.baseColor ? 0.7 : 0.4;
+                    }
                 });
 
                 btn.classList.remove('processing');
@@ -1008,7 +1196,7 @@
 
                 updateStatusUI();
                 log('ok', 'Recovery complete - all systems operational');
-                log('ok', 'TSN streams restored, PTP synchronized');
+                log('ok', 'TSN streams restored, network topology online');
             }, 4000);
         }
 
