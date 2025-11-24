@@ -633,9 +633,9 @@
 
         const zoneConfig = {
             'ACU_IT': { pos: [0, 4, 0], color: 0xffd700, size: [3, 1.5, 2] },
-            'Front-L-9662': { pos: [-3.5, 4, 10], color: 0x3b82f6, size: [2, 1, 1.5] },
-            'Front-R-9662': { pos: [3.5, 4, 10], color: 0x3b82f6, size: [2, 1, 1.5] },
-            'Rear-9662': { pos: [0, 4, -10], color: 0x3b82f6, size: [2, 1, 1.5] }
+            'Front-L-9692': { pos: [-3.5, 4, 10], color: 0x3b82f6, size: [2, 1, 1.5] },
+            'Front-R-9692': { pos: [3.5, 4, 10], color: 0x3b82f6, size: [2, 1, 1.5] },
+            'Rear-9692': { pos: [0, 4, -10], color: 0x3b82f6, size: [2, 1, 1.5] }
         };
 
         // Objects
@@ -768,10 +768,10 @@
         function createNetwork() {
             // Zone connections
             const zoneConns = [
-                ['ACU_IT', 'Front-L-9662', 0xffd700],
-                ['ACU_IT', 'Front-R-9662', 0xffd700],
-                ['ACU_IT', 'Rear-9662', 0xffd700],
-                ['Front-L-9662', 'Front-R-9662', 0x3b82f6]
+                ['ACU_IT', 'Front-L-9692', 0xffd700],
+                ['ACU_IT', 'Front-R-9692', 0xffd700],
+                ['ACU_IT', 'Rear-9692', 0xffd700],
+                ['Front-L-9692', 'Front-R-9692', 0x3b82f6]
             ];
 
             zoneConns.forEach(([from, to, color]) => {
@@ -787,14 +787,14 @@
 
             // Sensor connections
             const sensorZoneMap = {
-                'LiDAR-FL': 'Front-L-9662', 'LiDAR-FC': 'Front-L-9662',
-                'Cam-FL': 'Front-L-9662', 'Cam-SL1': 'Front-L-9662', 'Cam-SL2': 'Front-L-9662',
-                'Radar-FL': 'Front-L-9662',
-                'LiDAR-FR': 'Front-R-9662',
-                'Cam-FC': 'Front-R-9662', 'Cam-FR': 'Front-R-9662', 'Cam-SR1': 'Front-R-9662', 'Cam-SR2': 'Front-R-9662',
-                'Radar-FC': 'Front-R-9662', 'Radar-FR': 'Front-R-9662',
-                'LiDAR-RC': 'Rear-9662', 'Cam-RC': 'Rear-9662',
-                'Radar-RL': 'Rear-9662', 'Radar-RR': 'Rear-9662'
+                'LiDAR-FL': 'Front-L-9692', 'LiDAR-FC': 'Front-L-9692',
+                'Cam-FL': 'Front-L-9692', 'Cam-SL1': 'Front-L-9692', 'Cam-SL2': 'Front-L-9692',
+                'Radar-FL': 'Front-L-9692',
+                'LiDAR-FR': 'Front-R-9692',
+                'Cam-FC': 'Front-R-9692', 'Cam-FR': 'Front-R-9692', 'Cam-SR1': 'Front-R-9692', 'Cam-SR2': 'Front-R-9692',
+                'Radar-FC': 'Front-R-9692', 'Radar-FR': 'Front-R-9692',
+                'LiDAR-RC': 'Rear-9692', 'Cam-RC': 'Rear-9692',
+                'Radar-RL': 'Rear-9692', 'Radar-RR': 'Rear-9692'
             };
 
             Object.entries(sensorZoneMap).forEach(([sensorName, zoneName]) => {

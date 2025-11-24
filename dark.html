@@ -328,7 +328,7 @@
 
         // Updated sensor positions (matched with drive.html)
         [[-8.5, 10, 16.2, 'LiDAR-FL'], [8.5, 10, 16.2, 'LiDAR-FR'], [0, 5.5, 18.5, 'LiDAR-FC'], [0, 5.5, -18.5, 'LiDAR-RC']].forEach(p => addDevice('lidar', new THREE.Vector3(p[0], p[1], p[2]), p[3]));
-        [[0, 10.5, 18.5, 'Cam-FC'], [-2.5, 10.5, 18.5, 'Cam-FL'], [2.5, 10.5, 18.5, 'Cam-FR'], [-9.5, 8, 8, 'Cam-SL1'], [9.5, 8, 8, 'Cam-SR1'], [-9.5, 8, -8, 'Cam-SL2'], [9.5, 8, -8, 'Cam-SR2'], [0, 10.5, -18.5, 'Cam-RC']].forEach(p => addDevice('camera', new THREE.Vector3(p[0], p[1], p[2]), p[3]));
+        [[0, 10.5, 18.5, 'Cam-FC'], [-2.5, 10.5, 18.5, 'Cam-FL'], [2.5, 10.5, 18.5, 'Cam-FR'], [-8.5, 11, 16.5, 'Cam-SL1'], [8.5, 11, 16.5, 'Cam-SR1'], [-8.5, 11, 15.9, 'Cam-SL2'], [8.5, 11, 15.9, 'Cam-SR2'], [0, 10.5, -18.5, 'Cam-RC']].forEach(p => addDevice('camera', new THREE.Vector3(p[0], p[1], p[2]), p[3]));
         [[0, 3, 18.5, 'Radar-FC'], [-7, 3, 17.5, 'Radar-FL'], [7, 3, 17.5, 'Radar-FR'], [-7, 3, -17.5, 'Radar-RL'], [7, 3, -17.5, 'Radar-RR']].forEach(p => addDevice('radar', new THREE.Vector3(p[0], p[1], p[2]), p[3]));
 
         createConnection(frontL, acuIT); createConnection(frontR, acuIT); createConnection(rear, acuIT); createConnection(frontL, frontR);

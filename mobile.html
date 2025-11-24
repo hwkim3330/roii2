@@ -747,10 +747,12 @@
         createConnection(frontR, radarFC);
         createConnection(frontR, radarFR);
 
+        // Front zones → Side Camera 2
+        createConnection(frontL, camSL2);
+        createConnection(frontR, camSR2);
+
         createConnection(rear, lidarRC);
         createConnection(rear, camRC);
-        createConnection(rear, camSL2);
-        createConnection(rear, camSR2);
         createConnection(rear, radarRL);
         createConnection(rear, radarRR);
 

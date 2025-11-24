@@ -76,22 +76,22 @@ Interactive 3D visualization of Time-Sensitive Networking (TSN) for autonomous v
          │ Front-L-9692 ├────────────────┤ Front-R-9692 │
          └──────┬──────┘                 └──────┬──────┘
                 │                               │
-         [5 Sensors]                     [6 Sensors]
+         [6 Sensors]                     [7 Sensors]
 
                          ┌──────┴──────┐
                          │  Rear-9692  │
                          └──────┬──────┘
                                 │
-                         [6 Sensors]
+                         [4 Sensors]
 ```
 
 ### Zone Controllers (3x LAN9692)
 
 | Zone | Position | Connected Sensors |
 |------|----------|-------------------|
-| Front-L | Left front | LiDAR-FL, LiDAR-FC, Cam-FL, Cam-SL1, Radar-FL |
-| Front-R | Right front | LiDAR-FR, Cam-FC, Cam-FR, Cam-SR1, Radar-FC, Radar-FR |
-| Rear | Center rear | LiDAR-RC, Cam-RC, Cam-SL2, Cam-SR2, Radar-RL, Radar-RR |
+| Front-L | Left front | LiDAR-FL, LiDAR-FC, Cam-FL, Cam-SL1, Cam-SL2, Radar-FL |
+| Front-R | Right front | LiDAR-FR, Cam-FC, Cam-FR, Cam-SR1, Cam-SR2, Radar-FC, Radar-FR |
+| Rear | Center rear | LiDAR-RC, Cam-RC, Radar-RL, Radar-RR |
 
 ### Sensors (17 Total)
 

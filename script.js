@@ -521,11 +521,15 @@ function loadVehicleScenario() {
     createConnection(frontR, radarFC);
     createConnection(frontR, radarFR);
 
+    // Front-L Zone → Side Camera 2
+    createConnection(frontL, camSL2);
+
+    // Front-R Zone → Side Camera 2
+    createConnection(frontR, camSR2);
+
     // Rear Zone → Sensors
     createConnection(rear, lidarRC);
     createConnection(rear, camRC);
-    createConnection(rear, camSL2);
-    createConnection(rear, camSR2);
     createConnection(rear, radarRL);
     createConnection(rear, radarRR);
 

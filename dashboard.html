@@ -460,8 +460,8 @@
         const camFR = addDevice('camera', new THREE.Vector3(2.5, 10.5, 18.5), 'Cam-Front-R');
         const camSL1 = addDevice('camera', new THREE.Vector3(-9.5, 8, 8), 'Cam-Side-L1');
         const camSR1 = addDevice('camera', new THREE.Vector3(9.5, 8, 8), 'Cam-Side-R1');
-        const camSL2 = addDevice('camera', new THREE.Vector3(-9.5, 8, -8), 'Cam-Side-L2');
-        const camSR2 = addDevice('camera', new THREE.Vector3(9.5, 8, -8), 'Cam-Side-R2');
+        const camSL2 = addDevice('camera', new THREE.Vector3(-8.5, 11, 15.9), 'Cam-Side-L2');
+        const camSR2 = addDevice('camera', new THREE.Vector3(8.5, 11, 15.9), 'Cam-Side-R2');
         const camRC = addDevice('camera', new THREE.Vector3(0, 10.5, -18.5), 'Cam-Rear-Center');
 
         const radarFC = addDevice('radar', new THREE.Vector3(0, 3, 18.5), 'Radar-Front-Center');
@@ -488,10 +488,12 @@
         createConnection(frontR, radarFC);
         createConnection(frontR, radarFR);
 
+        // Front zones → Side Camera 2
+        createConnection(frontL, camSL2);
+        createConnection(frontR, camSR2);
+
         createConnection(rear, lidarRC);
         createConnection(rear, camRC);
-        createConnection(rear, camSL2);
-        createConnection(rear, camSR2);
         createConnection(rear, radarRL);
         createConnection(rear, radarRR);
 
