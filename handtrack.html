@@ -183,7 +183,7 @@
             transform: translateY(-2px);
         }
 
-        /* Control Panel - Simple */
+        /* Control Panels */
         .control-panel {
             position: fixed;
             top: 100px;
@@ -195,6 +195,11 @@
             padding: 16px;
             z-index: 100;
             backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .control-panel.active {
+            display: block;
         }
 
         .panel-title {
@@ -374,8 +379,9 @@
         </div>
     </div>
 
-    <div class="control-panel">
-        <div class="panel-title">Hand Controls</div>
+    <!-- Drive Mode Controls -->
+    <div class="control-panel active" id="driveControls">
+        <div class="panel-title">🚗 Drive Controls</div>
         <div class="control-item">
             <div class="control-icon">↔️</div>
             <div class="control-text">
@@ -406,9 +412,42 @@
         </div>
     </div>
 
+    <!-- Network Mode Controls -->
+    <div class="control-panel" id="networkControls">
+        <div class="panel-title">🌐 Network Controls</div>
+        <div class="control-item">
+            <div class="control-icon">↔️</div>
+            <div class="control-text">
+                <div class="control-name">Tilt Hand</div>
+                <div class="control-desc">Rotate camera around</div>
+            </div>
+        </div>
+        <div class="control-item">
+            <div class="control-icon">✊</div>
+            <div class="control-text">
+                <div class="control-name">Fist</div>
+                <div class="control-desc">Zoom IN (closer)</div>
+            </div>
+        </div>
+        <div class="control-item">
+            <div class="control-icon">🖐️</div>
+            <div class="control-text">
+                <div class="control-name">Open Palm</div>
+                <div class="control-desc">Zoom OUT (farther)</div>
+            </div>
+        </div>
+        <div class="control-item">
+            <div class="control-icon">✌️</div>
+            <div class="control-text">
+                <div class="control-name">Peace</div>
+                <div class="control-desc">Reset view</div>
+            </div>
+        </div>
+    </div>
+
     <div class="status-panel">
         <div class="speed-value" id="speedValue">0</div>
-        <div class="speed-unit">km/h</div>
+        <div class="speed-unit" id="speedUnit">km/h</div>
     </div>
 
     <div class="gesture-indicator" id="gestureIndicator">🖐️</div>
@@ -445,7 +484,8 @@
             handTilt: 0,      // -1 to 1
             handHeight: 0.5,  // 0 to 1
             gesture: 'none',
-            cameraAngle: 0
+            cameraAngle: 0,
+            zoom: 70          // 20 to 150
         };
 
         const drive = {
@@ -632,7 +672,8 @@
 
             if (indexExt && middleExt && !ringExt && !pinkyExt) return 'peace';
             if (count === 0) return 'fist';
-            return 'palm';
+            if (count === 4) return 'palm';
+            return 'none';
         }
 
         function onResults(results) {
@@ -681,14 +722,29 @@
 
         function updateUI() {
             const indicator = document.getElementById('gestureIndicator');
-            if (state.gesture === 'fist') {
-                indicator.textContent = '✊';
-                indicator.classList.add('visible');
-            } else if (state.gesture === 'peace') {
-                indicator.textContent = '✌️';
-                indicator.classList.add('visible');
+            if (state.mode === 'network') {
+                if (state.gesture === 'fist') {
+                    indicator.textContent = '🔍';
+                    indicator.classList.add('visible');
+                } else if (state.gesture === 'palm') {
+                    indicator.textContent = '🔭';
+                    indicator.classList.add('visible');
+                } else if (state.gesture === 'peace') {
+                    indicator.textContent = '✌️';
+                    indicator.classList.add('visible');
+                } else {
+                    indicator.classList.remove('visible');
+                }
             } else {
-                indicator.classList.remove('visible');
+                if (state.gesture === 'fist') {
+                    indicator.textContent = '✊';
+                    indicator.classList.add('visible');
+                } else if (state.gesture === 'peace') {
+                    indicator.textContent = '✌️';
+                    indicator.classList.add('visible');
+                } else {
+                    indicator.classList.remove('visible');
+                }
             }
         }
 
@@ -769,27 +825,36 @@
             // Peace = Reset
             if (state.gesture === 'peace') {
                 state.cameraAngle = 0;
+                state.zoom = 70;
                 camera.position.set(0, 30, -70);
                 camera.lookAt(0, 5, 0);
                 showToast('View Reset! ✌️');
                 return;
             }
 
-            // Hand tilt = rotate camera
-            state.cameraAngle += state.handTilt * 0.02;
-
-            // Hand height = zoom
-            const zoom = 40 + (1 - state.handHeight) * 60;
+            // Fist = Zoom IN (closer)
+            if (state.gesture === 'fist') {
+                state.zoom = Math.max(20, state.zoom - 2);
+            }
+            // Open palm = Zoom OUT (farther)
+            else if (state.gesture === 'palm') {
+                state.zoom = Math.min(150, state.zoom + 2);
+            }
+            // Hand tilt = Rotate (when not doing gesture)
+            else if (Math.abs(state.handTilt) > 0.1) {
+                state.cameraAngle += state.handTilt * 0.02;
+            }
 
             // Update camera position
             const angle = state.cameraAngle;
-            camera.position.x = Math.sin(angle) * zoom;
+            camera.position.x = Math.sin(angle) * state.zoom;
             camera.position.y = 30;
-            camera.position.z = Math.cos(angle) * zoom;
+            camera.position.z = Math.cos(angle) * state.zoom;
             camera.lookAt(0, 5, 0);
 
-            // Update display
-            document.getElementById('speedValue').textContent = Math.round((angle / Math.PI * 180) % 360);
+            // Update display - show zoom percentage
+            const zoomPercent = Math.round((1 - (state.zoom - 20) / 130) * 100);
+            document.getElementById('speedValue').textContent = zoomPercent;
         }
 
         // Initialize MediaPipe
@@ -843,16 +908,21 @@
 
             roadGroup.visible = mode === 'drive';
 
+            // Toggle control panels
+            document.getElementById('driveControls').classList.toggle('active', mode === 'drive');
+            document.getElementById('networkControls').classList.toggle('active', mode === 'network');
+
             if (mode === 'drive') {
                 vehicleGroup.position.set(0, 0, 0);
                 vehicleGroup.rotation.set(0, 0, 0);
                 drive.speed = 0;
-                document.querySelector('.speed-unit').textContent = 'km/h';
+                document.getElementById('speedUnit').textContent = 'km/h';
             } else {
                 state.cameraAngle = 0;
+                state.zoom = 70;
                 camera.position.set(0, 30, -70);
                 camera.lookAt(0, 5, 0);
-                document.querySelector('.speed-unit').textContent = 'deg';
+                document.getElementById('speedUnit').textContent = '%';
             }
 
             showToast(mode === 'drive' ? 'Drive Mode 🚗' : 'Network Mode 🌐');
